@@ -19,10 +19,12 @@ final class HealthController
 
     public function show(Request $request): Response
     {
-        $body = $this->view->render('health.php', [
+        $body = $this->view->render('pages/health.php', [
+            'pageTitle' => 'Health Check',
             'environment' => $this->config->environment,
             'baseUrl' => $this->config->baseUrl,
             'sessionId' => session_id(),
+            'activePath' => $request->path,
         ]);
 
         return new Response(
