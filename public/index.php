@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Fred\Http\Controller\HealthController;
+use Fred\Http\Controller\HomeController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -25,6 +26,7 @@ session_start();
 
 $view = new ViewRenderer($basePath . '/resources/views');
 $router = new Router();
+$router->get('/', [new HomeController($view, $config), 'index']);
 $router->get('/health', [new HealthController($view, $config), 'show']);
 
 $request = Request::fromGlobals();
