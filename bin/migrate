@@ -3,9 +3,28 @@
 
 declare(strict_types=1);
 
+use Fred\Infrastructure\Config\ConfigLoader;
+use Fred\Infrastructure\Database\ConnectionFactory;
+use Fred\Infrastructure\Database\Migration\MigrationRunner;
+use Fred\Infrastructure\Env\DotenvLoader;
+
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) {
     require $autoload;
 }
 
-fwrite(STDOUT, "Migration runner stub. Implement logic in Stage 1.\n");
+$basePath = dirname(__DIR__);
+$env = DotenvLoader::load($basePath . '/.env');
+$config = ConfigLoader::fromArray($env, $basePath);
+$pdo = ConnectionFactory::make($config);
+
+$runner = new MigrationRunner($pdo, $basePath . '/migrations');
+
+try {
+    $runner->run();
+    fwrite(STDOUT, "Migrations completed.\n");
+    exit(0);
+} catch (Throwable $exception) {
+    fwrite(STDERR, 'Migration failed: ' . $exception->getMessage() . "\n");
+    exit(1);
+}

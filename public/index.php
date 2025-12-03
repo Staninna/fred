@@ -2,5 +2,41 @@
 
 declare(strict_types=1);
 
-http_response_code(503);
-echo 'Forum engine bootstrap pending (Stage 1 will provide the router).';
+use Fred\Http\Controller\HealthController;
+use Fred\Http\Request;
+use Fred\Http\Response;
+use Fred\Http\Routing\Router;
+use Fred\Infrastructure\Config\ConfigLoader;
+use Fred\Infrastructure\Database\ConnectionFactory;
+use Fred\Infrastructure\Env\DotenvLoader;
+use Fred\Infrastructure\Session\SqliteSessionHandler;
+use Fred\Infrastructure\View\ViewRenderer;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$basePath = dirname(__DIR__);
+$env = DotenvLoader::load($basePath . '/.env');
+$config = ConfigLoader::fromArray($env, $basePath);
+$pdo = ConnectionFactory::make($config);
+
+$sessionHandler = new SqliteSessionHandler($pdo);
+session_set_save_handler($sessionHandler, true);
+session_start();
+
+$view = new ViewRenderer($basePath . '/resources/views');
+$router = new Router();
+$router->get('/health', [new HealthController($view, $config), 'show']);
+
+$request = Request::fromGlobals();
+
+try {
+    $response = $router->dispatch($request);
+} catch (\Throwable $exception) {
+    $response = new Response(
+        status: 500,
+        headers: ['Content-Type' => 'text/html; charset=utf-8'],
+        body: '<h1>Server Error</h1>',
+    );
+}
+
+$response->send();

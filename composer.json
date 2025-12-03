@@ -11,12 +11,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Fred\\\\": "src/"
+            "Fred\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Fred\\\\": "src/"
+            "Fred\\": "src/"
         }
     },
     "scripts": {
