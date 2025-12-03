@@ -1,0 +1,30 @@
+{
+    "name": "bartroos/fred",
+    "description": "Forum engine (v1 work-in-progress).",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64"
+    },
+    "autoload": {
+        "psr-4": {
+            "Fred\\\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Fred\\\\": "src/"
+        }
+    },
+    "scripts": {
+        "cs:check": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes",
+        "migrate": "php bin/migrate"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

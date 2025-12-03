@@ -1,0 +1,9 @@
+/vendor/
+/storage/uploads/
+/storage/logs/
+/storage/cache/
+/.php-cs-fixer.cache
+/.env
+/.DS_Store
+/public/build/
+/public/storage/

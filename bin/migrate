@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($autoload)) {
+    require $autoload;
+}
+
+fwrite(STDOUT, "Migration runner stub. Implement logic in Stage 1.\n");
