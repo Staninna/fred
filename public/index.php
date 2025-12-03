@@ -28,16 +28,37 @@ $view = new ViewRenderer($basePath . '/resources/views');
 $router = new Router();
 $router->get('/', [new HomeController($view, $config), 'index']);
 $router->get('/health', [new HealthController($view, $config), 'show']);
+$router->setNotFoundHandler(function (Request $request) use ($view) {
+    $body = $view->render('errors/404.php', [
+        'pageTitle' => 'Page not found',
+        'path' => $request->path,
+        'activePath' => $request->path,
+    ]);
+
+    return new Response(
+        status: 404,
+        headers: ['Content-Type' => 'text/html; charset=utf-8'],
+        body: $body,
+    );
+});
 
 $request = Request::fromGlobals();
 
 try {
     $response = $router->dispatch($request);
 } catch (\Throwable $exception) {
+    try {
+        $body = $view->render('errors/500.php', [
+            'pageTitle' => 'Server error',
+        ]);
+    } catch (\Throwable) {
+        $body = '<h1>Server Error</h1>';
+    }
+
     $response = new Response(
         status: 500,
         headers: ['Content-Type' => 'text/html; charset=utf-8'],
-        body: '<h1>Server Error</h1>',
+        body: $body,
     );
 }
 
