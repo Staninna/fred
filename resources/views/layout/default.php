@@ -1,3 +1,5 @@
+<?php /** @var callable(string, array): string $renderPartial */ ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>

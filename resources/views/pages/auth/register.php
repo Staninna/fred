@@ -1,6 +1,7 @@
 <?php
-/** @var array $errors */
-/** @var array $old */
+/** @var array<int, string> $errors */
+/** @var array<string, string> $old */
+/** @var callable(string, array): string $renderPartial */
 ?>
 
 <article class="card card--compact">
@@ -8,15 +9,7 @@
     <h1>Create account</h1>
     <p class="lede">Register to post and reply. New accounts get the Member role; Guests stay read-only.</p>
 
-    <?php if (!empty($errors)): ?>
-        <div class="alert">
-            <ul class="list">
-                <?php foreach ($errors as $error): ?>
-                    <li><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
+    <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
 
     <form class="form" method="post" action="/register" novalidate>
         <div class="field">
