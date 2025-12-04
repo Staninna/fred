@@ -16,6 +16,11 @@
                 <span class="tag">Locked</span>
             <?php endif; ?>
         </div>
+        <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+            <div class="account__actions" style="margin-top: 0.75rem;">
+                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="status">
         <div class="status__item">
