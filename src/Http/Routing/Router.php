@@ -33,7 +33,8 @@ final class Router
 
     private readonly ?string $publicPath;
 
-    private ?callable $notFoundHandler = null;
+    /** @var null|callable */
+    private $notFoundHandler = null;
 
     public function __construct(?string $publicPath = null)
     {
