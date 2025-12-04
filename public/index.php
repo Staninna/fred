@@ -5,6 +5,8 @@ declare(strict_types=1);
 use Fred\Http\Controller\HealthController;
 use Fred\Http\Controller\HomeController;
 use Fred\Http\Controller\AuthController;
+use Fred\Http\Controller\AdminController;
+use Fred\Http\Controller\CommunityController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -13,6 +15,9 @@ use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -25,6 +30,9 @@ $config = ConfigLoader::fromArray($env, $basePath);
 $pdo = ConnectionFactory::make($config);
 $userRepository = new UserRepository($pdo);
 $roleRepository = new RoleRepository($pdo);
+$communityRepository = new CommunityRepository($pdo);
+$categoryRepository = new CategoryRepository($pdo);
+$boardRepository = new BoardRepository($pdo);
 $authService = new AuthService($userRepository, $roleRepository);
 
 $sessionHandler = new SqliteSessionHandler($pdo);
@@ -36,8 +44,33 @@ $router = new Router($basePath . '/public');
 $homeController = new HomeController($view, $config, $authService);
 $healthController = new HealthController($view, $config, $authService);
 $authController = new AuthController($view, $config, $authService);
+$communityController = new CommunityController(
+    $view,
+    $config,
+    $authService,
+    $communityRepository,
+    $categoryRepository,
+    $boardRepository,
+);
+$adminController = new AdminController(
+    $view,
+    $config,
+    $authService,
+    $communityRepository,
+    $categoryRepository,
+    $boardRepository,
+);
 
-$router->get('/', [$homeController, 'index']);
+$router->get('/', [$communityController, 'index']);
+$router->post('/communities', [$communityController, 'store']);
+$router->get('/c/{community}', [$communityController, 'show']);
+$router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
+$router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
+$router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);
+$router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory']);
+$router->post('/c/{community}/admin/boards', [$adminController, 'createBoard']);
+$router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard']);
+$router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard']);
 $router->get('/health', [$healthController, 'show']);
 $router->get('/login', [$authController, 'showLoginForm']);
 $router->post('/login', [$authController, 'login']);
