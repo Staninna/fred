@@ -112,30 +112,59 @@ $profileController = new ProfileController(
     $bbcodeParser,
 );
 
+$authRequired = static function (Request $request, callable $next) use ($authService): Response {
+    if ($authService->currentUser()->isGuest()) {
+        return Response::redirect('/login');
+    }
+
+    return $next($request);
+};
+
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
-$router->get('/c/{community}', [$communityController, 'show']);
-$router->get('/c/{community}/b/{board}', [$boardController, 'show']);
-$router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create']);
-$router->post('/c/{community}/b/{board}/thread', [$threadController, 'store']);
-$router->get('/c/{community}/t/{thread}', [$threadController, 'show']);
-$router->post('/c/{community}/t/{thread}/reply', [$postController, 'store']);
-$router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
-$router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
-$router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);
-$router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory']);
-$router->post('/c/{community}/admin/boards', [$adminController, 'createBoard']);
-$router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard']);
-$router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard']);
 $router->get('/health', [$healthController, 'show']);
 $router->get('/login', [$authController, 'showLoginForm']);
 $router->post('/login', [$authController, 'login']);
 $router->get('/register', [$authController, 'showRegisterForm']);
 $router->post('/register', [$authController, 'register']);
 $router->post('/logout', [$authController, 'logout']);
-$router->get('/c/{community}/u/{username}', [$profileController, 'show']);
-$router->get('/c/{community}/settings/signature', [$profileController, 'editSignature']);
-$router->post('/c/{community}/settings/signature', [$profileController, 'updateSignature']);
+
+$router->group('/c/{community}', function (Router $router) use (
+    $communityController,
+    $boardController,
+    $threadController,
+    $postController,
+    $adminController,
+    $profileController,
+    $authRequired,
+) {
+    $router->get('/', [$communityController, 'show']);
+    $router->get('/u/{username}', [$profileController, 'show']);
+
+    $router->group('/settings', function (Router $router) use ($profileController) {
+        $router->get('/signature', [$profileController, 'editSignature']);
+        $router->post('/signature', [$profileController, 'updateSignature']);
+    }, [$authRequired]);
+
+    $router->get('/b/{board}', [$boardController, 'show']);
+    $router->group('/b/{board}', function (Router $router) use ($threadController) {
+        $router->get('/thread/new', [$threadController, 'create']);
+        $router->post('/thread', [$threadController, 'store']);
+    }, [$authRequired]);
+
+    $router->get('/t/{thread}', [$threadController, 'show']);
+    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired]);
+
+    $router->group('/admin', function (Router $router) use ($adminController) {
+        $router->get('/structure', [$adminController, 'structure']);
+        $router->post('/categories', [$adminController, 'createCategory']);
+        $router->post('/categories/{category}', [$adminController, 'updateCategory']);
+        $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory']);
+        $router->post('/boards', [$adminController, 'createBoard']);
+        $router->post('/boards/{board}', [$adminController, 'updateBoard']);
+        $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard']);
+    }, [$authRequired]);
+});
 
 $router->setNotFoundHandler(function (Request $request) use ($view, $authService, $config) {
     $body = $view->render('errors/404.php', [
