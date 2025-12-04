@@ -31,6 +31,7 @@ use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
+use League\Container\ReflectionContainer;
 use PDO;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -39,99 +40,16 @@ $basePath = dirname(__DIR__);
 $env = DotenvLoader::load($basePath . '/.env');
 
 $container = new Container();
+$container->delegate(new ReflectionContainer(true));
 $container->addShared('basePath', $basePath);
 $container->addShared('env', $env);
 
 $container->addShared(AppConfig::class, static fn (Container $c) => ConfigLoader::fromArray($c->get('env'), $c->get('basePath')));
 $container->addShared(PDO::class, static fn (Container $c) => ConnectionFactory::make($c->get(AppConfig::class)));
 $container->addShared(SqliteSessionHandler::class, static fn (Container $c) => new SqliteSessionHandler($c->get(PDO::class)));
-$container->addShared(UserRepository::class, static fn (Container $c) => new UserRepository($c->get(PDO::class)));
-$container->addShared(RoleRepository::class, static fn (Container $c) => new RoleRepository($c->get(PDO::class)));
-$container->addShared(CommunityRepository::class, static fn (Container $c) => new CommunityRepository($c->get(PDO::class)));
-$container->addShared(CategoryRepository::class, static fn (Container $c) => new CategoryRepository($c->get(PDO::class)));
-$container->addShared(BoardRepository::class, static fn (Container $c) => new BoardRepository($c->get(PDO::class)));
-$container->addShared(ThreadRepository::class, static fn (Container $c) => new ThreadRepository($c->get(PDO::class)));
-$container->addShared(PostRepository::class, static fn (Container $c) => new PostRepository($c->get(PDO::class)));
-$container->addShared(ProfileRepository::class, static fn (Container $c) => new ProfileRepository($c->get(PDO::class)));
 $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
-$container->addShared(AuthService::class, static fn (Container $c) => new AuthService(
-    $c->get(UserRepository::class),
-    $c->get(RoleRepository::class),
-    $c->get(ProfileRepository::class),
-));
 $container->addShared(ViewRenderer::class, static fn (Container $c) => new ViewRenderer($c->get('basePath') . '/resources/views'));
 $container->addShared(Router::class, static fn (Container $c) => new Router($c->get('basePath') . '/public'));
-
-$container->addShared(HomeController::class, static fn (Container $c) => new HomeController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-));
-$container->addShared(HealthController::class, static fn (Container $c) => new HealthController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-));
-$container->addShared(AuthController::class, static fn (Container $c) => new AuthController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-));
-$container->addShared(CommunityController::class, static fn (Container $c) => new CommunityController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(CategoryRepository::class),
-    $c->get(BoardRepository::class),
-));
-$container->addShared(AdminController::class, static fn (Container $c) => new AdminController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(CategoryRepository::class),
-    $c->get(BoardRepository::class),
-));
-$container->addShared(BoardController::class, static fn (Container $c) => new BoardController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(CategoryRepository::class),
-    $c->get(BoardRepository::class),
-    $c->get(ThreadRepository::class),
-));
-$container->addShared(ThreadController::class, static fn (Container $c) => new ThreadController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(CategoryRepository::class),
-    $c->get(BoardRepository::class),
-    $c->get(ThreadRepository::class),
-    $c->get(PostRepository::class),
-    $c->get(BbcodeParser::class),
-    $c->get(ProfileRepository::class),
-));
-$container->addShared(PostController::class, static fn (Container $c) => new PostController(
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(BoardRepository::class),
-    $c->get(ThreadRepository::class),
-    $c->get(PostRepository::class),
-    $c->get(BbcodeParser::class),
-    $c->get(ProfileRepository::class),
-));
-$container->addShared(ProfileController::class, static fn (Container $c) => new ProfileController(
-    $c->get(ViewRenderer::class),
-    $c->get(AppConfig::class),
-    $c->get(AuthService::class),
-    $c->get(CommunityRepository::class),
-    $c->get(UserRepository::class),
-    $c->get(ProfileRepository::class),
-    $c->get(BbcodeParser::class),
-));
 
 $sessionHandler = $container->get(SqliteSessionHandler::class);
 session_set_save_handler($sessionHandler, true);
