@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Http\Controller;
 
+use Fred\Application\Auth\AuthService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -14,6 +15,7 @@ final class HomeController
     public function __construct(
         private readonly ViewRenderer $view,
         private readonly AppConfig $config,
+        private readonly AuthService $auth,
     ) {
     }
 
@@ -44,6 +46,7 @@ final class HomeController
             'navSections' => $navSections,
             'environment' => $this->config->environment,
             'baseUrl' => $this->config->baseUrl,
+            'currentUser' => $this->auth->currentUser(),
         ]);
 
         return new Response(

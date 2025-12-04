@@ -38,8 +38,10 @@ a:hover { text-decoration: underline; }
     letter-spacing: 0.02em;
 }
 
+.masthead__brand { display: grid; gap: 0.2rem; }
 .masthead__title { font-weight: 700; color: var(--ink); text-transform: uppercase; letter-spacing: 0.12em; }
 .masthead__meta { color: var(--muted); }
+.masthead__account { display: flex; justify-content: flex-end; flex: 1; }
 
 .layout {
     display: grid;
@@ -144,12 +146,49 @@ h2 { font-size: 1.2rem; }
     box-shadow: 0 10px 20px rgba(194, 92, 22, 0.35);
 }
 .button:hover { text-decoration: none; filter: brightness(1.05); }
+.button--ghost { background: #fff; color: var(--accent); border: 1px solid var(--border); box-shadow: none; }
+.button--ghost:hover { background: var(--accent-soft); }
 
 code { font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace; font-size: 0.9rem; color: var(--accent); }
 
+.account {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.7rem 0.9rem;
+    box-shadow: var(--shadow);
+}
+.account--guest { background: var(--panel); }
+.account__label { color: var(--muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.account__name { font-weight: 700; color: var(--ink); }
+.account__role { color: var(--muted); }
+.account__actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.form { display: grid; gap: 0.9rem; }
+.field { display: grid; gap: 0.3rem; }
+.field label { font-weight: 600; color: var(--muted); }
+.field input {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 1rem;
+}
+.field input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.alert {
+    border: 1px solid #f2b8b5;
+    background: #fff5f5;
+    color: #9b1c1c;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+}
+
 @media (max-width: 900px) {
     .layout { grid-template-columns: 1fr; padding: 0 1.25rem 1.25rem; }
-    .masthead { padding: 1.25rem 1.25rem 0.25rem; }
+    .masthead { padding: 1.25rem 1.25rem 0.25rem; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
     .nav { position: relative; top: 0; }
     .card--hero { flex-direction: column; align-items: flex-start; }
+    .masthead__account { width: 100%; }
 }

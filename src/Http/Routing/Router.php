@@ -19,6 +19,11 @@ final class Router
         $this->routes['GET'][$path] = $handler;
     }
 
+    public function post(string $path, callable $handler): void
+    {
+        $this->routes['POST'][$path] = $handler;
+    }
+
     public function setNotFoundHandler(callable $handler): void
     {
         $this->notFoundHandler = $handler;
@@ -26,7 +31,8 @@ final class Router
 
     public function dispatch(Request $request): Response
     {
-        $handler = $this->routes[$request->method][$request->path] ?? null;
+        $methodRoutes = $this->routes[$request->method] ?? [];
+        $handler = $methodRoutes[$request->path] ?? null;
 
         if (!is_callable($handler)) {
             if ($this->notFoundHandler !== null) {

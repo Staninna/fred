@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Http\Controller;
 
+use Fred\Application\Auth\AuthService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -14,6 +15,7 @@ final class HealthController
     public function __construct(
         private readonly ViewRenderer $view,
         private readonly AppConfig $config,
+        private readonly AuthService $auth,
     ) {
     }
 
@@ -25,6 +27,7 @@ final class HealthController
             'baseUrl' => $this->config->baseUrl,
             'sessionId' => session_id(),
             'activePath' => $request->path,
+            'currentUser' => $this->auth->currentUser(),
         ]);
 
         return new Response(

@@ -9,14 +9,14 @@ use SessionHandlerInterface;
 
 use function time;
 
-final class SqliteSessionHandler implements SessionHandlerInterface
+final readonly class SqliteSessionHandler implements SessionHandlerInterface
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
         $this->ensureTable();
     }
 
-    public function open($savePath, $sessionName): bool
+    public function open($path, $name): bool
     {
         return true;
     }

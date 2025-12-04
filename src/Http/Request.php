@@ -13,6 +13,7 @@ final class Request
         public readonly string $method,
         public readonly string $path,
         public readonly array $query,
+        public readonly array $body,
     ) {
     }
 
@@ -28,6 +29,7 @@ final class Request
             method: trim($method),
             path: $path,
             query: $_GET ?? [],
+            body: $_POST ?? [],
         );
     }
 }

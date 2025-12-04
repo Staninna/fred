@@ -17,6 +17,15 @@ final class Response
     ) {
     }
 
+    public static function redirect(string $location, int $status = 302): self
+    {
+        return new self(
+            status: $status,
+            headers: ['Location' => $location],
+            body: '',
+        );
+    }
+
     public function send(): void
     {
         http_response_code($this->status);
