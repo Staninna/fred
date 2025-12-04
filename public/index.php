@@ -32,7 +32,7 @@ session_set_save_handler($sessionHandler, true);
 session_start();
 
 $view = new ViewRenderer($basePath . '/resources/views');
-$router = new Router();
+$router = new Router($basePath . '/public');
 $homeController = new HomeController($view, $config, $authService);
 $healthController = new HealthController($view, $config, $authService);
 $authController = new AuthController($view, $config, $authService);
