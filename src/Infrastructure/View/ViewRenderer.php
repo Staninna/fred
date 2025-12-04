@@ -14,11 +14,11 @@ use function ob_start;
 use function rtrim;
 use function str_replace;
 
-final class ViewRenderer
+final readonly class ViewRenderer
 {
     public function __construct(
-        private readonly string $viewPath,
-        private readonly ?string $defaultLayout = 'layout/default.php',
+        private string  $viewPath,
+        private ?string $defaultLayout = 'layout/default.php',
     ) {
     }
 

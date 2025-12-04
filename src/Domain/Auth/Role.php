@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Fred\Domain\Auth;
 
-final class Role
+final readonly class Role
 {
     public function __construct(
-        public readonly int $id,
-        public readonly string $slug,
-        public readonly string $name,
+        public int    $id,
+        public string $slug,
+        public string $name,
     ) {
     }
 }

@@ -7,9 +7,9 @@ namespace Fred\Infrastructure\Database;
 use Fred\Domain\Auth\User;
 use PDO;
 
-final class UserRepository
+final readonly class UserRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 

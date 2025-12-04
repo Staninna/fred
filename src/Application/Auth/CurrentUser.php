@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Fred\Application\Auth;
 
-final class CurrentUser
+final readonly class CurrentUser
 {
     public function __construct(
-        public readonly ?int $id,
-        public readonly string $username,
-        public readonly string $displayName,
-        public readonly string $role,
-        public readonly string $roleName,
-        public readonly bool $authenticated,
+        public ?int   $id,
+        public string $username,
+        public string $displayName,
+        public string $role,
+        public string $roleName,
+        public bool   $authenticated,
     ) {
     }
 

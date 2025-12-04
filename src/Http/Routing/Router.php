@@ -6,15 +6,16 @@ namespace Fred\Http\Routing;
 
 use Fred\Http\Request;
 use Fred\Http\Response;
+
 use function file_get_contents;
 use function filesize;
-use function in_array;
 use function is_file;
 use function pathinfo;
 use function realpath;
 use function rtrim;
 use function str_starts_with;
 use function strtolower;
+
 use const DIRECTORY_SEPARATOR;
 use const PATHINFO_EXTENSION;
 
@@ -25,7 +26,7 @@ final class Router
 
     private readonly ?string $publicPath;
 
-    private $notFoundHandler = null;
+    private ?callable $notFoundHandler = null;
 
     public function __construct(?string $publicPath = null)
     {
@@ -52,7 +53,7 @@ final class Router
         $methodRoutes = $this->routes[$request->method] ?? [];
         $handler = $methodRoutes[$request->path] ?? null;
 
-        if (!is_callable($handler)) {
+        if (!\is_callable($handler)) {
             $staticResponse = $this->tryServeStatic($request);
             if ($staticResponse instanceof Response) {
                 return $staticResponse;
@@ -78,7 +79,7 @@ final class Router
             return null;
         }
 
-        if (!in_array($request->method, ['GET', 'HEAD'], true)) {
+        if (!\in_array($request->method, ['GET', 'HEAD'], true)) {
             return null;
         }
 

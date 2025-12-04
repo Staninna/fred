@@ -10,12 +10,12 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\View\ViewRenderer;
 
-final class HomeController
+final readonly class HomeController
 {
     public function __construct(
-        private readonly ViewRenderer $view,
-        private readonly AppConfig $config,
-        private readonly AuthService $auth,
+        private ViewRenderer $view,
+        private AppConfig    $config,
+        private AuthService  $auth,
     ) {
     }
 

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Config;
 
-final class AppConfig
+final readonly class AppConfig
 {
     public function __construct(
-        public readonly string $environment,
-        public readonly string $baseUrl,
-        public readonly string $databasePath,
-        public readonly string $uploadsPath,
-        public readonly string $logsPath,
-        public readonly string $basePath,
+        public string $environment,
+        public string $baseUrl,
+        public string $databasePath,
+        public string $uploadsPath,
+        public string $logsPath,
+        public string $basePath,
     ) {
     }
 }

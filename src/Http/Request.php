@@ -7,13 +7,13 @@ namespace Fred\Http;
 use function parse_url;
 use function trim;
 
-final class Request
+final readonly class Request
 {
     public function __construct(
-        public readonly string $method,
-        public readonly string $path,
-        public readonly array $query,
-        public readonly array $body,
+        public string $method,
+        public string $path,
+        public array  $query,
+        public array  $body,
     ) {
     }
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Fred\Infrastructure\Database\Migration\Migration;
 
-return new class implements Migration {
+return new class () implements Migration {
     public function getName(): string
     {
         return '20240601_create_sessions_table';

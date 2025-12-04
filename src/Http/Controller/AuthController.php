@@ -10,12 +10,12 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\View\ViewRenderer;
 
-final class AuthController
+final readonly class AuthController
 {
     public function __construct(
-        private readonly ViewRenderer $view,
-        private readonly AppConfig $config,
-        private readonly AuthService $auth,
+        private ViewRenderer $view,
+        private AppConfig    $config,
+        private AuthService  $auth,
     ) {
     }
 
@@ -83,13 +83,13 @@ final class AuthController
 
         if ($username === '') {
             $errors[] = 'Username is required.';
-        } elseif (strlen($username) < 3) {
+        } elseif (\strlen($username) < 3) {
             $errors[] = 'Username must be at least 3 characters.';
         }
 
         if ($password === '') {
             $errors[] = 'Password is required.';
-        } elseif (strlen($password) < 6) {
+        } elseif (\strlen($password) < 6) {
             $errors[] = 'Password must be at least 6 characters.';
         }
 

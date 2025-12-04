@@ -7,17 +7,17 @@ namespace Fred\Infrastructure\Database\Migration;
 use PDO;
 use RuntimeException;
 use SplFileInfo;
+use Throwable;
 
 use function array_map;
 use function basename;
 use function date;
 use function glob;
-use function sprintf;
 use function usort;
 
 final class MigrationRunner
 {
-    private const TABLE = 'migrations';
+    private const string TABLE = 'migrations';
 
     public function __construct(
         private readonly PDO $pdo,
@@ -25,6 +25,9 @@ final class MigrationRunner
     ) {
     }
 
+    /**
+     * @throws Throwable
+     */
     public function run(): void
     {
         $this->ensureMigrationsTable();
@@ -46,7 +49,7 @@ final class MigrationRunner
                 $migration->up($this->pdo);
                 $this->markApplied($name);
                 $this->pdo->commit();
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 $this->pdo->rollBack();
 
                 throw $exception;
@@ -102,7 +105,7 @@ SQL);
 
         $fileName = basename($file->getPathname());
 
-        throw new RuntimeException(sprintf('Migration file %s must return a Migration instance.', $fileName));
+        throw new RuntimeException(\sprintf('Migration file %s must return a Migration instance.', $fileName));
     }
 
     private function markApplied(string $name): void

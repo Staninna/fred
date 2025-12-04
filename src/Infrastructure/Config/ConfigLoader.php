@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Config;
 
-use function dirname;
 use function is_dir;
 use function mkdir;
 use function rtrim;
@@ -21,7 +20,7 @@ final class ConfigLoader
         $uploadsPath = $env['UPLOADS_PATH'] ?? $basePath . '/storage/uploads';
         $logsPath = $env['LOGS_PATH'] ?? $basePath . '/storage/logs';
 
-        self::ensureDirectory(dirname($databasePath));
+        self::ensureDirectory(\dirname($databasePath));
         self::ensureDirectory($uploadsPath);
         self::ensureDirectory($logsPath);
 
