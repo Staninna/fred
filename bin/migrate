@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
+use Fred\Infrastructure\Database\DatabaseResetter;
 use Fred\Infrastructure\Database\Migration\MigrationRunner;
 use Fred\Infrastructure\Env\DotenvLoader;
 
@@ -16,13 +17,19 @@ if (file_exists($autoload)) {
 $basePath = dirname(__DIR__);
 $env = DotenvLoader::load($basePath . '/.env');
 $config = ConfigLoader::fromArray($env, $basePath);
+
+$fresh = in_array('--fresh', $argv, true) || in_array('fresh', $argv, true);
+if ($fresh) {
+    (new DatabaseResetter($config))->fresh();
+}
+
 $pdo = ConnectionFactory::make($config);
 
 $runner = new MigrationRunner($pdo, $basePath . '/migrations');
 
 try {
     $runner->run();
-    fwrite(STDOUT, "Migrations completed.\n");
+    fwrite(STDOUT, $fresh ? "Database refreshed and migrations completed.\n" : "Migrations completed.\n");
     exit(0);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Migration failed: ' . $exception->getMessage() . "\n");

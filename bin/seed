@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Fred\Application\Seed\DemoSeeder;
+use Fred\Infrastructure\Config\ConfigLoader;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\ConnectionFactory;
+use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Env\DotenvLoader;
+
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if (file_exists($autoload)) {
+    require $autoload;
+}
+
+$basePath = dirname(__DIR__);
+$env = DotenvLoader::load($basePath . '/.env');
+$config = ConfigLoader::fromArray($env, $basePath);
+$pdo = ConnectionFactory::make($config);
+
+$seeder = new DemoSeeder(
+    roles: new RoleRepository($pdo),
+    users: new UserRepository($pdo),
+    communities: new CommunityRepository($pdo),
+    categories: new CategoryRepository($pdo),
+    boards: new BoardRepository($pdo),
+    threads: new ThreadRepository($pdo),
+    posts: new PostRepository($pdo),
+);
+
+try {
+    $result = $seeder->seed();
+    fwrite(STDOUT, "Seeded demo data. Community ID: {$result['community_id']}, Board ID: {$result['board_id']}, User ID: {$result['user_id']}.\n");
+    exit(0);
+} catch (Throwable $exception) {
+    fwrite(STDERR, 'Seeding failed: ' . $exception->getMessage() . "\n");
+    exit(1);
+}
