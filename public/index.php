@@ -8,6 +8,8 @@ use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\BoardController;
+use Fred\Http\Controller\ThreadController;
+use Fred\Http\Controller\PostController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -19,6 +21,8 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -34,6 +38,8 @@ $roleRepository = new RoleRepository($pdo);
 $communityRepository = new CommunityRepository($pdo);
 $categoryRepository = new CategoryRepository($pdo);
 $boardRepository = new BoardRepository($pdo);
+$threadRepository = new ThreadRepository($pdo);
+$postRepository = new PostRepository($pdo);
 $authService = new AuthService($userRepository, $roleRepository);
 
 $sessionHandler = new SqliteSessionHandler($pdo);
@@ -68,12 +74,34 @@ $boardController = new BoardController(
     $communityRepository,
     $categoryRepository,
     $boardRepository,
+    $threadRepository,
+);
+$threadController = new ThreadController(
+    $view,
+    $config,
+    $authService,
+    $communityRepository,
+    $categoryRepository,
+    $boardRepository,
+    $threadRepository,
+    $postRepository,
+);
+$postController = new PostController(
+    $authService,
+    $communityRepository,
+    $boardRepository,
+    $threadRepository,
+    $postRepository,
 );
 
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
 $router->get('/c/{community}', [$communityController, 'show']);
 $router->get('/c/{community}/b/{board}', [$boardController, 'show']);
+$router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create']);
+$router->post('/c/{community}/b/{board}/thread', [$threadController, 'store']);
+$router->get('/c/{community}/t/{thread}', [$threadController, 'show']);
+$router->post('/c/{community}/t/{thread}/reply', [$postController, 'store']);
 $router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
 $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
 $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);

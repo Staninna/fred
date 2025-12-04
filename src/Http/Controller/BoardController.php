@@ -8,12 +8,14 @@ use Fred\Application\Auth\AuthService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Thread;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function array_values;
@@ -27,6 +29,7 @@ final readonly class BoardController
         private CommunityRepository $communities,
         private CategoryRepository $categories,
         private BoardRepository $boards,
+        private ThreadRepository $threads,
     ) {
     }
 
@@ -52,12 +55,14 @@ final readonly class BoardController
         $boards = $this->boards->listByCommunityId($community->id);
         $boardsByCategory = $this->groupBoards($boards);
         $allCommunities = $this->communities->all();
+        $threads = $this->threads->listByBoardId($board->id);
 
         $body = $this->view->render('pages/board/show.php', [
             'pageTitle' => $board->name,
             'community' => $community,
             'board' => $board,
             'category' => $category,
+            'threads' => $threads,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,

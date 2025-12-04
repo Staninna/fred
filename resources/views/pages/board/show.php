@@ -2,6 +2,8 @@
 /** @var \Fred\Domain\Community\Community $community */
 /** @var \Fred\Domain\Community\Board $board */
 /** @var \Fred\Domain\Community\Category $category */
+/** @var array<int, \Fred\Domain\Forum\Thread> $threads */
+/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 ?>
 
 <article class="card card--hero">
@@ -25,7 +27,7 @@
     <div class="status">
         <div class="status__item">
             <div class="status__label">Threads</div>
-            <div class="status__value">Coming soon</div>
+            <div class="status__value"><?= count($threads) ?></div>
         </div>
         <div class="status__item">
             <div class="status__label">Board ID</div>
@@ -34,7 +36,41 @@
     </div>
 </article>
 
-<article class="card card--compact">
-    <h2>Threads</h2>
-    <p class="muted">Thread listing will appear here in the next stage.</p>
+<article class="card">
+    <header class="card__header">
+        <div>
+            <p class="eyebrow">Threads</p>
+            <h2><?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?></h2>
+        </div>
+        <?php if ($board->isLocked): ?>
+            <span class="tag">Locked</span>
+        <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+            <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= $board->id ?>/thread/new">New thread</a>
+        <?php else: ?>
+            <a class="button button--ghost" href="/login">Sign in to post</a>
+        <?php endif; ?>
+    </header>
+
+    <?php if ($threads === []): ?>
+        <p class="muted">No threads yet.</p>
+    <?php else: ?>
+        <ul class="list">
+            <?php foreach ($threads as $thread): ?>
+                <li>
+                    <div class="nav__title">
+                        <?php if ($thread->isSticky): ?><span class="tag">Sticky</span> <?php endif; ?>
+                        <?php if ($thread->isAnnouncement): ?><span class="tag">Announcement</span> <?php endif; ?>
+                        <a class="nav__link" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/t/<?= $thread->id ?>">
+                            <?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?>
+                        </a>
+                    </div>
+                    <div class="nav__subtitle">
+                        Started by <?= htmlspecialchars($thread->authorName, ENT_QUOTES, 'UTF-8') ?> ·
+                        <?= date('Y-m-d H:i', $thread->createdAt) ?>
+                        <?= $thread->isLocked ? ' · Locked' : '' ?>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 </article>
