@@ -6,9 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Domain\Community\Board;
-use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
-use Fred\Domain\Forum\Thread;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;

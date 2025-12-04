@@ -162,8 +162,8 @@ final readonly class CommunityController
                     'label' => '↳ ' . $board->name,
                 'href' => '/c/' . ($current?->slug ?? '') . '/b/' . $board->slug,
             ];
+            }
         }
-    }
 
         return [
             [

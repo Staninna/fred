@@ -9,7 +9,6 @@ use Fred\Http\Response;
 
 use function file_get_contents;
 use function filesize;
-use function in_array;
 use function is_file;
 use function preg_match;
 use function preg_replace_callback;
@@ -230,7 +229,7 @@ final class Router
             return null;
         }
 
-        if (!in_array($request->method, ['GET', 'HEAD'], true)) {
+        if (!\in_array($request->method, ['GET', 'HEAD'], true)) {
             return null;
         }
 

@@ -265,7 +265,7 @@ final readonly class DemoSeeder
             return "[b]Welcome[/b] to the demo!\n\n"
                 . "Try replying with BBCode like [i]italics[/i], [code]print \"hi\";[/code], or [url=https://example.com]links[/url].\n"
                 . "[quote]You can also nest quotes and codes[/quote]\n"
-                . "Jump to this post with >>1.";
+                . 'Jump to this post with >>1.';
         }
 
         if ($boardSlug === 'general' && $threadIndex === 0 && $postIndex === 1) {
@@ -273,18 +273,18 @@ final readonly class DemoSeeder
         }
 
         if ($boardSlug === 'trading-post') {
-            return "Listing item: [b]" . $this->faker->words(3, true) . "[/b]\n"
-                . "Condition: [i]" . $this->faker->word() . "[/i]\n"
-                . "Details: [code]" . $this->faker->sentence(6) . "[/code]\n"
-                . "Price: " . $this->faker->numberBetween(20, 300) . " credits.\n"
-                . "More pics: [url=https://example.com/" . $this->faker->slug() . "]link[/url]";
+            return 'Listing item: [b]' . $this->faker->words(3, true) . "[/b]\n"
+                . 'Condition: [i]' . $this->faker->word() . "[/i]\n"
+                . 'Details: [code]' . $this->faker->sentence(6) . "[/code]\n"
+                . 'Price: ' . $this->faker->numberBetween(20, 300) . " credits.\n"
+                . 'More pics: [url=https://example.com/' . $this->faker->slug() . ']link[/url]';
         }
 
         if ($boardSlug === 'help-desk') {
-            return "[quote]" . $this->faker->sentence(8) . "[/quote]\n"
+            return '[quote]' . $this->faker->sentence(8) . "[/quote]\n"
                 . "Steps tried:\n"
-                . "[code]" . $this->faker->sentence(5) . "[/code]\n"
-                . "Any ideas?";
+                . '[code]' . $this->faker->sentence(5) . "[/code]\n"
+                . 'Any ideas?';
         }
 
         return $this->faker->paragraph(3);

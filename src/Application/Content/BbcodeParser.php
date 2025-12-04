@@ -19,7 +19,7 @@ final class BbcodeParser
         ];
 
         foreach ($replacements as $tag => [$open, $close]) {
-            $pattern = sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
+            $pattern = \sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
             $escaped = preg_replace($pattern, $open . '$1' . $close, $escaped) ?? $escaped;
         }
 
@@ -44,7 +44,7 @@ final class BbcodeParser
         return preg_replace_callback('/^&gt;&gt;(\d+)/m', static function (array $matches): string {
             $id = $matches[1];
 
-            return sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);
+            return \sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);
         }, $input) ?? $input;
     }
 }
