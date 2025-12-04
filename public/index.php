@@ -44,14 +44,14 @@ $container->delegate(new ReflectionContainer(true));
 $container->addShared('basePath', $basePath);
 $container->addShared('env', $env);
 
-$container->addShared(AppConfig::class, static fn (Container $c) => ConfigLoader::fromArray($c->get('env'), $c->get('basePath')));
-$container->addShared(PDO::class, static fn (Container $c) => ConnectionFactory::make($c->get(AppConfig::class)));
-$container->addShared(SqliteSessionHandler::class, static fn (Container $c) => new SqliteSessionHandler($c->get(PDO::class)));
-$container->addShared(FileLogger::class, static fn (Container $c) => new FileLogger($c->get(AppConfig::class)->logsPath . '/app.log'));
+$container->addShared(AppConfig::class, static fn () => ConfigLoader::fromArray($container->get('env'), $container->get('basePath')));
+$container->addShared(PDO::class, static fn () => ConnectionFactory::make($container->get(AppConfig::class)));
+$container->addShared(SqliteSessionHandler::class, static fn () => new SqliteSessionHandler($container->get(PDO::class)));
+$container->addShared(FileLogger::class, static fn () => new FileLogger($container->get(AppConfig::class)->logsPath . '/app.log'));
 $container->addShared(NullLogger::class, static fn () => new NullLogger());
 $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
-$container->addShared(ViewRenderer::class, static fn (Container $c) => new ViewRenderer($c->get('basePath') . '/resources/views'));
-$container->addShared(Router::class, static fn (Container $c) => new Router($c->get('basePath') . '/public'));
+$container->addShared(ViewRenderer::class, static fn () => new ViewRenderer($container->get('basePath') . '/resources/views'));
+$container->addShared(Router::class, static fn () => new Router($container->get('basePath') . '/public'));
 
 $sessionHandler = $container->get(SqliteSessionHandler::class);
 session_set_save_handler($sessionHandler, true);
