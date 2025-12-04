@@ -14,6 +14,7 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
+use Faker\Factory as FakerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoload)) {
@@ -25,6 +26,14 @@ $env = DotenvLoader::load($basePath . '/.env');
 $config = ConfigLoader::fromArray($env, $basePath);
 $pdo = ConnectionFactory::make($config);
 
+$faker = FakerFactory::create();
+$faker->seed(1234);
+
+$boardCount = (int) ($argv[1] ?? 4);
+$threadsPerBoard = (int) ($argv[2] ?? 6);
+$postsPerThread = (int) ($argv[3] ?? 8);
+$userCount = (int) ($argv[4] ?? 10);
+
 $seeder = new DemoSeeder(
     roles: new RoleRepository($pdo),
     users: new UserRepository($pdo),
@@ -33,11 +42,24 @@ $seeder = new DemoSeeder(
     boards: new BoardRepository($pdo),
     threads: new ThreadRepository($pdo),
     posts: new PostRepository($pdo),
+    faker: $faker,
+    boardCount: max(1, $boardCount),
+    threadsPerBoard: max(1, $threadsPerBoard),
+    postsPerThread: max(1, $postsPerThread),
+    userCount: max(2, $userCount),
 );
 
 try {
     $result = $seeder->seed();
-    fwrite(STDOUT, "Seeded demo data. Community ID: {$result['community_id']}, Board ID: {$result['board_id']}, User ID: {$result['user_id']}.\n");
+    $communityIds = $result['community_ids'] ?? [];
+    $userIds = $result['user_ids'] ?? [];
+    $boardIds = $result['board_ids'] ?? [];
+
+    $communityId = $communityIds[0] ?? '';
+    $userId = $userIds[0] ?? '';
+    $boardCountOutput = is_countable($boardIds) ? count($boardIds) : 0;
+
+    fwrite(STDOUT, "Seeded demo data. Community ID: {$communityId}, Boards: {$boardCountOutput}, User ID: {$userId}.\n");
     exit(0);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Seeding failed: ' . $exception->getMessage() . "\n");

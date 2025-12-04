@@ -8,6 +8,7 @@
         "ext-pdo": "*"
     },
     "require-dev": {
+        "fakerphp/faker": "^1.24",
         "friendsofphp/php-cs-fixer": "^3.64",
         "phpunit/phpunit": "^11"
     },
