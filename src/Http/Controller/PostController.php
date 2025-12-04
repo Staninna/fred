@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\BbcodeParser;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Database\BoardRepository;
@@ -22,6 +23,7 @@ final readonly class PostController
         private BoardRepository $boards,
         private ThreadRepository $threads,
         private PostRepository $posts,
+        private BbcodeParser $parser,
     ) {
     }
 
@@ -60,13 +62,14 @@ final readonly class PostController
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
         }
 
+        $bodyParsed = $this->parser->parse($bodyText);
         $timestamp = time();
         $this->posts->create(
             communityId: $community->id,
             threadId: $thread->id,
             authorId: $currentUser->id ?? 0,
             bodyRaw: $bodyText,
-            bodyParsed: null,
+            bodyParsed: $bodyParsed,
             signatureSnapshot: null,
             timestamp: $timestamp,
         );

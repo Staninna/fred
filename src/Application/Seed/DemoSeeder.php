@@ -12,6 +12,7 @@ use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Application\Content\BbcodeParser;
 
 final readonly class DemoSeeder
 {
@@ -28,6 +29,7 @@ final readonly class DemoSeeder
         private int $threadsPerBoard = 3,
         private int $postsPerThread = 5,
         private int $userCount = 6,
+        private ?BbcodeParser $parser = null,
     ) {
     }
 
@@ -248,16 +250,22 @@ final readonly class DemoSeeder
 
             for ($p = 0; $p < $this->postsPerThread; $p++) {
                 $postAuthor = $users[array_rand($users)];
+                $body = $this->faker->paragraph(3);
                 $this->posts->create(
                     communityId: $communityId,
                     threadId: $thread->id,
                     authorId: $postAuthor->id,
-                    bodyRaw: $this->faker->paragraph(3),
-                    bodyParsed: null,
+                    bodyRaw: $body,
+                    bodyParsed: $this->parser()?->parse($body),
                     signatureSnapshot: null,
                     timestamp: $timestamp - random_int(0, 20_000),
                 );
             }
         }
+    }
+
+    private function parser(): BbcodeParser
+    {
+        return $this->parser ?? new BbcodeParser();
     }
 }

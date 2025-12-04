@@ -14,6 +14,7 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\BbcodeParser;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
 use Fred\Infrastructure\Database\RoleRepository;
@@ -41,6 +42,7 @@ $boardRepository = new BoardRepository($pdo);
 $threadRepository = new ThreadRepository($pdo);
 $postRepository = new PostRepository($pdo);
 $authService = new AuthService($userRepository, $roleRepository);
+$bbcodeParser = new BbcodeParser();
 
 $sessionHandler = new SqliteSessionHandler($pdo);
 session_set_save_handler($sessionHandler, true);
@@ -85,6 +87,7 @@ $threadController = new ThreadController(
     $boardRepository,
     $threadRepository,
     $postRepository,
+    $bbcodeParser,
 );
 $postController = new PostController(
     $authService,
@@ -92,6 +95,7 @@ $postController = new PostController(
     $boardRepository,
     $threadRepository,
     $postRepository,
+    $bbcodeParser,
 );
 
 $router->get('/', [$communityController, 'index']);

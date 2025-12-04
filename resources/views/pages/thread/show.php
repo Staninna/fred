@@ -47,10 +47,14 @@
     <?php else: ?>
         <ul class="list">
             <?php foreach ($posts as $post): ?>
-                <li class="card card--compact" style="margin-bottom: 0.75rem;">
+                <li id="post-<?= $post->id ?>" class="card card--compact" style="margin-bottom: 0.75rem;">
                     <div class="nav__title"><?= htmlspecialchars($post->authorName, ENT_QUOTES, 'UTF-8') ?></div>
                     <div class="nav__subtitle"><?= date('Y-m-d H:i', $post->createdAt) ?></div>
-                    <div class="nav__subtitle"><?= nl2br(htmlspecialchars($post->bodyRaw, ENT_QUOTES, 'UTF-8')) ?></div>
+                    <div class="nav__subtitle post-body">
+                        <?= $post->bodyParsed !== null
+                            ? $post->bodyParsed
+                            : nl2br(htmlspecialchars($post->bodyRaw, ENT_QUOTES, 'UTF-8')) ?>
+                    </div>
                 </li>
             <?php endforeach; ?>
         </ul>

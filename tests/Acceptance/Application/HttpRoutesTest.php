@@ -24,6 +24,7 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
+use Fred\Application\Content\BbcodeParser;
 use Tests\TestCase;
 
 final class HttpRoutesTest extends TestCase
@@ -145,6 +146,7 @@ final class HttpRoutesTest extends TestCase
             $boardRepository,
             $threadRepository,
             $postRepository,
+            new BbcodeParser(),
         );
         $postController = new PostController(
             $authService,
@@ -152,6 +154,7 @@ final class HttpRoutesTest extends TestCase
             $boardRepository,
             $threadRepository,
             $postRepository,
+            new BbcodeParser(),
         );
 
         $router->get('/', [$communityController, 'index']);

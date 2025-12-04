@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\BbcodeParser;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -34,6 +35,7 @@ final readonly class ThreadController
         private BoardRepository $boards,
         private ThreadRepository $threads,
         private PostRepository $posts,
+        private BbcodeParser $parser,
     ) {
     }
 
@@ -183,7 +185,7 @@ final readonly class ThreadController
             threadId: $thread->id,
             authorId: $currentUser->id ?? 0,
             bodyRaw: $bodyText,
-            bodyParsed: null,
+            bodyParsed: $this->parser->parse($bodyText),
             signatureSnapshot: null,
             timestamp: $timestamp,
         );

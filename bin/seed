@@ -47,6 +47,7 @@ $seeder = new DemoSeeder(
     threadsPerBoard: max(1, $threadsPerBoard),
     postsPerThread: max(1, $postsPerThread),
     userCount: max(2, $userCount),
+    parser: null,
 );
 
 try {
