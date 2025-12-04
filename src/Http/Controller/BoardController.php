@@ -19,6 +19,7 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function array_values;
+use function ctype_digit;
 
 final readonly class BoardController
 {
@@ -40,9 +41,17 @@ final readonly class BoardController
             return $this->notFound();
         }
 
-        $boardId = (int) ($request->params['board'] ?? 0);
-        $board = $this->boards->findById($boardId);
-        if ($board === null || $board->communityId !== $community->id) {
+        $boardSlug = (string) ($request->params['board'] ?? '');
+        $board = $this->boards->findBySlug($community->id, $boardSlug);
+        if ($board === null && ctype_digit($boardSlug)) {
+            $board = $this->boards->findById((int) $boardSlug);
+
+            if ($board !== null && $board->communityId !== $community->id) {
+                $board = null;
+            }
+        }
+
+        if ($board === null) {
             return $this->notFound();
         }
 
@@ -124,7 +133,7 @@ final readonly class BoardController
             foreach ($boardsByCategory[$category->id] ?? [] as $board) {
                 $boardLinks[] = [
                     'label' => '↳ ' . $board->name,
-                    'href' => '/c/' . $current->slug . '/b/' . $board->id,
+                    'href' => '/c/' . $current->slug . '/b/' . $board->slug,
                 ];
             }
         }

@@ -71,6 +71,10 @@ use Fred\Domain\Community\Community;
                     <input id="board_name" name="name" type="text" required>
                 </div>
                 <div class="field">
+                    <label for="board_slug">Slug</label>
+                    <input id="board_slug" name="slug" type="text" placeholder="auto-generated from name">
+                </div>
+                <div class="field">
                     <label for="board_description">Description</label>
                     <input id="board_description" name="description" type="text">
                 </div>
@@ -115,12 +119,16 @@ use Fred\Domain\Community\Community;
                             <li>
                                 <form class="form" method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/boards/<?= $board->id ?>" novalidate>
                                     <div class="field">
-                                        <label>Name</label>
-                                        <input name="name" type="text" value="<?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>" required>
-                                    </div>
-                                    <div class="field">
-                                        <label>Description</label>
-                                        <input name="description" type="text" value="<?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?>">
+                                <label>Name</label>
+                                <input name="name" type="text" value="<?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>" required>
+                            </div>
+                            <div class="field">
+                                <label>Slug</label>
+                                <input name="slug" type="text" value="<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>" required>
+                            </div>
+                            <div class="field">
+                                <label>Description</label>
+                                <input name="description" type="text" value="<?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?>">
                                     </div>
                                     <div class="field">
                                         <label>Position</label>

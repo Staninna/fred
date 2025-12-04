@@ -21,7 +21,7 @@
 <article class="card">
     <h2>Create thread</h2>
     <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-    <form class="form" method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= $board->id ?>/thread" novalidate>
+    <form class="form" method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread" novalidate>
         <div class="field">
             <label for="title">Title</label>
             <input id="title" name="title" type="text" value="<?= htmlspecialchars($old['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
@@ -32,7 +32,7 @@
         </div>
         <div class="account__actions">
             <button class="button" type="submit">Post thread</button>
-            <a class="button button--ghost" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= $board->id ?>">Cancel</a>
+        <a class="button button--ghost" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
         </div>
     </form>
 </article>

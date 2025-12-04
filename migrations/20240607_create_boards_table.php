@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS boards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     community_id INTEGER NOT NULL,
     category_id INTEGER NOT NULL,
+    slug TEXT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     position INTEGER NOT NULL DEFAULT 0,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS boards (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_boards_community_category_position ON boards (community_id, category_id, position);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_boards_community_slug ON boards (community_id, slug);
 SQL);
     }
 };

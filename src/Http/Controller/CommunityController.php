@@ -160,10 +160,10 @@ final readonly class CommunityController
             foreach ($boardsByCategory[$category->id] ?? [] as $board) {
                 $boardLinks[] = [
                     'label' => '↳ ' . $board->name,
-                    'href' => '/c/' . ($current?->slug ?? '') . '/b/' . $board->id,
-                ];
-            }
+                'href' => '/c/' . ($current?->slug ?? '') . '/b/' . $board->slug,
+            ];
         }
+    }
 
         return [
             [

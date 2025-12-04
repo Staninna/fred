@@ -10,6 +10,7 @@ final readonly class Board
         public int $id,
         public int $communityId,
         public int $categoryId,
+        public string $slug,
         public string $name,
         public string $description,
         public int $position,

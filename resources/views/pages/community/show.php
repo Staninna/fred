@@ -57,7 +57,11 @@ use Fred\Domain\Community\Community;
                 <ul class="list">
                     <?php foreach ($categoryBoards as $board): ?>
                         <li>
-                            <div class="nav__title"><?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?></div>
+                            <div class="nav__title">
+                                <a class="nav__link" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
+                                    <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                            </div>
                             <div class="nav__subtitle"><?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?></div>
                         </li>
                     <?php endforeach; ?>

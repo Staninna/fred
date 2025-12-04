@@ -20,6 +20,7 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function array_values;
+use function ctype_digit;
 use function trim;
 
 final readonly class ThreadController
@@ -92,8 +93,17 @@ final readonly class ThreadController
             return $this->notFound();
         }
 
-        $board = $this->boards->findById((int) ($request->params['board'] ?? 0));
-        if ($board === null || $board->communityId !== $community->id) {
+        $boardSlug = (string) ($request->params['board'] ?? '');
+        $board = $this->boards->findBySlug($community->id, $boardSlug);
+        if ($board === null && ctype_digit($boardSlug)) {
+            $board = $this->boards->findById((int) $boardSlug);
+
+            if ($board !== null && $board->communityId !== $community->id) {
+                $board = null;
+            }
+        }
+
+        if ($board === null) {
             return $this->notFound();
         }
 
@@ -111,8 +121,17 @@ final readonly class ThreadController
             return $this->notFound();
         }
 
-        $board = $this->boards->findById((int) ($request->params['board'] ?? 0));
-        if ($board === null || $board->communityId !== $community->id) {
+        $boardSlug = (string) ($request->params['board'] ?? '');
+        $board = $this->boards->findBySlug($community->id, $boardSlug);
+        if ($board === null && ctype_digit($boardSlug)) {
+            $board = $this->boards->findById((int) $boardSlug);
+
+            if ($board !== null && $board->communityId !== $community->id) {
+                $board = null;
+            }
+        }
+
+        if ($board === null) {
             return $this->notFound();
         }
 
@@ -252,7 +271,7 @@ final readonly class ThreadController
             foreach ($boardsByCategory[$category->id] ?? [] as $board) {
                 $boardLinks[] = [
                     'label' => '↳ ' . $board->name,
-                    'href' => '/c/' . $current->slug . '/b/' . $board->id,
+                    'href' => '/c/' . $current->slug . '/b/' . $board->slug,
                 ];
             }
         }

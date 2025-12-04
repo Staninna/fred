@@ -13,7 +13,11 @@
         <h1><?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?></h1>
         <div class="tags">
             <span class="tag">Community: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></span>
-            <span class="tag">Board: <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?></span>
+            <span class="tag">
+                <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
+                    Board: <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+                </a>
+            </span>
             <?php if ($thread->isSticky): ?><span class="tag">Sticky</span><?php endif; ?>
             <?php if ($thread->isAnnouncement): ?><span class="tag">Announcement</span><?php endif; ?>
             <?php if ($thread->isLocked): ?><span class="tag">Locked</span><?php endif; ?>

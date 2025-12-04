@@ -143,6 +143,8 @@ final readonly class AdminController
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
+        $slugInput = trim((string) ($request->body['slug'] ?? ''));
+        $slug = $slugInput === '' ? $this->slugify($name) : $this->slugify($slugInput);
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
@@ -151,9 +153,18 @@ final readonly class AdminController
             return $this->structure($request, ['Board name is required.']);
         }
 
+        if ($slug === '') {
+            return $this->structure($request, ['Board slug is required.']);
+        }
+
+        if ($this->boards->findBySlug($community->id, $slug) !== null) {
+            return $this->structure($request, ['Board slug is already in use.']);
+        }
+
         $this->boards->create(
             communityId: $community->id,
             categoryId: $category->id,
+            slug: $slug,
             name: $name,
             description: $description,
             position: $position,
@@ -179,6 +190,8 @@ final readonly class AdminController
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
+        $slugInput = trim((string) ($request->body['slug'] ?? ''));
+        $slug = $slugInput === '' ? $this->slugify($name) : $this->slugify($slugInput);
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
@@ -187,8 +200,18 @@ final readonly class AdminController
             return $this->structure($request, ['Board name is required.']);
         }
 
+        if ($slug === '') {
+            return $this->structure($request, ['Board slug is required.']);
+        }
+
+        $existing = $this->boards->findBySlug($community->id, $slug);
+        if ($existing !== null && $existing->id !== $board->id) {
+            return $this->structure($request, ['Board slug is already in use.']);
+        }
+
         $this->boards->update(
             id: $board->id,
+            slug: $slug,
             name: $name,
             description: $description,
             position: $position,
@@ -240,6 +263,15 @@ final readonly class AdminController
         }
 
         return $grouped;
+    }
+
+    private function slugify(string $value): string
+    {
+        $slug = strtolower(trim($value));
+        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug) ?? '';
+        $slug = trim((string) $slug, '-');
+
+        return $slug;
     }
 
     private function notFound(): Response

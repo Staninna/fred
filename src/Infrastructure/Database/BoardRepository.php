@@ -19,7 +19,7 @@ final class BoardRepository
     public function listByCommunityId(int $communityId): array
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, community_id, category_id, name, description, position, is_locked, custom_css, created_at, updated_at
+            'SELECT id, community_id, category_id, slug, name, description, position, is_locked, custom_css, created_at, updated_at
              FROM boards
              WHERE community_id = :community_id
              ORDER BY position ASC, id ASC',
@@ -35,7 +35,7 @@ final class BoardRepository
     public function findById(int $id): ?Board
     {
         $statement = $this->pdo->prepare(
-            'SELECT id, community_id, category_id, name, description, position, is_locked, custom_css, created_at, updated_at
+            'SELECT id, community_id, category_id, slug, name, description, position, is_locked, custom_css, created_at, updated_at
              FROM boards
              WHERE id = :id
              LIMIT 1',
@@ -47,9 +47,28 @@ final class BoardRepository
         return $row === false ? null : $this->hydrate($row);
     }
 
+    public function findBySlug(int $communityId, string $slug): ?Board
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT id, community_id, category_id, slug, name, description, position, is_locked, custom_css, created_at, updated_at
+             FROM boards
+             WHERE community_id = :community_id AND slug = :slug
+             LIMIT 1',
+        );
+        $statement->execute([
+            'community_id' => $communityId,
+            'slug' => $slug,
+        ]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $row === false ? null : $this->hydrate($row);
+    }
+
     public function create(
         int $communityId,
         int $categoryId,
+        string $slug,
         string $name,
         string $description,
         int $position,
@@ -58,13 +77,14 @@ final class BoardRepository
         int $timestamp,
     ): Board {
         $statement = $this->pdo->prepare(
-            'INSERT INTO boards (community_id, category_id, name, description, position, is_locked, custom_css, created_at, updated_at)
-             VALUES (:community_id, :category_id, :name, :description, :position, :is_locked, :custom_css, :created_at, :updated_at)',
+            'INSERT INTO boards (community_id, category_id, slug, name, description, position, is_locked, custom_css, created_at, updated_at)
+             VALUES (:community_id, :category_id, :slug, :name, :description, :position, :is_locked, :custom_css, :created_at, :updated_at)',
         );
 
         $statement->execute([
             'community_id' => $communityId,
             'category_id' => $categoryId,
+            'slug' => $slug,
             'name' => $name,
             'description' => $description,
             'position' => $position,
@@ -86,6 +106,7 @@ final class BoardRepository
 
     public function update(
         int $id,
+        string $slug,
         string $name,
         string $description,
         int $position,
@@ -95,7 +116,8 @@ final class BoardRepository
     ): void {
         $statement = $this->pdo->prepare(
             'UPDATE boards
-             SET name = :name,
+             SET slug = :slug,
+                 name = :name,
                  description = :description,
                  position = :position,
                  is_locked = :is_locked,
@@ -106,6 +128,7 @@ final class BoardRepository
 
         $statement->execute([
             'id' => $id,
+            'slug' => $slug,
             'name' => $name,
             'description' => $description,
             'position' => $position,
@@ -127,6 +150,7 @@ final class BoardRepository
             id: (int) $row['id'],
             communityId: (int) $row['community_id'],
             categoryId: (int) $row['category_id'],
+            slug: (string) $row['slug'],
             name: (string) $row['name'],
             description: (string) $row['description'],
             position: (int) $row['position'],

@@ -14,6 +14,7 @@
         <div class="tags">
             <span class="tag">Community: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></span>
             <span class="tag">Category: <?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></span>
+            <span class="tag">Slug: <?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?></span>
             <?php if ($board->isLocked): ?>
                 <span class="tag">Locked</span>
             <?php endif; ?>
@@ -45,7 +46,7 @@
         <?php if ($board->isLocked): ?>
             <span class="tag">Locked</span>
         <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
-            <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= $board->id ?>/thread/new">New thread</a>
+            <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread/new">New thread</a>
         <?php else: ?>
             <a class="button button--ghost" href="/login">Sign in to post</a>
         <?php endif; ?>
