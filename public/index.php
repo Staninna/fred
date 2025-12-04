@@ -2,115 +2,151 @@
 
 declare(strict_types=1);
 
+use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\BbcodeParser;
+use Fred\Http\Controller\AdminController;
+use Fred\Http\Controller\AuthController;
+use Fred\Http\Controller\BoardController;
+use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\HealthController;
 use Fred\Http\Controller\HomeController;
-use Fred\Http\Controller\AuthController;
-use Fred\Http\Controller\AdminController;
-use Fred\Http\Controller\CommunityController;
-use Fred\Http\Controller\BoardController;
-use Fred\Http\Controller\ThreadController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
+use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
-use Fred\Application\Auth\AuthService;
-use Fred\Application\Content\BbcodeParser;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Config\ConfigLoader;
-use Fred\Infrastructure\Database\ConnectionFactory;
-use Fred\Infrastructure\Database\RoleRepository;
-use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\ConnectionFactory;
 use Fred\Infrastructure\Database\PostRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
+use League\Container\Container;
+use PDO;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $basePath = dirname(__DIR__);
 $env = DotenvLoader::load($basePath . '/.env');
-$config = ConfigLoader::fromArray($env, $basePath);
-$pdo = ConnectionFactory::make($config);
-$userRepository = new UserRepository($pdo);
-$roleRepository = new RoleRepository($pdo);
-$communityRepository = new CommunityRepository($pdo);
-$categoryRepository = new CategoryRepository($pdo);
-$boardRepository = new BoardRepository($pdo);
-$threadRepository = new ThreadRepository($pdo);
-$postRepository = new PostRepository($pdo);
-$profileRepository = new ProfileRepository($pdo);
-$authService = new AuthService($userRepository, $roleRepository, $profileRepository);
-$bbcodeParser = new BbcodeParser();
 
-$sessionHandler = new SqliteSessionHandler($pdo);
+$container = new Container();
+$container->addShared('basePath', $basePath);
+$container->addShared('env', $env);
+
+$container->addShared(AppConfig::class, static fn (Container $c) => ConfigLoader::fromArray($c->get('env'), $c->get('basePath')));
+$container->addShared(PDO::class, static fn (Container $c) => ConnectionFactory::make($c->get(AppConfig::class)));
+$container->addShared(SqliteSessionHandler::class, static fn (Container $c) => new SqliteSessionHandler($c->get(PDO::class)));
+$container->addShared(UserRepository::class, static fn (Container $c) => new UserRepository($c->get(PDO::class)));
+$container->addShared(RoleRepository::class, static fn (Container $c) => new RoleRepository($c->get(PDO::class)));
+$container->addShared(CommunityRepository::class, static fn (Container $c) => new CommunityRepository($c->get(PDO::class)));
+$container->addShared(CategoryRepository::class, static fn (Container $c) => new CategoryRepository($c->get(PDO::class)));
+$container->addShared(BoardRepository::class, static fn (Container $c) => new BoardRepository($c->get(PDO::class)));
+$container->addShared(ThreadRepository::class, static fn (Container $c) => new ThreadRepository($c->get(PDO::class)));
+$container->addShared(PostRepository::class, static fn (Container $c) => new PostRepository($c->get(PDO::class)));
+$container->addShared(ProfileRepository::class, static fn (Container $c) => new ProfileRepository($c->get(PDO::class)));
+$container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
+$container->addShared(AuthService::class, static fn (Container $c) => new AuthService(
+    $c->get(UserRepository::class),
+    $c->get(RoleRepository::class),
+    $c->get(ProfileRepository::class),
+));
+$container->addShared(ViewRenderer::class, static fn (Container $c) => new ViewRenderer($c->get('basePath') . '/resources/views'));
+$container->addShared(Router::class, static fn (Container $c) => new Router($c->get('basePath') . '/public'));
+
+$container->addShared(HomeController::class, static fn (Container $c) => new HomeController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+));
+$container->addShared(HealthController::class, static fn (Container $c) => new HealthController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+));
+$container->addShared(AuthController::class, static fn (Container $c) => new AuthController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+));
+$container->addShared(CommunityController::class, static fn (Container $c) => new CommunityController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(CategoryRepository::class),
+    $c->get(BoardRepository::class),
+));
+$container->addShared(AdminController::class, static fn (Container $c) => new AdminController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(CategoryRepository::class),
+    $c->get(BoardRepository::class),
+));
+$container->addShared(BoardController::class, static fn (Container $c) => new BoardController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(CategoryRepository::class),
+    $c->get(BoardRepository::class),
+    $c->get(ThreadRepository::class),
+));
+$container->addShared(ThreadController::class, static fn (Container $c) => new ThreadController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(CategoryRepository::class),
+    $c->get(BoardRepository::class),
+    $c->get(ThreadRepository::class),
+    $c->get(PostRepository::class),
+    $c->get(BbcodeParser::class),
+    $c->get(ProfileRepository::class),
+));
+$container->addShared(PostController::class, static fn (Container $c) => new PostController(
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(BoardRepository::class),
+    $c->get(ThreadRepository::class),
+    $c->get(PostRepository::class),
+    $c->get(BbcodeParser::class),
+    $c->get(ProfileRepository::class),
+));
+$container->addShared(ProfileController::class, static fn (Container $c) => new ProfileController(
+    $c->get(ViewRenderer::class),
+    $c->get(AppConfig::class),
+    $c->get(AuthService::class),
+    $c->get(CommunityRepository::class),
+    $c->get(UserRepository::class),
+    $c->get(ProfileRepository::class),
+    $c->get(BbcodeParser::class),
+));
+
+$sessionHandler = $container->get(SqliteSessionHandler::class);
 session_set_save_handler($sessionHandler, true);
 session_start();
 
-$view = new ViewRenderer($basePath . '/resources/views');
-$router = new Router($basePath . '/public');
-$homeController = new HomeController($view, $config, $authService);
-$healthController = new HealthController($view, $config, $authService);
-$authController = new AuthController($view, $config, $authService);
-$communityController = new CommunityController(
-    $view,
-    $config,
-    $authService,
-    $communityRepository,
-    $categoryRepository,
-    $boardRepository,
-);
-$adminController = new AdminController(
-    $view,
-    $config,
-    $authService,
-    $communityRepository,
-    $categoryRepository,
-    $boardRepository,
-);
-$boardController = new BoardController(
-    $view,
-    $config,
-    $authService,
-    $communityRepository,
-    $categoryRepository,
-    $boardRepository,
-    $threadRepository,
-);
-$threadController = new ThreadController(
-    $view,
-    $config,
-    $authService,
-    $communityRepository,
-    $categoryRepository,
-    $boardRepository,
-    $threadRepository,
-    $postRepository,
-    $bbcodeParser,
-    $profileRepository,
-);
-$postController = new PostController(
-    $authService,
-    $communityRepository,
-    $boardRepository,
-    $threadRepository,
-    $postRepository,
-    $bbcodeParser,
-    $profileRepository,
-);
-$profileController = new ProfileController(
-    $view,
-    $config,
-    $authService,
-    $communityRepository,
-    $userRepository,
-    $profileRepository,
-    $bbcodeParser,
-);
+$router = $container->get(Router::class);
+$authService = $container->get(AuthService::class);
+$communityController = $container->get(CommunityController::class);
+$boardController = $container->get(BoardController::class);
+$threadController = $container->get(ThreadController::class);
+$postController = $container->get(PostController::class);
+$adminController = $container->get(AdminController::class);
+$healthController = $container->get(HealthController::class);
+$authController = $container->get(AuthController::class);
+$profileController = $container->get(ProfileController::class);
 
 $authRequired = static function (Request $request, callable $next) use ($authService): Response {
     if ($authService->currentUser()->isGuest()) {
@@ -166,13 +202,17 @@ $router->group('/c/{community}', function (Router $router) use (
     }, [$authRequired]);
 });
 
-$router->setNotFoundHandler(function (Request $request) use ($view, $authService, $config) {
+$router->setNotFoundHandler(function (Request $request) use ($container) {
+    $view = $container->get(ViewRenderer::class);
+    $auth = $container->get(AuthService::class);
+    $config = $container->get(AppConfig::class);
+
     $body = $view->render('errors/404.php', [
         'pageTitle' => 'Page not found',
         'path' => $request->path,
         'activePath' => $request->path,
         'environment' => $config->environment,
-        'currentUser' => $authService->currentUser(),
+        'currentUser' => $auth->currentUser(),
     ]);
 
     return new Response(
@@ -188,10 +228,14 @@ try {
     $response = $router->dispatch($request);
 } catch (\Throwable $exception) {
     try {
+        $view = $container->get(ViewRenderer::class);
+        $config = $container->get(AppConfig::class);
+        $auth = $container->get(AuthService::class);
+
         $body = $view->render('errors/500.php', [
             'pageTitle' => 'Server error',
             'environment' => $config->environment,
-            'currentUser' => $authService->currentUser(),
+            'currentUser' => $auth->currentUser(),
         ]);
     } catch (\Throwable) {
         $body = '<h1>Server Error</h1>';
