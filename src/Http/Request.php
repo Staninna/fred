@@ -14,6 +14,7 @@ final readonly class Request
         public string $path,
         public array  $query,
         public array  $body,
+        public array  $params = [],
     ) {
     }
 
@@ -30,6 +31,18 @@ final readonly class Request
             path: $path,
             query: $_GET ?? [],
             body: $_POST ?? [],
+            params: [],
+        );
+    }
+
+    public function withParams(array $params): self
+    {
+        return new self(
+            method: $this->method,
+            path: $this->path,
+            query: $this->query,
+            body: $this->body,
+            params: $params,
         );
     }
 }

@@ -9,10 +9,14 @@ use Fred\Http\Response;
 
 use function file_get_contents;
 use function filesize;
+use function in_array;
 use function is_file;
+use function preg_match;
+use function preg_replace_callback;
 use function pathinfo;
 use function realpath;
 use function rtrim;
+use function str_contains;
 use function str_starts_with;
 use function strtolower;
 
@@ -22,7 +26,10 @@ use const PATHINFO_EXTENSION;
 final class Router
 {
     /** @var array<string, array<string, callable>> */
-    private array $routes = [];
+    private array $staticRoutes = [];
+
+    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable}>> */
+    private array $dynamicRoutes = [];
 
     private readonly ?string $publicPath;
 
@@ -35,12 +42,12 @@ final class Router
 
     public function get(string $path, callable $handler): void
     {
-        $this->routes['GET'][$path] = $handler;
+        $this->addRoute('GET', $path, $handler);
     }
 
     public function post(string $path, callable $handler): void
     {
-        $this->routes['POST'][$path] = $handler;
+        $this->addRoute('POST', $path, $handler);
     }
 
     public function setNotFoundHandler(callable $handler): void
@@ -50,27 +57,92 @@ final class Router
 
     public function dispatch(Request $request): Response
     {
-        $methodRoutes = $this->routes[$request->method] ?? [];
-        $handler = $methodRoutes[$request->path] ?? null;
+        $staticHandler = $this->staticRoutes[$request->method][$request->path] ?? null;
 
-        if (!\is_callable($handler)) {
-            $staticResponse = $this->tryServeStatic($request);
-            if ($staticResponse instanceof Response) {
-                return $staticResponse;
-            }
-
-            if ($this->notFoundHandler !== null) {
-                return ($this->notFoundHandler)($request);
-            }
-
-            return new Response(
-                status: 404,
-                headers: ['Content-Type' => 'text/html; charset=utf-8'],
-                body: '<h1>Not Found</h1>',
-            );
+        if (\is_callable($staticHandler)) {
+            return $staticHandler($request);
         }
 
-        return $handler($request);
+        $dynamicMatch = $this->matchDynamic($request);
+        if ($dynamicMatch !== null) {
+            return $dynamicMatch['handler']($dynamicMatch['request']);
+        }
+
+        $staticResponse = $this->tryServeStatic($request);
+        if ($staticResponse instanceof Response) {
+            return $staticResponse;
+        }
+
+        if ($this->notFoundHandler !== null) {
+            return ($this->notFoundHandler)($request);
+        }
+
+        return new Response(
+            status: 404,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: '<h1>Not Found</h1>',
+        );
+    }
+
+    private function addRoute(string $method, string $path, callable $handler): void
+    {
+        if (str_contains($path, '{')) {
+            [$regex, $paramNames] = $this->compileRoute($path);
+            $this->dynamicRoutes[$method][] = [
+                'regex' => $regex,
+                'paramNames' => $paramNames,
+                'handler' => $handler,
+            ];
+
+            return;
+        }
+
+        $this->staticRoutes[$method][$path] = $handler;
+    }
+
+    /**
+     * @return array{handler: callable, request: Request}|null
+     */
+    private function matchDynamic(Request $request): ?array
+    {
+        foreach ($this->dynamicRoutes[$request->method] ?? [] as $route) {
+            if (!preg_match($route['regex'], $request->path, $matches)) {
+                continue;
+            }
+
+            $params = [];
+            foreach ($route['paramNames'] as $index => $name) {
+                $params[$name] = $matches[$index + 1] ?? null;
+            }
+
+            $requestWithParams = $request->withParams($params);
+
+            return [
+                'handler' => $route['handler'],
+                'request' => $requestWithParams,
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{0: string, 1: array<int, string>}
+     */
+    private function compileRoute(string $path): array
+    {
+        $paramNames = [];
+        $regex = preg_replace_callback(
+            '/\{([^}]+)\}/',
+            static function (array $matches) use (&$paramNames): string {
+                $paramNames[] = $matches[1];
+
+                return '([^/]+)';
+            },
+            $path,
+        );
+
+        return ['#^' . $regex . '$#', $paramNames];
     }
 
     private function tryServeStatic(Request $request): ?Response
@@ -79,7 +151,7 @@ final class Router
             return null;
         }
 
-        if (!\in_array($request->method, ['GET', 'HEAD'], true)) {
+        if (!in_array($request->method, ['GET', 'HEAD'], true)) {
             return null;
         }
 
