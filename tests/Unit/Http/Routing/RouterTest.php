@@ -75,4 +75,89 @@ final class RouterTest extends TestCase
 
         $this->removeDirectory($tempRoot);
     }
+
+    public function testRouteGroupPrefixesAreApplied(): void
+    {
+        $router = new Router();
+
+        $router->group('/c/{community}', function (Router $router) {
+            $router->get('/b/{board}', static fn (Request $request) => new Response(
+                status: 200,
+                headers: ['Content-Type' => 'text/plain'],
+                body: ($request->params['community'] ?? '') . '/' . ($request->params['board'] ?? ''),
+            ));
+        });
+
+        $response = $router->dispatch(new Request(
+            method: 'GET',
+            path: '/c/main/b/general',
+            query: [],
+            body: [],
+        ));
+
+        $this->assertSame(200, $response->status);
+        $this->assertSame('main/general', $response->body);
+    }
+
+    public function testMiddlewareRunsInOrder(): void
+    {
+        $calls = [];
+
+        $router = new Router();
+        $router->get('/hello', static function (Request $request) {
+            return new Response(
+                status: 200,
+                headers: ['Content-Type' => 'text/plain'],
+                body: 'handler',
+            );
+        }, [
+            static function (Request $request, callable $next) use (&$calls): Response {
+                $calls[] = 'first';
+
+                return $next($request);
+            },
+            static function (Request $request, callable $next) use (&$calls): Response {
+                $calls[] = 'second';
+
+                return $next($request);
+            },
+        ]);
+
+        $response = $router->dispatch(new Request(
+            method: 'GET',
+            path: '/hello',
+            query: [],
+            body: [],
+        ));
+
+        $this->assertSame(200, $response->status);
+        $this->assertSame(['first', 'second'], $calls);
+        $this->assertSame('handler', $response->body);
+    }
+
+    public function testMiddlewareCanShortCircuit(): void
+    {
+        $router = new Router();
+        $router->get('/blocked', static fn () => new Response(
+            status: 200,
+            headers: ['Content-Type' => 'text/plain'],
+            body: 'should not run',
+        ), [
+            static fn () => new Response(
+                status: 403,
+                headers: ['Content-Type' => 'text/plain'],
+                body: 'blocked',
+            ),
+        ]);
+
+        $response = $router->dispatch(new Request(
+            method: 'GET',
+            path: '/blocked',
+            query: [],
+            body: [],
+        ));
+
+        $this->assertSame(403, $response->status);
+        $this->assertSame('blocked', $response->body);
+    }
 }

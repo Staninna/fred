@@ -25,10 +25,10 @@ use const PATHINFO_EXTENSION;
 
 final class Router
 {
-    /** @var array<string, array<string, callable>> */
+    /** @var array<string, array<string, array{handler: callable, middleware: array<int, callable>}>> */
     private array $staticRoutes = [];
 
-    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable}>> */
+    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable>}>> */
     private array $dynamicRoutes = [];
 
     private readonly ?string $publicPath;
@@ -36,19 +36,36 @@ final class Router
     /** @var null|callable */
     private $notFoundHandler = null;
 
+    /** @var string[] */
+    private array $groupPrefixStack = [];
+
+    /** @var array<int, array<int, callable>> */
+    private array $groupMiddlewareStack = [];
+
     public function __construct(?string $publicPath = null)
     {
         $this->publicPath = $publicPath === null ? null : rtrim($publicPath, '/\\');
     }
 
-    public function get(string $path, callable $handler): void
+    public function get(string $path, callable $handler, array $middleware = []): void
     {
-        $this->addRoute('GET', $path, $handler);
+        $this->addRoute('GET', $path, $handler, $middleware);
     }
 
-    public function post(string $path, callable $handler): void
+    public function post(string $path, callable $handler, array $middleware = []): void
     {
-        $this->addRoute('POST', $path, $handler);
+        $this->addRoute('POST', $path, $handler, $middleware);
+    }
+
+    public function group(string $prefix, callable $callback, array $middleware = []): void
+    {
+        $this->groupPrefixStack[] = $prefix;
+        $this->groupMiddlewareStack[] = $middleware;
+
+        $callback($this);
+
+        array_pop($this->groupPrefixStack);
+        array_pop($this->groupMiddlewareStack);
     }
 
     public function setNotFoundHandler(callable $handler): void
@@ -58,15 +75,23 @@ final class Router
 
     public function dispatch(Request $request): Response
     {
-        $staticHandler = $this->staticRoutes[$request->method][$request->path] ?? null;
+        $staticRoute = $this->staticRoutes[$request->method][$request->path] ?? null;
 
-        if (\is_callable($staticHandler)) {
-            return $staticHandler($request);
+        if (\is_array($staticRoute)) {
+            return $this->runMiddleware(
+                $request,
+                $staticRoute['handler'],
+                $staticRoute['middleware'],
+            );
         }
 
         $dynamicMatch = $this->matchDynamic($request);
         if ($dynamicMatch !== null) {
-            return $dynamicMatch['handler']($dynamicMatch['request']);
+            return $this->runMiddleware(
+                $dynamicMatch['request'],
+                $dynamicMatch['handler'],
+                $dynamicMatch['middleware'],
+            );
         }
 
         $staticResponse = $this->tryServeStatic($request);
@@ -85,24 +110,31 @@ final class Router
         );
     }
 
-    private function addRoute(string $method, string $path, callable $handler): void
+    private function addRoute(string $method, string $path, callable $handler, array $middleware = []): void
     {
-        if (str_contains($path, '{')) {
-            [$regex, $paramNames] = $this->compileRoute($path);
+        $fullPath = $this->applyGroupPrefix($path);
+        $combinedMiddleware = $this->gatherGroupMiddleware($middleware);
+
+        if (str_contains($fullPath, '{')) {
+            [$regex, $paramNames] = $this->compileRoute($fullPath);
             $this->dynamicRoutes[$method][] = [
                 'regex' => $regex,
                 'paramNames' => $paramNames,
                 'handler' => $handler,
+                'middleware' => $combinedMiddleware,
             ];
 
             return;
         }
 
-        $this->staticRoutes[$method][$path] = $handler;
+        $this->staticRoutes[$method][$fullPath] = [
+            'handler' => $handler,
+            'middleware' => $combinedMiddleware,
+        ];
     }
 
     /**
-     * @return array{handler: callable, request: Request}|null
+     * @return array{handler: callable, request: Request, middleware: array<int, callable>}|null
      */
     private function matchDynamic(Request $request): ?array
     {
@@ -121,6 +153,7 @@ final class Router
             return [
                 'handler' => $route['handler'],
                 'request' => $requestWithParams,
+                'middleware' => $route['middleware'],
             ];
         }
 
@@ -144,6 +177,51 @@ final class Router
         );
 
         return ['#^' . $regex . '$#', $paramNames];
+    }
+
+    private function applyGroupPrefix(string $path): string
+    {
+        $prefix = '';
+
+        foreach ($this->groupPrefixStack as $part) {
+            $prefix .= '/' . ltrim($part, '/');
+        }
+
+        $combined = rtrim($prefix, '/') . '/' . ltrim($path, '/');
+        $combined = preg_replace('#//+#', '/', $combined) ?? '/';
+
+        return $combined === '' ? '/' : $combined;
+    }
+
+    private function gatherGroupMiddleware(array $routeMiddleware): array
+    {
+        $merged = [];
+        foreach ($this->groupMiddlewareStack as $stackMiddleware) {
+            $merged = array_merge($merged, $stackMiddleware);
+        }
+
+        return array_merge($merged, $routeMiddleware);
+    }
+
+    /**
+     * @param array<int, callable> $middleware
+     */
+    private function runMiddleware(Request $request, callable $handler, array $middleware): Response
+    {
+        $pipeline = array_reverse($middleware);
+        $next = static fn (Request $incoming) => $handler($incoming);
+
+        foreach ($pipeline as $layer) {
+            $prevNext = $next;
+            $next = static fn (Request $incoming) => $layer($incoming, $prevNext);
+        }
+
+        $result = $next($request);
+        if (!$result instanceof Response) {
+            throw new \RuntimeException('Middleware pipeline must return a Response.');
+        }
+
+        return $result;
     }
 
     private function tryServeStatic(Request $request): ?Response
