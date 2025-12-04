@@ -82,9 +82,22 @@ final readonly class DemoSeeder
     private function seedUsers(int $roleId, int $timestamp): array
     {
         $users = [];
-        $existingDemo = $this->users->findByUsername('demo');
-        if ($existingDemo === null) {
-            $existingDemo = $this->users->create(
+
+        $stan = $this->users->findByUsername('stan');
+        if ($stan === null) {
+            $stan = $this->users->create(
+                username: 'stan',
+                displayName: 's t a n i n n a',
+                passwordHash: password_hash('stan', PASSWORD_BCRYPT),
+                roleId: $roleId,
+                createdAt: $timestamp,
+            );
+        }
+        $users[] = $stan;
+
+        $demo = $this->users->findByUsername('demo');
+        if ($demo === null) {
+            $demo = $this->users->create(
                 username: 'demo',
                 displayName: 'Demo User',
                 passwordHash: password_hash('password', PASSWORD_BCRYPT),
@@ -92,7 +105,7 @@ final readonly class DemoSeeder
                 createdAt: $timestamp,
             );
         }
-        $users[] = $existingDemo;
+        $users[] = $demo;
 
         for ($i = 1; $i < $this->userCount; $i++) {
             $username = 'member' . $i;
