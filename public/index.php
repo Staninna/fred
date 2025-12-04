@@ -47,6 +47,8 @@ $container->addShared('env', $env);
 $container->addShared(AppConfig::class, static fn (Container $c) => ConfigLoader::fromArray($c->get('env'), $c->get('basePath')));
 $container->addShared(PDO::class, static fn (Container $c) => ConnectionFactory::make($c->get(AppConfig::class)));
 $container->addShared(SqliteSessionHandler::class, static fn (Container $c) => new SqliteSessionHandler($c->get(PDO::class)));
+$container->addShared(FileLogger::class, static fn (Container $c) => new FileLogger($c->get(AppConfig::class)->logsPath . '/app.log'));
+$container->addShared(NullLogger::class, static fn () => new NullLogger());
 $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
 $container->addShared(ViewRenderer::class, static fn (Container $c) => new ViewRenderer($c->get('basePath') . '/resources/views'));
 $container->addShared(Router::class, static fn (Container $c) => new Router($c->get('basePath') . '/public'));
@@ -145,6 +147,9 @@ $request = Request::fromGlobals();
 try {
     $response = $router->dispatch($request);
 } catch (\Throwable $exception) {
+    $logger = $container->get(FileLogger::class);
+    $logger->error($exception->getMessage(), ['exception' => $exception]);
+
     try {
         $view = $container->get(ViewRenderer::class);
         $config = $container->get(AppConfig::class);
