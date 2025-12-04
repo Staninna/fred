@@ -240,7 +240,7 @@ final readonly class DemoSeeder
             $thread = $this->threads->create(
                 communityId: $communityId,
                 boardId: $boardId,
-                title: $this->faker->sentence(5),
+                title: $this->threadTitle($boardSlug, $i),
                 authorId: $author->id,
                 isSticky: $isGeneral && $i === 0,
                 isLocked: $lockThread && $i === ($toCreate - 1),
@@ -250,7 +250,7 @@ final readonly class DemoSeeder
 
             for ($p = 0; $p < $this->postsPerThread; $p++) {
                 $postAuthor = $users[array_rand($users)];
-                $body = $this->faker->paragraph(3);
+                $body = $this->postBody($boardSlug, $i, $p);
                 $this->posts->create(
                     communityId: $communityId,
                     threadId: $thread->id,
@@ -267,5 +267,31 @@ final readonly class DemoSeeder
     private function parser(): BbcodeParser
     {
         return $this->parser ?? new BbcodeParser();
+    }
+
+    private function threadTitle(string $boardSlug, int $index): string
+    {
+        if ($boardSlug === 'general' && $index === 0) {
+            return 'Welcome to the plaza';
+        }
+
+        return $this->faker->sentence(5);
+    }
+
+    private function postBody(string $boardSlug, int $threadIndex, int $postIndex): string
+    {
+        if ($boardSlug === 'general' && $threadIndex === 0 && $postIndex === 0) {
+            return "[b]Welcome[/b] to the demo!\n\nTry replying with BBCode like [i]italics[/i], [code]print \"hi\";[/code], or [url=https://example.com]links[/url].";
+        }
+
+        if ($boardSlug === 'general' && $threadIndex === 0 && $postIndex === 1) {
+            return "Quoting works too:\n>>1\nWhat's your favorite retro machine?";
+        }
+
+        if ($boardSlug === 'trading-post') {
+            return "Listing item: [b]" . $this->faker->words(3, true) . "[/b]\nCondition: [i]" . $this->faker->word() . "[/i]\nPrice: " . $this->faker->numberBetween(20, 300) . " credits.";
+        }
+
+        return $this->faker->paragraph(3);
     }
 }
