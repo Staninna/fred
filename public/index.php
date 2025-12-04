@@ -7,6 +7,7 @@ use Fred\Http\Controller\HomeController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\CommunityController;
+use Fred\Http\Controller\BoardController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -60,10 +61,19 @@ $adminController = new AdminController(
     $categoryRepository,
     $boardRepository,
 );
+$boardController = new BoardController(
+    $view,
+    $config,
+    $authService,
+    $communityRepository,
+    $categoryRepository,
+    $boardRepository,
+);
 
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
 $router->get('/c/{community}', [$communityController, 'show']);
+$router->get('/c/{community}/b/{board}', [$boardController, 'show']);
 $router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
 $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
 $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);
