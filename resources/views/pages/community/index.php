@@ -1,7 +1,11 @@
 <?php
-/** @var array<int, \Fred\Domain\Community\Community> $communities */
+/** @var array<int, Community> $communities */
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
+/** @var callable(string, array): string $renderPartial */
+
+use Fred\Domain\Community\Community;
+
 ?>
 
 <article class="card card--hero">

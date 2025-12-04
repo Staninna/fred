@@ -42,7 +42,7 @@ if ($sections === null) {
                     $label = htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8');
                     $href = $item['href'] ?? '#';
                     $isActive = $activePath !== null && $href !== '#' && $href === $activePath;
-                ?>
+                    ?>
                     <li>
                         <a class="nav__link<?= $isActive ? ' nav__link--active' : '' ?>" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>"><?= $label ?></a>
                     </li>

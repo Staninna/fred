@@ -12,8 +12,8 @@ return new class () implements Migration {
 
     public function up(\PDO $pdo): void
     {
-        $pdo->exec("ALTER TABLE communities ADD COLUMN custom_css TEXT NULL");
-        $pdo->exec("ALTER TABLE communities ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0");
-        $pdo->exec("UPDATE communities SET updated_at = created_at WHERE updated_at = 0");
+        $pdo->exec('ALTER TABLE communities ADD COLUMN custom_css TEXT NULL');
+        $pdo->exec('ALTER TABLE communities ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0');
+        $pdo->exec('UPDATE communities SET updated_at = created_at WHERE updated_at = 0');
     }
 };
