@@ -10,6 +10,7 @@ use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Controller\PostController;
+use Fred\Http\Controller\ProfileController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -24,6 +25,7 @@ use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -41,7 +43,8 @@ $categoryRepository = new CategoryRepository($pdo);
 $boardRepository = new BoardRepository($pdo);
 $threadRepository = new ThreadRepository($pdo);
 $postRepository = new PostRepository($pdo);
-$authService = new AuthService($userRepository, $roleRepository);
+$profileRepository = new ProfileRepository($pdo);
+$authService = new AuthService($userRepository, $roleRepository, $profileRepository);
 $bbcodeParser = new BbcodeParser();
 
 $sessionHandler = new SqliteSessionHandler($pdo);
@@ -88,6 +91,7 @@ $threadController = new ThreadController(
     $threadRepository,
     $postRepository,
     $bbcodeParser,
+    $profileRepository,
 );
 $postController = new PostController(
     $authService,
@@ -95,6 +99,16 @@ $postController = new PostController(
     $boardRepository,
     $threadRepository,
     $postRepository,
+    $bbcodeParser,
+    $profileRepository,
+);
+$profileController = new ProfileController(
+    $view,
+    $config,
+    $authService,
+    $communityRepository,
+    $userRepository,
+    $profileRepository,
     $bbcodeParser,
 );
 
@@ -119,6 +133,9 @@ $router->post('/login', [$authController, 'login']);
 $router->get('/register', [$authController, 'showRegisterForm']);
 $router->post('/register', [$authController, 'register']);
 $router->post('/logout', [$authController, 'logout']);
+$router->get('/c/{community}/u/{username}', [$profileController, 'show']);
+$router->get('/c/{community}/settings/signature', [$profileController, 'editSignature']);
+$router->post('/c/{community}/settings/signature', [$profileController, 'updateSignature']);
 
 $router->setNotFoundHandler(function (Request $request) use ($view, $authService, $config) {
     $body = $view->render('errors/404.php', [

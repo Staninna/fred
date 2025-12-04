@@ -10,6 +10,7 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 
@@ -24,6 +25,7 @@ final readonly class PostController
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
+        private ProfileRepository $profiles,
     ) {
     }
 
@@ -62,6 +64,7 @@ final readonly class PostController
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
         }
 
+        $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
         $bodyParsed = $this->parser->parse($bodyText);
         $timestamp = time();
         $this->posts->create(
@@ -70,7 +73,7 @@ final readonly class PostController
             authorId: $currentUser->id ?? 0,
             bodyRaw: $bodyText,
             bodyParsed: $bodyParsed,
-            signatureSnapshot: null,
+            signatureSnapshot: $profile?->signatureParsed,
             timestamp: $timestamp,
         );
 

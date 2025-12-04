@@ -7,6 +7,7 @@ namespace Fred\Application\Auth;
 use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 
 use function password_hash;
 use function password_verify;
@@ -23,6 +24,7 @@ final class AuthService
     public function __construct(
         private readonly UserRepository $users,
         private readonly RoleRepository $roles,
+        private readonly ProfileRepository $profiles,
     ) {
         $this->roles->ensureDefaultRoles();
     }
@@ -73,6 +75,16 @@ final class AuthService
             passwordHash: $passwordHash,
             roleId: $role->id,
             createdAt: time(),
+        );
+        $this->profiles->create(
+            userId: $user->id,
+            bio: '',
+            location: '',
+            website: '',
+            signatureRaw: '',
+            signatureParsed: '',
+            avatarPath: '',
+            timestamp: time(),
         );
 
         return $this->loginUser($user);

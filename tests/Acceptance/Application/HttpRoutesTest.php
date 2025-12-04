@@ -22,6 +22,7 @@ use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 use Fred\Application\Content\BbcodeParser;
@@ -106,7 +107,8 @@ final class HttpRoutesTest extends TestCase
         $boardRepository = new BoardRepository($pdo);
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
-        $authService = new AuthService($userRepository, $roleRepository);
+        $profileRepository = new ProfileRepository($pdo);
+        $authService = new AuthService($userRepository, $roleRepository, $profileRepository);
 
         $router = new Router($this->basePath('public'));
         $homeController = new HomeController($view, $config, $authService);
@@ -147,6 +149,7 @@ final class HttpRoutesTest extends TestCase
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
+            $profileRepository,
         );
         $postController = new PostController(
             $authService,
@@ -155,6 +158,7 @@ final class HttpRoutesTest extends TestCase
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
+            $profileRepository,
         );
 
         $router->get('/', [$communityController, 'index']);

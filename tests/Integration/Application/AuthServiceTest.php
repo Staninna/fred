@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Tests\TestCase;
@@ -28,6 +29,7 @@ final class AuthServiceTest extends TestCase
         $auth = new AuthService(
             users: new UserRepository($pdo),
             roles: new RoleRepository($pdo),
+            profiles: new ProfileRepository($pdo),
         );
 
         $current = $auth->register('bob', 'Bobby', 'secret123');
@@ -36,6 +38,9 @@ final class AuthServiceTest extends TestCase
         $this->assertSame('bob', $current->username);
         $this->assertSame('member', $current->role);
         $this->assertNotNull($_SESSION['user_id'] ?? null);
+
+        $profile = (new ProfileRepository($pdo))->findByUserId($current->id ?? 0);
+        $this->assertNotNull($profile);
     }
 
     public function testLoginAndLogout(): void
@@ -44,6 +49,7 @@ final class AuthServiceTest extends TestCase
         $auth = new AuthService(
             users: new UserRepository($pdo),
             roles: new RoleRepository($pdo),
+            profiles: new ProfileRepository($pdo),
         );
 
         $auth->register('jane', 'Jane', 'password1');
@@ -62,6 +68,7 @@ final class AuthServiceTest extends TestCase
         $auth = new AuthService(
             users: new UserRepository($pdo),
             roles: new RoleRepository($pdo),
+            profiles: new ProfileRepository($pdo),
         );
 
         $auth->register('mallory', 'Mallory', 'topsecret');

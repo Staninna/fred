@@ -12,6 +12,7 @@ use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Application\Content\BbcodeParser;
 
 final readonly class DemoSeeder
@@ -24,6 +25,7 @@ final readonly class DemoSeeder
         private BoardRepository $boards,
         private ThreadRepository $threads,
         private PostRepository $posts,
+        private ProfileRepository $profiles,
         private Generator $faker,
         private int $boardCount = 4,
         private int $threadsPerBoard = 3,
@@ -85,29 +87,8 @@ final readonly class DemoSeeder
     {
         $users = [];
 
-        $stan = $this->users->findByUsername('stan');
-        if ($stan === null) {
-            $stan = $this->users->create(
-                username: 'stan',
-                displayName: 's t a n i n n a',
-                passwordHash: password_hash('stan', PASSWORD_BCRYPT),
-                roleId: $roleId,
-                createdAt: $timestamp,
-            );
-        }
-        $users[] = $stan;
-
-        $demo = $this->users->findByUsername('demo');
-        if ($demo === null) {
-            $demo = $this->users->create(
-                username: 'demo',
-                displayName: 'Demo User',
-                passwordHash: password_hash('password', PASSWORD_BCRYPT),
-                roleId: $roleId,
-                createdAt: $timestamp,
-            );
-        }
-        $users[] = $demo;
+        $users[] = $this->ensureUser('stan', 's t a n i n n a', 'stan', $roleId, $timestamp);
+        $users[] = $this->ensureUser('demo', 'Demo User', 'password', $roleId, $timestamp);
 
         for ($i = 1; $i < $this->userCount; $i++) {
             $username = 'member' . $i;
@@ -117,12 +98,12 @@ final readonly class DemoSeeder
                 continue;
             }
 
-            $users[] = $this->users->create(
-                username: $username,
-                displayName: $this->faker->name(),
-                passwordHash: password_hash('password', PASSWORD_BCRYPT),
-                roleId: $roleId,
-                createdAt: $timestamp - random_int(0, 10_000),
+            $users[] = $this->ensureUser(
+                $username,
+                $this->faker->name(),
+                'password',
+                $roleId,
+                $timestamp - random_int(0, 10_000),
             );
         }
 
@@ -307,5 +288,34 @@ final readonly class DemoSeeder
         }
 
         return $this->faker->paragraph(3);
+    }
+
+    private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp)
+    {
+        $user = $this->users->findByUsername($username);
+        if ($user === null) {
+            $user = $this->users->create(
+                username: $username,
+                displayName: $displayName,
+                passwordHash: password_hash($password, PASSWORD_BCRYPT),
+                roleId: $roleId,
+                createdAt: $timestamp,
+            );
+        }
+        $profile = $this->profiles->findByUserId($user->id);
+        if ($profile === null) {
+            $this->profiles->create(
+                userId: $user->id,
+                bio: '',
+                location: '',
+                website: '',
+                signatureRaw: '',
+                signatureParsed: '',
+                avatarPath: '',
+                timestamp: $timestamp,
+            );
+        }
+
+        return $user;
     }
 }

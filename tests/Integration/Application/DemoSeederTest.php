@@ -12,6 +12,7 @@ use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Tests\TestCase;
 
@@ -31,6 +32,7 @@ final class DemoSeederTest extends TestCase
             boards: new BoardRepository($pdo),
             threads: new ThreadRepository($pdo),
             posts: new PostRepository($pdo),
+            profiles: new ProfileRepository($pdo),
             faker: $faker,
             boardCount: 4,
             threadsPerBoard: 3,

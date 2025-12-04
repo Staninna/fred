@@ -17,6 +17,7 @@ use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
@@ -36,6 +37,7 @@ final readonly class ThreadController
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
+        private ProfileRepository $profiles,
     ) {
     }
 
@@ -180,13 +182,15 @@ final readonly class ThreadController
             timestamp: $timestamp,
         );
 
+        $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
+
         $this->posts->create(
             communityId: $community->id,
             threadId: $thread->id,
             authorId: $currentUser->id ?? 0,
             bodyRaw: $bodyText,
             bodyParsed: $this->parser->parse($bodyText),
-            signatureSnapshot: null,
+            signatureSnapshot: $profile?->signatureParsed,
             timestamp: $timestamp,
         );
 
