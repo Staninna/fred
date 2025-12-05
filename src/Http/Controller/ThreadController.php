@@ -11,16 +11,12 @@ use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
-use function array_values;
-use function ctype_digit;
 use function trim;
 
 final readonly class ThreadController
@@ -29,9 +25,8 @@ final readonly class ThreadController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
-        private CommunityRepository $communities,
+        private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
-        private BoardRepository $boards,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
@@ -41,31 +36,28 @@ final readonly class ThreadController
 
     public function show(Request $request): Response
     {
-        $community = $this->resolveCommunity($request->params['community'] ?? null);
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
-            return $this->notFound();
+            return $this->notFound($request);
         }
 
         $threadId = (int) ($request->params['thread'] ?? 0);
         $thread = $this->threads->findById($threadId);
         if ($thread === null || $thread->communityId !== $community->id) {
-            return $this->notFound();
+            return $this->notFound($request);
         }
 
-        $board = $this->boards->findById($thread->boardId);
-        if ($board === null || $board->communityId !== $community->id) {
-            return $this->notFound();
+        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
+        if ($board === null) {
+            return $this->notFound($request);
         }
 
         $category = $this->categories->findById($board->categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return $this->notFound();
+            return $this->notFound($request);
         }
 
-        $categories = $this->categories->listByCommunityId($community->id);
-        $boards = $this->boards->listByCommunityId($community->id);
-        $boardsByCategory = $this->groupBoards($boards);
-        $allCommunities = $this->communities->all();
+        $structure = $this->communityHelper->structureForCommunity($community);
         $posts = $this->posts->listByThreadId($thread->id);
 
         $body = $this->view->render('pages/thread/show.php', [
@@ -78,7 +70,11 @@ final readonly class ThreadController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,
-            'navSections' => $this->navSections($community, $allCommunities, $boardsByCategory, $categories),
+            'navSections' => $this->communityHelper->navSections(
+                $community,
+                $structure['categories'],
+                $structure['boardsByCategory'],
+            ),
         ]);
 
         return new Response(
@@ -90,24 +86,11 @@ final readonly class ThreadController
 
     public function create(Request $request): Response
     {
-        $community = $this->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return $this->notFound();
+        $context = $this->resolveBoardContext($request);
+        if ($context === null) {
+            return $this->notFound($request);
         }
-
-        $boardSlug = (string) ($request->params['board'] ?? '');
-        $board = $this->boards->findBySlug($community->id, $boardSlug);
-        if ($board === null && ctype_digit($boardSlug)) {
-            $board = $this->boards->findById((int) $boardSlug);
-
-            if ($board !== null && $board->communityId !== $community->id) {
-                $board = null;
-            }
-        }
-
-        if ($board === null) {
-            return $this->notFound();
-        }
+        ['community' => $community, 'board' => $board] = $context;
 
         if ($this->auth->currentUser()->isGuest()) {
             return Response::redirect('/login');
@@ -118,24 +101,11 @@ final readonly class ThreadController
 
     public function store(Request $request): Response
     {
-        $community = $this->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return $this->notFound();
+        $context = $this->resolveBoardContext($request);
+        if ($context === null) {
+            return $this->notFound($request);
         }
-
-        $boardSlug = (string) ($request->params['board'] ?? '');
-        $board = $this->boards->findBySlug($community->id, $boardSlug);
-        if ($board === null && ctype_digit($boardSlug)) {
-            $board = $this->boards->findById((int) $boardSlug);
-
-            if ($board !== null && $board->communityId !== $community->id) {
-                $board = null;
-            }
-        }
-
-        if ($board === null) {
-            return $this->notFound();
-        }
+        ['community' => $community, 'board' => $board] = $context;
 
         $currentUser = $this->auth->currentUser();
         if ($currentUser->isGuest()) {
@@ -203,10 +173,7 @@ final readonly class ThreadController
         array $old = [],
         int $status = 200,
     ): Response {
-        $categories = $this->categories->listByCommunityId($community->id);
-        $boards = $this->boards->listByCommunityId($community->id);
-        $boardsByCategory = $this->groupBoards($boards);
-        $allCommunities = $this->communities->all();
+        $structure = $this->communityHelper->structureForCommunity($community);
 
         $body = $this->view->render('pages/thread/create.php', [
             'pageTitle' => 'New thread',
@@ -217,7 +184,11 @@ final readonly class ThreadController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,
-            'navSections' => $this->navSections($community, $allCommunities, $boardsByCategory, $categories),
+            'navSections' => $this->communityHelper->navSections(
+                $community,
+                $structure['categories'],
+                $structure['boardsByCategory'],
+            ),
         ]);
 
         return new Response(
@@ -227,77 +198,27 @@ final readonly class ThreadController
         );
     }
 
-    private function resolveCommunity(?string $slug): ?Community
+    /**
+     * @return array{community: Community, board: Board}|null
+     */
+    private function resolveBoardContext(Request $request): ?array
     {
-        if ($slug === null || $slug === '') {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
             return null;
         }
 
-        return $this->communities->findBySlug($slug);
+        $boardSlug = (string) ($request->params['board'] ?? '');
+        $board = $this->communityHelper->resolveBoard($community, $boardSlug);
+        if ($board === null) {
+            return null;
+        }
+
+        return ['community' => $community, 'board' => $board];
     }
 
-    /**
-     * @param Board[] $boards
-     *
-     * @return array<int, Board[]>
-     */
-    private function groupBoards(array $boards): array
+    private function notFound(Request $request): Response
     {
-        $grouped = [];
-        foreach ($boards as $board) {
-            $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
-        }
-
-        return $grouped;
-    }
-
-    private function navSections(Community $current, array $communities, array $boardsByCategory, array $categories): array
-    {
-        $communityLinks = [];
-        foreach ($communities as $community) {
-            $communityLinks[] = [
-                'label' => $community->name,
-                'href' => '/c/' . $community->slug,
-            ];
-        }
-
-        $boardLinks = [];
-        foreach ($categories as $category) {
-            $boardLinks[] = [
-                'label' => $category->name,
-                'href' => '#',
-            ];
-
-            foreach ($boardsByCategory[$category->id] ?? [] as $board) {
-                $boardLinks[] = [
-                    'label' => '↳ ' . $board->name,
-                    'href' => '/c/' . $current->slug . '/b/' . $board->slug,
-                ];
-            }
-        }
-
-        return [
-            [
-                'title' => 'Communities',
-                'items' => $communityLinks,
-            ],
-            [
-                'title' => 'Boards',
-                'items' => $boardLinks === [] ? [['label' => 'No boards yet', 'href' => '#']] : $boardLinks,
-            ],
-        ];
-    }
-
-    private function notFound(): Response
-    {
-        return new Response(
-            status: 404,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: '<h1>Not Found</h1>',
-        );
+        return Response::notFound($this->view, $this->config, $this->auth, $request);
     }
 }

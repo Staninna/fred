@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
+use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\HealthController;
 use Fred\Http\Controller\HomeController;
@@ -109,6 +110,7 @@ final class HttpRoutesTest extends TestCase
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
         $authService = new AuthService($userRepository, $roleRepository, $profileRepository);
+        $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
         $homeController = new HomeController($view, $config, $authService);
@@ -118,15 +120,14 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
+            $communityHelper,
             $communityRepository,
-            $categoryRepository,
-            $boardRepository,
         );
         $adminController = new AdminController(
             $view,
             $config,
             $authService,
-            $communityRepository,
+            $communityHelper,
             $categoryRepository,
             $boardRepository,
         );
@@ -134,18 +135,16 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
-            $communityRepository,
+            $communityHelper,
             $categoryRepository,
-            $boardRepository,
             $threadRepository,
         );
         $threadController = new ThreadController(
             $view,
             $config,
             $authService,
-            $communityRepository,
+            $communityHelper,
             $categoryRepository,
-            $boardRepository,
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
@@ -153,8 +152,9 @@ final class HttpRoutesTest extends TestCase
         );
         $postController = new PostController(
             $authService,
-            $communityRepository,
-            $boardRepository,
+            $view,
+            $config,
+            $communityHelper,
             $threadRepository,
             $postRepository,
             new BbcodeParser(),

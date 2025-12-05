@@ -5,18 +5,12 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
-use Fred\Domain\Community\Board;
-use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\BoardRepository;
-use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
-use function array_values;
-use function strtolower;
 use function trim;
 
 final readonly class CommunityController
@@ -25,9 +19,8 @@ final readonly class CommunityController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
+        private CommunityHelper $communityHelper,
         private CommunityRepository $communities,
-        private CategoryRepository $categories,
-        private BoardRepository $boards,
     ) {
     }
 
@@ -41,7 +34,7 @@ final readonly class CommunityController
             'errors' => $errors,
             'old' => $old,
             'activePath' => $request->path,
-            'navSections' => $this->navSections(null, $communities),
+            'navSections' => $this->communityHelper->navSections(null, [], [], $communities),
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
         ]);
@@ -65,7 +58,7 @@ final readonly class CommunityController
             $errors[] = 'Name is required.';
         }
 
-        $slug = $slug === '' ? $this->slugify($name) : $this->slugify($slug);
+        $slug = $slug === '' ? $this->communityHelper->slugify($name) : $this->communityHelper->slugify($slug);
         if ($slug === '') {
             $errors[] = 'Slug is required.';
         }
@@ -94,28 +87,26 @@ final readonly class CommunityController
 
     public function show(Request $request): Response
     {
-        $community = $this->resolveCommunity($request->params['community'] ?? null);
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
-            return new Response(
-                status: 404,
-                headers: ['Content-Type' => 'text/html; charset=utf-8'],
-                body: '<h1>Community not found</h1>',
-            );
+            return $this->notFound($request);
         }
 
-        $categories = $this->categories->listByCommunityId($community->id);
-        $boards = $this->boards->listByCommunityId($community->id);
-        $boardsByCategory = $this->groupBoards($boards);
+        $structure = $this->communityHelper->structureForCommunity($community);
 
         $body = $this->view->render('pages/community/show.php', [
             'pageTitle' => $community->name,
             'community' => $community,
-            'categories' => $categories,
-            'boardsByCategory' => $boardsByCategory,
+            'categories' => $structure['categories'],
+            'boardsByCategory' => $structure['boardsByCategory'],
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,
-            'navSections' => $this->navSections($community, $this->communities->all(), $boardsByCategory, $categories),
+            'navSections' => $this->communityHelper->navSections(
+                $community,
+                $structure['categories'],
+                $structure['boardsByCategory'],
+            ),
         ]);
 
         return new Response(
@@ -125,73 +116,8 @@ final readonly class CommunityController
         );
     }
 
-    private function groupBoards(array $boards): array
+    private function notFound(Request $request): Response
     {
-        $grouped = [];
-        /** @var Board $board */
-        foreach ($boards as $board) {
-            $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
-        }
-
-        return $grouped;
-    }
-
-    private function navSections(?Community $current, array $communities, array $boardsByCategory = [], array $categories = []): array
-    {
-        $communityLinks = [];
-        foreach ($communities as $community) {
-            $communityLinks[] = [
-                'label' => $community->name,
-                'href' => '/c/' . $community->slug,
-            ];
-        }
-
-        $boardLinks = [];
-        foreach ($categories as $category) {
-            $boardLinks[] = [
-                'label' => $category->name,
-                'href' => '#',
-            ];
-
-            foreach ($boardsByCategory[$category->id] ?? [] as $board) {
-                $boardLinks[] = [
-                    'label' => '↳ ' . $board->name,
-                'href' => '/c/' . ($current?->slug ?? '') . '/b/' . $board->slug,
-            ];
-            }
-        }
-
-        return [
-            [
-                'title' => 'Communities',
-                'items' => $communityLinks,
-            ],
-            [
-                'title' => 'Boards',
-                'items' => $boardLinks === [] ? [['label' => 'No boards yet', 'href' => '#']] : $boardLinks,
-            ],
-        ];
-    }
-
-    private function resolveCommunity(?string $slug): ?Community
-    {
-        if ($slug === null || $slug === '') {
-            return null;
-        }
-
-        return $this->communities->findBySlug($slug);
-    }
-
-    private function slugify(string $value): string
-    {
-        $slug = strtolower(trim($value));
-        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug) ?? '';
-        $slug = trim((string) $slug, '-');
-
-        return $slug;
+        return Response::notFound($this->view, $this->config, $this->auth, $request);
     }
 }

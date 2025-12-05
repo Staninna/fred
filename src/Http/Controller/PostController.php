@@ -8,11 +8,11 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Http\Request;
 use Fred\Http\Response;
-use Fred\Infrastructure\Database\BoardRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
 
@@ -20,8 +20,9 @@ final readonly class PostController
 {
     public function __construct(
         private AuthService $auth,
-        private CommunityRepository $communities,
-        private BoardRepository $boards,
+        private ViewRenderer $view,
+        private AppConfig $config,
+        private CommunityHelper $communityHelper,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
@@ -31,19 +32,19 @@ final readonly class PostController
 
     public function store(Request $request): Response
     {
-        $community = $this->communities->findBySlug((string) ($request->params['community'] ?? ''));
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
-            return $this->notFound();
+            return $this->notFound($request);
         }
 
         $thread = $this->threads->findById((int) ($request->params['thread'] ?? 0));
         if ($thread === null || $thread->communityId !== $community->id) {
-            return $this->notFound();
+            return $this->notFound($request);
         }
 
-        $board = $this->boards->findById($thread->boardId);
-        if ($board === null || $board->communityId !== $community->id) {
-            return $this->notFound();
+        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
+        if ($board === null) {
+            return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
@@ -80,12 +81,8 @@ final readonly class PostController
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
-    private function notFound(): Response
+    private function notFound(Request $request): Response
     {
-        return new Response(
-            status: 404,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: '<h1>Not Found</h1>',
-        );
+        return Response::notFound($this->view, $this->config, $this->auth, $request);
     }
 }

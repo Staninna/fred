@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Fred\Http;
 
+use Fred\Application\Auth\AuthService;
+use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\View\ViewRenderer;
+
 use function header;
 use function http_response_code;
 
@@ -22,6 +26,30 @@ final readonly class Response
             status: $status,
             headers: ['Location' => $location],
             body: '',
+        );
+    }
+
+    public static function notFound(
+        ?ViewRenderer $view = null,
+        ?AppConfig $config = null,
+        ?AuthService $auth = null,
+        ?Request $request = null,
+        string $body = '<h1>Not Found</h1>',
+    ): self {
+        if ($view !== null && $config !== null && $auth !== null) {
+            $body = $view->render('errors/404.php', [
+                'pageTitle' => 'Page not found',
+                'path' => $request?->path ?? '',
+                'activePath' => $request?->path ?? '',
+                'environment' => $config->environment,
+                'currentUser' => $auth->currentUser(),
+            ]);
+        }
+
+        return new self(
+            status: 404,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
         );
     }
 
