@@ -13,6 +13,29 @@ abstract class TestCase extends BaseTestCase
 {
     use FilesystemTrait;
 
+    private ?string $sessionPath = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->sessionPath = $this->createTempDir('fred-sessions-');
+        session_save_path($this->sessionPath);
+    }
+
+    protected function tearDown(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        if ($this->sessionPath !== null) {
+            $this->removeDirectory($this->sessionPath);
+        }
+
+        parent::tearDown();
+    }
+
     protected function basePath(string $path = ''): string
     {
         $root = rtrim(dirname(__DIR__), '/');
