@@ -1,9 +1,15 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Domain\Community\Board $board */
-/** @var \Fred\Domain\Community\Category $category */
+/** @var Community $community */
+/** @var Board $board */
+/** @var Category $category */
 /** @var array<int, \Fred\Domain\Forum\Thread> $threads */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var CurrentUser|null $currentUser */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <article class="card card--hero">

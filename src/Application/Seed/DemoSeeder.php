@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Application\Seed;
 
 use Faker\Generator;
+use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
@@ -14,6 +15,7 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Application\Content\BbcodeParser;
+use Random\RandomException;
 
 final readonly class DemoSeeder
 {
@@ -83,6 +85,9 @@ final readonly class DemoSeeder
         return $slug !== '' ? $slug : 'board-' . uniqid();
     }
 
+    /**
+     * @throws RandomException
+     */
     private function seedUsers(int $roleId, int $timestamp): array
     {
         $users = [];
@@ -157,6 +162,9 @@ final readonly class DemoSeeder
         return $boardIds;
     }
 
+    /**
+     * @throws RandomException
+     */
     private function seedBoards(int $communityId, int $categoryId, int $timestamp): array
     {
         $boards = [];
@@ -208,6 +216,9 @@ final readonly class DemoSeeder
         return $boards;
     }
 
+    /**
+     * @throws RandomException
+     */
     private function seedThreadsAndPosts(int $communityId, int $boardId, string $boardSlug, array $users, int $timestamp): void
     {
         $existingThreads = $this->threads->listByBoardId($boardId);
@@ -290,7 +301,7 @@ final readonly class DemoSeeder
         return $this->faker->paragraph(3);
     }
 
-    private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp)
+    private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp): ?User
     {
         $user = $this->users->findByUsername($username);
         if ($user === null) {

@@ -19,11 +19,12 @@ use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
 use Fred\Infrastructure\Env\DotenvLoader;
+use Fred\Infrastructure\Logging\FileLogger;
+use Fred\Infrastructure\Logging\NullLogger;
 use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
 use League\Container\ReflectionContainer;
-use PDO;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 

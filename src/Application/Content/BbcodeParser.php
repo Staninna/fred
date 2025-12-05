@@ -24,9 +24,7 @@ final class BbcodeParser
         }
 
         $escaped = $this->parseUrlTags($escaped);
-        $escaped = nl2br($escaped);
-
-        return $escaped;
+        return nl2br($escaped);
     }
 
     private function parseUrlTags(string $input): string

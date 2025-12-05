@@ -17,7 +17,7 @@ use function trim;
 
 final class AuthService
 {
-    private const SESSION_KEY = 'user_id';
+    private const string SESSION_KEY = 'user_id';
 
     private ?CurrentUser $cached = null;
 
