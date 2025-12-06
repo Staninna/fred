@@ -39,41 +39,39 @@ use Fred\Domain\Forum\Post;
         <td class="table-heading">Started</td>
         <td><?= date('Y-m-d H:i', $thread->createdAt) ?> · Posts: <?= count($posts) ?> <?= $thread->isLocked ? '· Locked' : '' ?></td>
     </tr>
-    <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+    <?php if (!empty($canModerate ?? false)): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a>
-                <?php if ($canModerate): ?>
-                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
-                        <label for="target_board" class="small">Move to:</label>
-                        <select name="target_board" id="target_board">
-                            <?php foreach ($allBoards as $boardOption): ?>
-                                <option value="<?= $e($boardOption->slug) ?>"<?= $boardOption->id === $board->id ? ' selected' : '' ?>>
-                                    <?= $e($boardOption->name) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <button class="button" type="submit">Move</button>
+                <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
+                    <label for="target_board" class="small">Move to:</label>
+                    <select name="target_board" id="target_board">
+                        <?php foreach ($allBoards as $boardOption): ?>
+                            <option value="<?= $e($boardOption->slug) ?>"<?= $boardOption->id === $board->id ? ' selected' : '' ?>>
+                                <?= $e($boardOption->name) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button class="button" type="submit">Move</button>
+                </form>
+                <?php if ($thread->isLocked): ?>
+                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
+                        <button class="button" type="submit">Unlock</button>
                     </form>
-                    <?php if ($thread->isLocked): ?>
-                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
-                            <button class="button" type="submit">Unlock</button>
-                        </form>
-                    <?php else: ?>
-                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/lock">
-                            <button class="button" type="submit">Lock</button>
-                        </form>
-                    <?php endif; ?>
-                    <?php if ($thread->isSticky): ?>
-                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unsticky">
-                            <button class="button" type="submit">Unsticky</button>
-                        </form>
-                    <?php else: ?>
-                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/sticky">
-                            <button class="button" type="submit">Sticky</button>
-                        </form>
-                    <?php endif; ?>
+                <?php else: ?>
+                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/lock">
+                        <button class="button" type="submit">Lock</button>
+                    </form>
+                <?php endif; ?>
+                <?php if ($thread->isSticky): ?>
+                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unsticky">
+                        <button class="button" type="submit">Unsticky</button>
+                    </form>
+                <?php else: ?>
+                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/sticky">
+                        <button class="button" type="submit">Sticky</button>
+                    </form>
                 <?php endif; ?>
             </td>
         </tr>

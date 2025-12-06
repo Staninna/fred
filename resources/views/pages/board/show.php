@@ -5,6 +5,7 @@
 /** @var array<int, \Fred\Domain\Forum\Thread> $threads */
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, int): string $e */
+/** @var bool $canModerate */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
@@ -33,7 +34,7 @@ use Fred\Domain\Community\Community;
         <td class="table-heading">Status</td>
         <td><?= $board->isLocked ? 'Locked' : 'Open' ?> · Threads: <?= count($threads) ?> · Board ID: <?= $board->id ?></td>
     </tr>
-    <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+    <?php if (!empty($canModerate ?? false)): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a></td>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -19,6 +20,7 @@ final readonly class CommunityController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
+        private PermissionService $permissions,
         private CommunityHelper $communityHelper,
         private CommunityRepository $communities,
     ) {
@@ -37,6 +39,7 @@ final readonly class CommunityController
             'navSections' => $this->communityHelper->navSections(null, [], [], $communities),
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
         ]);
 
         return new Response(
@@ -101,6 +104,7 @@ final readonly class CommunityController
             'boardsByCategory' => $structure['boardsByCategory'],
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

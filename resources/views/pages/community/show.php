@@ -4,6 +4,7 @@
 /** @var CurrentUser $currentUser*/
 /** @var array<int, array<int, Board>> $boardsByCategory */
 /** @var callable(string, int): string $e */
+/** @var bool $canModerate */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
@@ -28,7 +29,7 @@ use Fred\Domain\Community\Community;
         <td class="table-heading">Stats</td>
         <td>Categories: <?= count($categories) ?> · Boards: <?= array_sum(array_map('count', $boardsByCategory)) ?></td>
     </tr>
-    <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+    <?php if (!empty($canModerate ?? false)): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Manage structure</a></td>
