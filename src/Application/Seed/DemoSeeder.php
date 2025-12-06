@@ -37,6 +37,9 @@ final readonly class DemoSeeder
     ) {
     }
 
+    /**
+     * @throws RandomException
+     */
     public function seed(): array
     {
         $this->faker->seed(1234);
@@ -139,6 +142,9 @@ final readonly class DemoSeeder
         return $communities;
     }
 
+    /**
+     * @throws RandomException
+     */
     private function seedCommunityContent(object $community, array $users, int $timestamp): array
     {
         $boardIds = [];

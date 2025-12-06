@@ -1,10 +1,15 @@
 <?php
-/** @var \Fred\Domain\Auth\Profile|null $profile */
-/** @var \Fred\Domain\Community\Community $community */
+/** @var Profile|null $profile */
+/** @var Community $community */
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var CurrentUser|null $currentUser */
 /** @var callable(string, array): string $renderPartial */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Auth\Profile;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

@@ -4,6 +4,7 @@
 /** @var Category $category */
 /** @var array<int, \Fred\Domain\Forum\Thread> $threads */
 /** @var CurrentUser|null $currentUser */
+/** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
@@ -14,18 +15,18 @@ use Fred\Domain\Community\Community;
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2">Board: <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?></th>
+        <th colspan="2">Board: <?= $e($board->name) ?></th>
     </tr>
     <tr>
         <td class="table-heading">Description</td>
-        <td><?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($board->description) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Location</td>
         <td>
-            Community: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?> ·
-            Category: <?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?> ·
-            Slug: <?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>
+            Community: <?= $e($community->name) ?> ·
+            Category: <?= $e($category->name) ?> ·
+            Slug: <?= $e($board->slug) ?>
         </td>
     </tr>
     <tr>
@@ -35,7 +36,7 @@ use Fred\Domain\Community\Community;
     <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
         <tr>
             <td class="table-heading">Admin</td>
-            <td><a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a></td>
+            <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a></td>
         </tr>
     <?php endif; ?>
 </table>
@@ -55,12 +56,12 @@ use Fred\Domain\Community\Community;
                 <td width="320">
                     <?php if ($thread->isSticky): ?>[Sticky] <?php endif; ?>
                     <?php if ($thread->isAnnouncement): ?>[Announcement] <?php endif; ?>
-                    <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/t/<?= $thread->id ?>">
-                        <?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?>
+                    <a href="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>">
+                        <?= $e($thread->title) ?>
                     </a>
                 </td>
                 <td>
-                    Started by <?= htmlspecialchars($thread->authorName, ENT_QUOTES, 'UTF-8') ?> ·
+                    Started by <?= $e($thread->authorName) ?> ·
                     <?= date('Y-m-d H:i', $thread->createdAt) ?>
                     <?= $thread->isLocked ? ' · Locked' : '' ?>
                 </td>
@@ -72,7 +73,7 @@ use Fred\Domain\Community\Community;
             <?php if ($board->isLocked): ?>
                 <span class="muted">Board locked.</span>
             <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread/new">New thread</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread/new">New thread</a>
             <?php else: ?>
                 <a class="button" href="/login">Sign in to post</a>
             <?php endif; ?>

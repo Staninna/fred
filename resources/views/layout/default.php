@@ -1,10 +1,13 @@
-<?php /** @var callable(string, array): string $renderPartial */ ?>
+<?php
+/** @var callable(string, array): string $renderPartial */
+/** @var callable(string, int): string $e */
+?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title><?= htmlspecialchars($pageTitle ?? 'Fred Forum', ENT_QUOTES, 'UTF-8') ?></title>
+    <title><?= $e($pageTitle ?? 'Fred Forum') ?></title>
     <link rel="stylesheet" href="/css/layout.css">
     <script src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
 </head>
@@ -12,12 +15,12 @@
 <table class="page-frame" cellspacing="0" cellpadding="0" align="center">
     <tr>
         <td class="banner" colspan="2">
-            <div class="banner-title"><?= htmlspecialchars($pageTitle ?? 'Fred Forum', ENT_QUOTES, 'UTF-8') ?></div>
-            <div class="banner-line">Classic forum interface. Environment: <?= htmlspecialchars($environment ?? 'local', ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="banner-title"><?= $e($pageTitle ?? 'Fred Forum') ?></div>
+            <div class="banner-line">Classic forum interface. Environment: <?= $e($environment ?? 'local') ?></div>
             <div class="banner-links">
                 <a href="/">Home</a> |
                 <?php if (isset($currentUser) && $currentUser->isAuthenticated()): ?>
-                    Signed in as <?= htmlspecialchars($currentUser->displayName, ENT_QUOTES, 'UTF-8') ?> |
+                    Signed in as <?= $e($currentUser->displayName) ?> |
                     <form class="inline-form" method="post" action="/logout">
                         <button class="button" type="submit">Sign out</button>
                     </form>
@@ -40,9 +43,9 @@
     </tr>
     <tr>
         <td class="footer" colspan="2">
-            Fred forum engine · <?= htmlspecialchars($environment ?? 'local', ENT_QUOTES, 'UTF-8') ?>
+            Fred forum engine · <?= $e($environment ?? 'local') ?>
             <?php if (!empty($baseUrl ?? '')): ?>
-                · Base URL: <?= htmlspecialchars($baseUrl ?? '', ENT_QUOTES, 'UTF-8') ?>
+                · Base URL: <?= $e($baseUrl ?? '') ?>
             <?php endif; ?>
         </td>
     </tr>

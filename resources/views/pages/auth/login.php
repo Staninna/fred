@@ -2,6 +2,7 @@
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var callable(string, array): string $renderPartial */
+/** @var callable(string, int): string $e */
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -16,7 +17,7 @@
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="username">Username</label></td>
-                        <td><input id="username" name="username" type="text" autocomplete="username" value="<?= htmlspecialchars($old['username'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required></td>
+                        <td><input id="username" name="username" type="text" autocomplete="username" value="<?= $e($old['username'] ?? '') ?>" required></td>
                     </tr>
                     <tr>
                         <td><label for="password">Password</label></td>

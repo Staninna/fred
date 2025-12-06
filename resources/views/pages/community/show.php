@@ -1,8 +1,11 @@
 <?php
 /** @var Community $community */
 /** @var array<int, Category> $categories */
+/** @var CurrentUser $currentUser*/
 /** @var array<int, array<int, Board>> $boardsByCategory */
+/** @var callable(string, int): string $e */
 
+use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -11,15 +14,15 @@ use Fred\Domain\Community\Community;
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2"><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></th>
+        <th colspan="2"><?= $e($community->name) ?></th>
     </tr>
     <tr>
         <td class="table-heading">Description</td>
-        <td><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($community->description) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Slug</td>
-        <td><?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($community->slug) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Stats</td>
@@ -28,20 +31,20 @@ use Fred\Domain\Community\Community;
     <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
         <tr>
             <td class="table-heading">Admin</td>
-            <td><a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Manage structure</a></td>
+            <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Manage structure</a></td>
         </tr>
     <?php endif; ?>
 </table>
 
 <?php if ($categories === []): ?>
     <div class="notice">No categories or boards. Visit the admin panel to create structure.</div>
-    <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Open admin</a>
+    <a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Open admin</a>
 <?php else: ?>
     <?php foreach ($categories as $category): ?>
         <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
         <table class="section-table" cellpadding="0" cellspacing="0" id="category-<?= $category->id ?>">
             <tr>
-                <th colspan="2">Category: <?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></th>
+                <th colspan="2">Category: <?= $e($category->name) ?></th>
             </tr>
             <?php if ($categoryBoards === []): ?>
                 <tr>
@@ -51,11 +54,11 @@ use Fred\Domain\Community\Community;
                 <?php foreach ($categoryBoards as $board): ?>
                     <tr>
                         <td width="240">
-                            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
-                                <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+                            <a href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">
+                                <?= $e($board->name) ?>
                             </a>
                         </td>
-                        <td><?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= $e($board->description) ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php endif; ?>

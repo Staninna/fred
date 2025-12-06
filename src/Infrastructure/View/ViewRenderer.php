@@ -59,7 +59,6 @@ final readonly class ViewRenderer
             throw new RuntimeException('View not found: ' . $relative);
         }
 
-        /** @var callable(string, int): string $e */
         $e = static fn (string $value, int $flags = ENT_QUOTES): string => htmlspecialchars($value, $flags, 'UTF-8');
 
         extract($data, EXTR_SKIP);

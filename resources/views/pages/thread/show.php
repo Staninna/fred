@@ -1,10 +1,18 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Domain\Community\Board $board */
-/** @var \Fred\Domain\Community\Category $category */
+/** @var Community $community */
+/** @var Board $board */
+/** @var Category $category */
 /** @var \Fred\Domain\Forum\Thread $thread */
-/** @var array<int, \Fred\Domain\Forum\Post> $posts */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var array<int, Post> $posts */
+/** @var CurrentUser|null $currentUser */
+/** @var callable(string, array): string $renderPartial */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Post;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

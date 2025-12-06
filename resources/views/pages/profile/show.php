@@ -1,8 +1,14 @@
 <?php
-/** @var \Fred\Domain\Auth\User $user */
-/** @var \Fred\Domain\Auth\Profile|null $profile */
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var User $user */
+/** @var Profile|null $profile */
+/** @var Community $community */
+/** @var CurrentUser|null $currentUser */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Auth\Profile;
+use Fred\Domain\Auth\User;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

@@ -1,5 +1,8 @@
 <?php
-/** @var array<int, \Fred\Domain\Forum\Post> $posts */
+/** @var array<int, Post> $posts */
+/** @var callable(string, int): string $e */
+
+use Fred\Domain\Forum\Post;
 ?>
 
 <?php if ($posts === []): ?>
@@ -12,7 +15,7 @@
         <?php foreach ($posts as $post): ?>
             <tr id="post-<?= $post->id ?>">
                 <td class="author-cell">
-                    <div><strong><?= htmlspecialchars($post->authorName, ENT_QUOTES, 'UTF-8') ?></strong></div>
+                    <div><strong><?= $e($post->authorName) ?></strong></div>
                     <div class="small"><?= date('Y-m-d H:i', $post->createdAt) ?></div>
                     <div class="small">Post #<?= $post->id ?></div>
                 </td>
@@ -20,7 +23,7 @@
                     <div class="post-body">
                         <?= $post->bodyParsed !== null
                             ? $post->bodyParsed
-                            : nl2br(htmlspecialchars($post->bodyRaw, ENT_QUOTES, 'UTF-8')) ?>
+                            : nl2br($e($post->bodyRaw)) ?>
                     </div>
                     <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>
                         <hr>

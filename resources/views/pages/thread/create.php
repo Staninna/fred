@@ -1,9 +1,13 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Domain\Community\Board $board */
+/** @var Community $community */
+/** @var Board $board */
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var callable(string, array): string $renderPartial */
+
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
