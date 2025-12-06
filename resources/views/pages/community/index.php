@@ -8,61 +8,67 @@ use Fred\Domain\Community\Community;
 
 ?>
 
-<article class="card card--hero">
-    <div>
-        <p class="eyebrow">Communities</p>
-        <h1>Select a community</h1>
-        <p class="lede">Pick where you want to explore. Create a new one to start fresh.</p>
-    </div>
-    <div class="status">
-        <div class="status__item">
-            <div class="status__label">Available</div>
-            <div class="status__value"><?= count($communities) ?></div>
-        </div>
-        <div class="status__item">
-            <div class="status__label">Environment</div>
-            <div class="status__value"><?= htmlspecialchars($environment ?? '', ENT_QUOTES, 'UTF-8') ?></div>
-        </div>
-    </div>
-</article>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2">Communities</th>
+    </tr>
+    <tr>
+        <td class="table-heading">Available</td>
+        <td><?= count($communities) ?></td>
+    </tr>
+    <tr>
+        <td class="table-heading">Environment</td>
+        <td><?= htmlspecialchars($environment ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+    </tr>
+</table>
 
-<section class="grid">
-    <article class="card">
-        <h2>Communities</h2>
-        <?php if ($communities === []): ?>
-            <p class="muted">No communities yet. Create the first one to get started.</p>
-        <?php else: ?>
-            <ul class="list">
-                <?php foreach ($communities as $community): ?>
-                    <li>
-                        <a class="nav__link" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>">
-                            <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?>
-                        </a>
-                        <div class="nav__subtitle"><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></div>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        <?php endif; ?>
-    </article>
-    <article class="card">
-        <h2>Create community</h2>
-        <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-        <form class="form" method="post" action="/communities" novalidate>
-            <div class="field">
-                <label for="name">Name</label>
-                <input id="name" name="name" type="text" value="<?= htmlspecialchars($old['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
-            </div>
-            <div class="field">
-                <label for="slug">Slug</label>
-                <input id="slug" name="slug" type="text" value="<?= htmlspecialchars($old['slug'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="auto-generated from name">
-            </div>
-            <div class="field">
-                <label for="description">Description</label>
-                <input id="description" name="description" type="text" value="<?= htmlspecialchars($old['description'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-            </div>
-            <div>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th>Name</th>
+        <th>Description</th>
+    </tr>
+    <?php if ($communities === []): ?>
+        <tr>
+            <td colspan="2" class="muted">No communities yet. Create the first one to get started.</td>
+        </tr>
+    <?php else: ?>
+        <?php foreach ($communities as $community): ?>
+            <tr>
+                <td width="240">
+                    <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?>
+                    </a>
+                </td>
+                <td><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></td>
+            </tr>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</table>
+
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th>Create community</th>
+    </tr>
+    <tr>
+        <td>
+            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+            <form method="post" action="/communities" novalidate>
+                <table class="form-table" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="140"><label for="name">Name</label></td>
+                        <td><input id="name" name="name" type="text" value="<?= htmlspecialchars($old['name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="slug">Slug</label></td>
+                        <td><input id="slug" name="slug" type="text" value="<?= htmlspecialchars($old['slug'] ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="auto-generated from name"></td>
+                    </tr>
+                    <tr>
+                        <td><label for="description">Description</label></td>
+                        <td><input id="description" name="description" type="text" value="<?= htmlspecialchars($old['description'] ?? '', ENT_QUOTES, 'UTF-8') ?>"></td>
+                    </tr>
+                </table>
                 <button class="button" type="submit">Create</button>
-            </div>
-        </form>
-    </article>
-</section>
+            </form>
+        </td>
+    </tr>
+</table>

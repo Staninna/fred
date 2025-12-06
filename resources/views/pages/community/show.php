@@ -9,64 +9,56 @@ use Fred\Domain\Community\Community;
 
 ?>
 
-<article class="card card--hero">
-    <div>
-        <p class="eyebrow">Community</p>
-        <h1><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="lede"><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></p>
-        <div class="tags">
-            <span class="tag">Slug: <?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?></span>
-        </div>
-        <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
-            <div class="account__actions" style="margin-top: 0.75rem;">
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a>
-            </div>
-        <?php endif; ?>
-    </div>
-    <div class="status">
-        <div class="status__item">
-            <div class="status__label">Categories</div>
-            <div class="status__value"><?= count($categories) ?></div>
-        </div>
-        <div class="status__item">
-            <div class="status__label">Boards</div>
-            <div class="status__value"><?= array_sum(array_map('count', $boardsByCategory)) ?></div>
-        </div>
-    </div>
-</article>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2"><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></th>
+    </tr>
+    <tr>
+        <td class="table-heading">Description</td>
+        <td><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></td>
+    </tr>
+    <tr>
+        <td class="table-heading">Slug</td>
+        <td><?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?></td>
+    </tr>
+    <tr>
+        <td class="table-heading">Stats</td>
+        <td>Categories: <?= count($categories) ?> · Boards: <?= array_sum(array_map('count', $boardsByCategory)) ?></td>
+    </tr>
+    <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+        <tr>
+            <td class="table-heading">Admin</td>
+            <td><a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Manage structure</a></td>
+        </tr>
+    <?php endif; ?>
+</table>
 
 <?php if ($categories === []): ?>
-    <article class="card card--compact">
-        <h2>Nothing here yet</h2>
-        <p class="muted">No categories or boards. Head to the admin panel to create structure.</p>
-        <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Open admin</a>
-    </article>
+    <div class="notice">No categories or boards. Visit the admin panel to create structure.</div>
+    <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Open admin</a>
 <?php else: ?>
     <?php foreach ($categories as $category): ?>
-        <article class="card">
-            <header class="card__header">
-                <div>
-                    <p class="eyebrow">Category</p>
-                    <h2><?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></h2>
-                </div>
-            </header>
-            <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
+        <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
+        <table class="section-table" cellpadding="0" cellspacing="0" id="category-<?= $category->id ?>">
+            <tr>
+                <th colspan="2">Category: <?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></th>
+            </tr>
             <?php if ($categoryBoards === []): ?>
-                <p class="muted">No boards in this category yet.</p>
+                <tr>
+                    <td colspan="2" class="muted">No boards in this category yet.</td>
+                </tr>
             <?php else: ?>
-                <ul class="list">
-                    <?php foreach ($categoryBoards as $board): ?>
-                        <li>
-                            <div class="nav__title">
-                                <a class="nav__link" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
-                                    <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
-                                </a>
-                            </div>
-                            <div class="nav__subtitle"><?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?></div>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
+                <?php foreach ($categoryBoards as $board): ?>
+                    <tr>
+                        <td width="240">
+                            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+                            </a>
+                        </td>
+                        <td><?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?></td>
+                    </tr>
+                <?php endforeach; ?>
             <?php endif; ?>
-        </article>
+        </table>
     <?php endforeach; ?>
 <?php endif; ?>

@@ -1,0 +1,257 @@
+body {
+    margin: 0;
+    padding: 10px;
+    background: #c0c0c0;
+    font-family: "Verdana", "Arial", "Helvetica", sans-serif;
+    color: #000000;
+}
+
+a:link {
+    color: #0000ee;
+    text-decoration: underline;
+}
+
+a:visited {
+    color: #551a8b;
+    text-decoration: underline;
+}
+
+a:hover {
+    color: #0000ee;
+    text-decoration: underline;
+}
+
+a:active {
+    color: #0000ee;
+}
+
+.page-frame {
+    width: 980px;
+    margin: 0 auto;
+    border: 1px solid #666666;
+    background: #f7f7f7;
+    border-collapse: collapse;
+}
+
+.page-frame td {
+    vertical-align: top;
+}
+
+.banner {
+    background: #003366;
+    color: #ffffff;
+    padding: 6px 8px;
+    border-bottom: 2px solid #000000;
+}
+
+.banner-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.banner-line {
+    margin: 2px 0;
+    font-size: 12px;
+}
+
+.banner a,
+.banner a:visited {
+    color: #ffe7c6;
+}
+
+.banner-links {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.sidebar {
+    width: 220px;
+    background: #e0e0e0;
+    border-right: 1px solid #999999;
+    padding: 6px;
+}
+
+.content {
+    padding: 8px;
+    background: #ffffff;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #999999;
+    margin: 8px 0;
+}
+
+.section-table {
+    width: 100%;
+    border: 1px solid #666666;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+.section-table th {
+    background: #dcdcdc;
+    text-align: left;
+    border: 1px solid #999999;
+    padding: 4px;
+    font-size: 13px;
+}
+
+.section-table td {
+    border: 1px solid #999999;
+    padding: 4px;
+}
+
+.table-heading {
+    background: #efefef;
+    font-weight: bold;
+    padding: 4px;
+    border: 1px solid #999999;
+}
+
+.nav-list {
+    list-style: square;
+    margin: 4px 0 8px 16px;
+    padding: 0;
+}
+
+.nav-list li {
+    margin: 2px 0;
+}
+
+.info-line {
+    font-size: 12px;
+    color: #333333;
+}
+
+.small {
+    font-size: 12px;
+    color: #444444;
+}
+
+.muted {
+    color: #555555;
+    font-size: 12px;
+}
+
+.button {
+    border: 2px outset #c0c0c0;
+    background: #dcdcdc;
+    color: #000000;
+    padding: 2px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.button:active {
+    border-style: inset;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+    border: 1px solid #666666;
+    background: #ffffff;
+    padding: 2px;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+textarea {
+    width: 98%;
+}
+
+.form-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+}
+
+.form-table td {
+    padding: 3px 4px;
+    font-size: 12px;
+}
+
+.notice {
+    border: 1px solid #999999;
+    background: #f0f0f0;
+    padding: 6px;
+    margin-bottom: 8px;
+}
+
+.alert {
+    border: 1px solid #990000;
+    background: #fff2f2;
+    padding: 6px;
+    margin-bottom: 8px;
+}
+
+.alert ul {
+    margin: 4px 0 0 16px;
+    padding: 0;
+}
+
+.post-table .author-cell {
+    width: 180px;
+    background: #f2f2f2;
+}
+
+.post-table .body-cell {
+    background: #ffffff;
+}
+
+.post-body {
+    line-height: 1.4;
+}
+
+.post-table tr:target td {
+    background: #fff3c4;
+    border-color: #cc9f2f;
+}
+
+.bbcode-toolbar {
+    margin: 4px 0;
+    padding: 4px;
+    border: 1px solid #999999;
+    background: #efefef;
+    font-size: 12px;
+}
+
+.bbcode-toolbar__label {
+    margin-right: 4px;
+    font-weight: bold;
+}
+
+.bbcode-toolbar .button {
+    margin-right: 4px;
+}
+
+.inline-form {
+    display: inline;
+    margin: 0;
+    padding: 0;
+}
+
+.inline-form .button {
+    font-size: 11px;
+    padding: 1px 6px;
+}
+
+code,
+pre {
+    font-family: "Courier New", monospace;
+}
+
+.footer {
+    background: #dcdcdc;
+    border-top: 1px solid #999999;
+    padding: 6px 8px;
+    font-size: 12px;
+    text-align: center;
+}

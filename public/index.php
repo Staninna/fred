@@ -8,7 +8,6 @@ use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityController;
-use Fred\Http\Controller\HealthController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\ThreadController;
@@ -56,7 +55,6 @@ $boardController = $container->get(BoardController::class);
 $threadController = $container->get(ThreadController::class);
 $postController = $container->get(PostController::class);
 $adminController = $container->get(AdminController::class);
-$healthController = $container->get(HealthController::class);
 $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
 
@@ -70,12 +68,13 @@ $authRequired = static function (Request $request, callable $next) use ($authSer
 
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
-$router->get('/health', [$healthController, 'show']);
 $router->get('/login', [$authController, 'showLoginForm']);
 $router->post('/login', [$authController, 'login']);
 $router->get('/register', [$authController, 'showRegisterForm']);
 $router->post('/register', [$authController, 'register']);
 $router->post('/logout', [$authController, 'logout']);
+
+$router->get('/c/{community}', [$communityController, 'show']);
 
 $router->group('/c/{community}', function (Router $router) use (
     $communityController,
@@ -90,6 +89,8 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->get('/u/{username}', [$profileController, 'show']);
 
     $router->group('/settings', function (Router $router) use ($profileController) {
+        $router->get('/profile', [$profileController, 'editProfile']);
+        $router->post('/profile', [$profileController, 'updateProfile']);
         $router->get('/signature', [$profileController, 'editSignature']);
         $router->post('/signature', [$profileController, 'updateSignature']);
     }, [$authRequired]);
@@ -118,6 +119,7 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
     $view = $container->get(ViewRenderer::class);
     $auth = $container->get(AuthService::class);
     $config = $container->get(AppConfig::class);
+    $communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
 
     $body = $view->render('errors/404.php', [
         'pageTitle' => 'Page not found',
@@ -125,6 +127,7 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
         'activePath' => $request->path,
         'environment' => $config->environment,
         'currentUser' => $auth->currentUser(),
+        'navSections' => $communityHelper->navForCommunity(),
     ]);
 
     return new Response(

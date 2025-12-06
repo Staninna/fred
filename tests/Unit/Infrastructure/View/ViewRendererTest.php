@@ -13,17 +13,16 @@ final class ViewRendererTest extends TestCase
     {
         $view = new ViewRenderer($this->basePath('resources/views'));
 
-        $output = $view->render('pages/health.php', [
-            'pageTitle' => 'Health Check',
+        $output = $view->render('pages/home.php', [
+            'pageTitle' => 'Welcome',
             'environment' => 'testing',
             'baseUrl' => 'http://example.test',
-            'sessionId' => 'abc123',
-            'activePath' => '/health',
+            'navSections' => [],
             'currentUser' => null,
         ]);
 
-        $this->assertStringContainsString('<title>Health Check</title>', $output);
-        $this->assertStringContainsString('Health Check', $output);
+        $this->assertStringContainsString('<title>Welcome</title>', $output);
+        $this->assertStringContainsString('Fred forum engine', $output);
         $this->assertStringContainsString('testing', $output);
     }
 }

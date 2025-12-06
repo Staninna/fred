@@ -238,7 +238,13 @@ final readonly class AdminController
 
     private function notFound(Request $request): Response
     {
-        return Response::notFound($this->view, $this->config, $this->auth, $request);
+        return Response::notFound(
+            view: $this->view,
+            config: $this->config,
+            auth: $this->auth,
+            request: $request,
+            navSections: $this->communityHelper->navForCommunity(),
+        );
     }
 
 }

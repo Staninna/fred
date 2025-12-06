@@ -41,6 +41,15 @@ final class BbcodeParserTest extends TestCase
         $this->assertStringContainsString('&gt;&gt;123', $output);
     }
 
+    public function testConvertsInlineQuoteLinks(): void
+    {
+        $parser = new BbcodeParser();
+        $input = "This references >>45 in-line.";
+        $output = $parser->parse($input);
+
+        $this->assertStringContainsString('<a class="quote-link" href="#post-45">&gt;&gt;45</a>', $output);
+    }
+
     public function testEscapesHtml(): void
     {
         $parser = new BbcodeParser();

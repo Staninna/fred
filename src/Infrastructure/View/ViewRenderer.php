@@ -37,7 +37,7 @@ final readonly class ViewRenderer
         );
 
         $chosenLayout = $layout === null ? $this->defaultLayout : $layout;
-        if ($chosenLayout === null) {
+        if ($chosenLayout === null || $chosenLayout === '') {
             return $content;
         }
 

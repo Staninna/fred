@@ -68,7 +68,7 @@ final readonly class PostController
         $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
         $bodyParsed = $this->parser->parse($bodyText);
         $timestamp = time();
-        $this->posts->create(
+        $createdPost = $this->posts->create(
             communityId: $community->id,
             threadId: $thread->id,
             authorId: $currentUser->id ?? 0,
@@ -78,11 +78,17 @@ final readonly class PostController
             timestamp: $timestamp,
         );
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
+        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '#post-' . $createdPost->id);
     }
 
     private function notFound(Request $request): Response
     {
-        return Response::notFound($this->view, $this->config, $this->auth, $request);
+        return Response::notFound(
+            view: $this->view,
+            config: $this->config,
+            auth: $this->auth,
+            request: $request,
+            navSections: $this->communityHelper->navForCommunity(),
+        );
     }
 }

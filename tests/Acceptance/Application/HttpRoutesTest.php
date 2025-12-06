@@ -10,8 +10,6 @@ use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Controller\CommunityController;
-use Fred\Http\Controller\HealthController;
-use Fred\Http\Controller\HomeController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
@@ -31,21 +29,6 @@ use Tests\TestCase;
 
 final class HttpRoutesTest extends TestCase
 {
-    public function testHealthRouteRendersHtml(): void
-    {
-        [$router] = $this->buildApp();
-
-        $response = $router->dispatch(new Request(
-            method: 'GET',
-            path: '/health',
-            query: [],
-            body: [],
-        ));
-
-        $this->assertSame(200, $response->status);
-        $this->assertStringContainsString('Health Check', $response->body);
-    }
-
     public function testCommunityAndBoardPagesRenderData(): void
     {
         [$router, $context] = $this->buildApp();
@@ -113,8 +96,6 @@ final class HttpRoutesTest extends TestCase
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
-        $homeController = new HomeController($view, $config, $authService);
-        $healthController = new HealthController($view, $config, $authService);
         $authController = new AuthController($view, $config, $authService);
         $communityController = new CommunityController(
             $view,
@@ -176,7 +157,6 @@ final class HttpRoutesTest extends TestCase
         $router->post('/c/{community}/admin/boards', [$adminController, 'createBoard']);
         $router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard']);
         $router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard']);
-        $router->get('/health', [$healthController, 'show']);
         $router->get('/login', [$authController, 'showLoginForm']);
         $router->post('/login', [$authController, 'login']);
         $router->get('/register', [$authController, 'showRegisterForm']);

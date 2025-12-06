@@ -89,10 +89,11 @@ final readonly class CommunityHelper
         }
 
         $boardLinks = [];
+        $communitySlug = $current?->slug ?? '';
         foreach ($categories as $category) {
             $boardLinks[] = [
                 'label' => $category->name,
-                'href' => '#',
+                'href' => $communitySlug !== '' ? '/c/' . $communitySlug . '#category-' . $category->id : '#',
             ];
 
             foreach ($boardsByCategory[$category->id] ?? [] as $board) {
@@ -113,6 +114,17 @@ final readonly class CommunityHelper
                 'items' => $boardLinks === [] ? [['label' => 'No boards yet', 'href' => '#']] : $boardLinks,
             ],
         ];
+    }
+
+    public function navForCommunity(?Community $community = null): array
+    {
+        if ($community === null) {
+            return $this->navSections(null, [], [], null);
+        }
+
+        $structure = $this->structureForCommunity($community);
+
+        return $this->navSections($community, $structure['categories'], $structure['boardsByCategory']);
     }
 
     /** @param Board[] $boards @return array<int, Board[]> */

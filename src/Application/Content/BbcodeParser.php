@@ -39,7 +39,7 @@ final class BbcodeParser
 
     private function convertLineQuotes(string $input): string
     {
-        return preg_replace_callback('/^&gt;&gt;(\d+)/m', static function (array $matches): string {
+        return preg_replace_callback('/&gt;&gt;(\d+)/', static function (array $matches): string {
             $id = $matches[1];
 
             return \sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);

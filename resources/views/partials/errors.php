@@ -7,7 +7,8 @@ if (empty($errors)) {
 ?>
 
 <div class="alert">
-    <ul class="list">
+    <strong>There were issues:</strong>
+    <ul class="nav-list">
         <?php foreach ($errors as $error): ?>
             <li><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></li>
         <?php endforeach; ?>

@@ -34,6 +34,7 @@ final readonly class Response
         ?AppConfig $config = null,
         ?AuthService $auth = null,
         ?Request $request = null,
+        ?array $navSections = null,
         string $body = '<h1>Not Found</h1>',
     ): self {
         if ($view !== null && $config !== null && $auth !== null) {
@@ -43,6 +44,7 @@ final readonly class Response
                 'activePath' => $request?->path ?? '',
                 'environment' => $config->environment,
                 'currentUser' => $auth->currentUser(),
+                'navSections' => $navSections,
             ]);
         }
 

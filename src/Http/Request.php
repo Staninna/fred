@@ -15,6 +15,7 @@ final readonly class Request
         public array  $query,
         public array  $body,
         public array  $params = [],
+        public array  $headers = [],
     ) {
     }
 
@@ -26,12 +27,23 @@ final readonly class Request
         $path = (string) parse_url($uri, PHP_URL_PATH);
         $path = $path === '' ? '/' : $path;
 
+        $headers = function_exists('getallheaders') ? (getallheaders() ?: []) : [];
+        if ($headers === []) {
+            foreach ($_SERVER as $key => $value) {
+                if (str_starts_with($key, 'HTTP_')) {
+                    $headerName = str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($key, 5)))));
+                    $headers[$headerName] = $value;
+                }
+            }
+        }
+
         return new self(
             method: trim($method),
             path: $path,
             query: $_GET ?? [],
             body: $_POST ?? [],
             params: [],
+            headers: $headers,
         );
     }
 
@@ -43,6 +55,24 @@ final readonly class Request
             query: $this->query,
             body: $this->body,
             params: $params,
+            headers: $this->headers,
         );
+    }
+
+    public function header(string $name, mixed $default = null): mixed
+    {
+        $normalized = strtolower($name);
+        foreach ($this->headers as $key => $value) {
+            if (strtolower((string) $key) === $normalized) {
+                return $value;
+            }
+        }
+
+        return $default;
+    }
+
+    public function isHxRequest(): bool
+    {
+        return strtolower((string) $this->header('HX-Request', 'false')) === 'true';
     }
 }

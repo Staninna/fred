@@ -1,53 +1,44 @@
 <?php
-/** @var array|null $navSections */
+/** @var array<int, array{title: string, items: array<int, array{label: string, href: string}>}>|null $navSections */
 /** @var string|null $activePath */
 
-$sections = $navSections;
-
-if ($sections === null) {
-    $sections = [
-        [
-            'title' => 'Communities',
-            'items' => [
-                ['label' => 'Main Plaza', 'href' => '#'],
-                ['label' => 'Retro PC', 'href' => '#'],
-                ['label' => 'Design Lab', 'href' => '#'],
-            ],
-        ],
-        [
-            'title' => 'Boards',
-            'items' => [
-                ['label' => 'Announcements', 'href' => '#'],
-                ['label' => 'General Chat', 'href' => '#'],
-                ['label' => 'Help Desk', 'href' => '#'],
-            ],
-        ],
-    ];
-}
+$sections = $navSections ?? [];
 ?>
 
-<nav class="nav">
-    <div class="nav__brand">
-        <div class="nav__logo">F</div>
-        <div>
-            <div class="nav__title">Fred</div>
-            <div class="nav__subtitle">Multi-community forum</div>
-        </div>
-    </div>
-    <?php foreach ($sections as $section): ?>
-        <div class="nav__section">
-            <div class="nav__section-title"><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></div>
-            <ul class="nav__list">
-                <?php foreach ($section['items'] as $item):
-                    $label = htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8');
-                    $href = $item['href'] ?? '#';
-                    $isActive = $activePath !== null && $href !== '#' && $href === $activePath;
-                    ?>
-                    <li>
-                        <a class="nav__link<?= $isActive ? ' nav__link--active' : '' ?>" href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>"><?= $label ?></a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endforeach; ?>
-</nav>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th>Navigation</th>
+    </tr>
+    <?php if ($sections === []): ?>
+        <tr>
+            <td>
+                <div class="info-line">Navigation will appear once communities and boards are available.</div>
+            </td>
+        </tr>
+    <?php else: ?>
+        <?php foreach ($sections as $section): ?>
+            <tr>
+                <td class="table-heading"><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></td>
+            </tr>
+            <tr>
+                <td>
+                    <ul class="nav-list">
+                        <?php foreach ($section['items'] as $item):
+                            $label = htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8');
+                            $href = $item['href'] ?? '#';
+                            $isActive = $activePath !== null && $href !== '#' && $href === $activePath;
+                            ?>
+                            <li>
+                                <?php if ($isActive): ?>
+                                    <strong><?= $label ?></strong>
+                                <?php else: ?>
+                                    <a href="<?= htmlspecialchars($href, ENT_QUOTES, 'UTF-8') ?>"><?= $label ?></a>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php endif; ?>
+</table>
