@@ -10,6 +10,7 @@ use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
+use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -55,6 +56,7 @@ $boardController = $container->get(BoardController::class);
 $threadController = $container->get(ThreadController::class);
 $postController = $container->get(PostController::class);
 $adminController = $container->get(AdminController::class);
+$moderationController = $container->get(ModerationController::class);
 $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
 
@@ -103,6 +105,11 @@ $router->group('/c/{community}', function (Router $router) use (
 
     $router->get('/t/{thread}', [$threadController, 'show']);
     $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired]);
+    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired]);
+    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
+    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
+    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
+    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
 
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);

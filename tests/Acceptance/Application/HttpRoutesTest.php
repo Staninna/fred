@@ -10,6 +10,7 @@ use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Controller\CommunityController;
+use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
@@ -92,7 +93,8 @@ final class HttpRoutesTest extends TestCase
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
-        $authService = new AuthService($userRepository, $roleRepository, $profileRepository);
+        $authService = new AuthService($userRepository, $roleRepository, $profileRepository, new \Fred\Infrastructure\Database\BanRepository($pdo));
+        $permissionService = new \Fred\Application\Auth\PermissionService();
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
@@ -124,6 +126,7 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
+            $permissionService,
             $communityHelper,
             $categoryRepository,
             $threadRepository,
@@ -141,6 +144,15 @@ final class HttpRoutesTest extends TestCase
             new BbcodeParser(),
             $profileRepository,
         );
+        $moderationController = new ModerationController(
+            $view,
+            $config,
+            $authService,
+            $permissionService,
+            $communityHelper,
+            $threadRepository,
+            $postRepository,
+        );
 
         $router->get('/', [$communityController, 'index']);
         $router->post('/communities', [$communityController, 'store']);
@@ -150,6 +162,11 @@ final class HttpRoutesTest extends TestCase
         $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store']);
         $router->get('/c/{community}/t/{thread}', [$threadController, 'show']);
         $router->post('/c/{community}/t/{thread}/reply', [$postController, 'store']);
+        $router->post('/c/{community}/t/{thread}/lock', [$moderationController, 'lockThread']);
+        $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread']);
+        $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread']);
+        $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread']);
+        $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost']);
         $router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
         $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
         $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);

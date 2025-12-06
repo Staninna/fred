@@ -52,6 +52,12 @@ final class PostRepository
         return $row === false ? null : $this->hydrate($row);
     }
 
+    public function delete(int $id): void
+    {
+        $statement = $this->pdo->prepare('DELETE FROM posts WHERE id = :id');
+        $statement->execute(['id' => $id]);
+    }
+
     public function create(
         int $communityId,
         int $threadId,

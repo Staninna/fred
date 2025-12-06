@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
@@ -25,6 +26,7 @@ final readonly class ThreadController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
+        private PermissionService $permissions,
         private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
         private ThreadRepository $threads,
@@ -69,6 +71,7 @@ final readonly class ThreadController
             'posts' => $posts,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

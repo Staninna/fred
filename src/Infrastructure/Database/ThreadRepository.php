@@ -89,6 +89,26 @@ final class ThreadRepository
         return $thread;
     }
 
+    public function updateLock(int $threadId, bool $locked): void
+    {
+        $statement = $this->pdo->prepare('UPDATE threads SET is_locked = :locked, updated_at = :updated_at WHERE id = :id');
+        $statement->execute([
+            'locked' => $locked ? 1 : 0,
+            'updated_at' => time(),
+            'id' => $threadId,
+        ]);
+    }
+
+    public function updateSticky(int $threadId, bool $sticky): void
+    {
+        $statement = $this->pdo->prepare('UPDATE threads SET is_sticky = :sticky, updated_at = :updated_at WHERE id = :id');
+        $statement->execute([
+            'sticky' => $sticky ? 1 : 0,
+            'updated_at' => time(),
+            'id' => $threadId,
+        ]);
+    }
+
     private function hydrate(array $row): Thread
     {
         return new Thread(

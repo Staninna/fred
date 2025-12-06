@@ -4,6 +4,7 @@
 /** @var array<int, array<int, Board>> $boardsByCategory */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
+/** @var callable(string, int): string $e */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
@@ -15,11 +16,11 @@ use Fred\Domain\Community\Community;
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2">Manage structure: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></th>
+        <th colspan="2">Manage structure: <?= $e($community->name) ?></th>
     </tr>
     <tr>
         <td class="table-heading">Description</td>
-        <td><?= htmlspecialchars($community->description, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($community->description) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Note</td>
@@ -35,7 +36,7 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td>
-            <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/categories" novalidate>
+            <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories" novalidate>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="category_name">Name</label></td>
@@ -64,7 +65,7 @@ use Fred\Domain\Community\Community;
         <?php foreach ($categories as $category): ?>
             <tr>
                 <td>
-                    <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/categories/<?= $category->id ?>" novalidate>
+                    <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories/<?= $category->id ?>" novalidate>
                         <table class="form-table" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td width="140">Name</td>
@@ -76,7 +77,7 @@ use Fred\Domain\Community\Community;
                             </tr>
                         </table>
                         <button class="button" type="submit">Update</button>
-                        <button class="button" type="submit" formaction="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/categories/<?= $category->id ?>/delete">Delete</button>
+                        <button class="button" type="submit" formaction="/c/<?= $e($community->slug) ?>/admin/categories/<?= $category->id ?>/delete">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -93,7 +94,7 @@ use Fred\Domain\Community\Community;
             <?php if ($categories === []): ?>
                 <div class="muted">Create a category first to add boards.</div>
             <?php else: ?>
-                <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/boards" novalidate>
+                <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards" novalidate>
                     <table class="form-table" cellpadding="0" cellspacing="0">
                         <tr>
                             <td width="140"><label for="board_name">Name</label></td>
@@ -116,7 +117,7 @@ use Fred\Domain\Community\Community;
                             <td>
                                 <select id="board_category_id" name="category_id">
                                     <?php foreach ($categories as $category): ?>
-                                        <option value="<?= $category->id ?>"><?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></option>
+                                        <option value="<?= $category->id ?>"><?= $e($category->name) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </td>
@@ -146,24 +147,24 @@ use Fred\Domain\Community\Community;
             <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
             <?php if ($categoryBoards === []): continue; endif; ?>
             <tr>
-                <td colspan="2" class="table-heading">Category: <?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?></td>
+                <td colspan="2" class="table-heading">Category: <?= $e($category->name) ?></td>
             </tr>
             <?php foreach ($categoryBoards as $board): ?>
                 <tr>
                     <td colspan="2">
-                        <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/boards/<?= $board->id ?>" novalidate>
+                        <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards/<?= $board->id ?>" novalidate>
                             <table class="form-table" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td width="140">Name</td>
-                                    <td><input name="name" type="text" value="<?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>" required></td>
+                                    <td><input name="name" type="text" value="<?= $e($board->name) ?>" required></td>
                                 </tr>
                                 <tr>
                                     <td>Slug</td>
-                                    <td><input name="slug" type="text" value="<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>" required></td>
+                                    <td><input name="slug" type="text" value="<?= $e($board->slug) ?>" required></td>
                                 </tr>
                                 <tr>
                                     <td>Description</td>
-                                    <td><input name="description" type="text" value="<?= htmlspecialchars($board->description, ENT_QUOTES, 'UTF-8') ?>"></td>
+                                    <td><input name="description" type="text" value="<?= $e($board->description) ?>"></td>
                                 </tr>
                                 <tr>
                                     <td>Position</td>
@@ -175,7 +176,7 @@ use Fred\Domain\Community\Community;
                                 </tr>
                             </table>
                             <button class="button" type="submit">Update</button>
-                            <button class="button" type="submit" formaction="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/boards/<?= $board->id ?>/delete">Delete</button>
+                            <button class="button" type="submit" formaction="/c/<?= $e($community->slug) ?>/admin/boards/<?= $board->id ?>/delete">Delete</button>
                         </form>
                     </td>
                 </tr>

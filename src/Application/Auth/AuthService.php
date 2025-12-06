@@ -6,6 +6,7 @@ namespace Fred\Application\Auth;
 
 use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 
@@ -25,6 +26,7 @@ final class AuthService
         private readonly UserRepository $users,
         private readonly RoleRepository $roles,
         private readonly ProfileRepository $profiles,
+        private readonly BanRepository $bans,
     ) {
         $this->roles->ensureDefaultRoles();
     }
@@ -43,6 +45,12 @@ final class AuthService
         $user = $this->users->findById((int) $userId);
         if ($user === null) {
             unset($_SESSION[self::SESSION_KEY]);
+
+            return $this->cached = $this->guest();
+        }
+
+        if ($this->bans->isBanned($user->id, time())) {
+            $this->logout();
 
             return $this->cached = $this->guest();
         }
@@ -98,6 +106,10 @@ final class AuthService
         }
 
         if (!password_verify($password, $user->passwordHash)) {
+            return false;
+        }
+
+        if ($this->bans->isBanned($user->id, time())) {
             return false;
         }
 

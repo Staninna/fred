@@ -20,6 +20,8 @@ final readonly class RoleRepository
         foreach ([
             ['slug' => 'guest', 'name' => 'Guest'],
             ['slug' => 'member', 'name' => 'Member'],
+            ['slug' => 'moderator', 'name' => 'Moderator'],
+            ['slug' => 'admin', 'name' => 'Administrator'],
         ] as $role) {
             $statement->execute($role);
         }

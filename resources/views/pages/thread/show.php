@@ -6,6 +6,8 @@
 /** @var array<int, Post> $posts */
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, array): string $renderPartial */
+/** @var bool $canModerate */
+/** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
@@ -17,18 +19,18 @@ use Fred\Domain\Forum\Post;
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2"><?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?></th>
+        <th colspan="2"><?= $e($thread->title) ?></th>
     </tr>
     <tr>
         <td class="table-heading">Location</td>
         <td>
             Community:
-            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?>
+            <a href="/c/<?= $e($community->slug) ?>">
+                <?= $e($community->name) ?>
             </a>
             · Board:
-            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
-                <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+            <a href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">
+                <?= $e($board->name) ?>
             </a>
         </td>
     </tr>
@@ -39,13 +41,39 @@ use Fred\Domain\Forum\Post;
     <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
         <tr>
             <td class="table-heading">Admin</td>
-            <td><a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a></td>
+            <td>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a>
+                <?php if ($canModerate): ?>
+                    <?php if ($thread->isLocked): ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
+                            <button class="button" type="submit">Unlock</button>
+                        </form>
+                    <?php else: ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/lock">
+                            <button class="button" type="submit">Lock</button>
+                        </form>
+                    <?php endif; ?>
+                    <?php if ($thread->isSticky): ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unsticky">
+                            <button class="button" type="submit">Unsticky</button>
+                        </form>
+                    <?php else: ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/sticky">
+                            <button class="button" type="submit">Sticky</button>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </td>
         </tr>
     <?php endif; ?>
 </table>
 
 <div id="post-list">
-    <?= $renderPartial('partials/thread/posts.php', ['posts' => $posts]) ?>
+    <?= $renderPartial('partials/thread/posts.php', [
+        'posts' => $posts,
+        'canModerate' => $canModerate ?? false,
+        'communitySlug' => $community->slug,
+    ]) ?>
 </div>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -60,7 +88,7 @@ use Fred\Domain\Forum\Post;
             <?php elseif ($thread->isLocked || $board->isLocked): ?>
                 <div class="muted">This thread is locked.</div>
             <?php else: ?>
-                <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/t/<?= $thread->id ?>/reply" novalidate>
+                <form method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/reply" novalidate>
                     <table class="form-table" cellpadding="0" cellspacing="0">
                         <tr>
                             <td width="120"><label for="reply_body">Message</label></td>
