@@ -6,33 +6,44 @@
 /** @var callable(string, array): string $renderPartial */
 ?>
 
-<article class="card card--hero">
-    <div>
-        <p class="eyebrow">New thread</p>
-        <h1><?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="lede">Start a discussion in <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?>.</p>
-        <div class="tags">
-            <span class="tag">Community: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></span>
-            <span class="tag">Board ID: <?= $board->id ?></span>
-        </div>
-    </div>
-</article>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2">New thread</th>
+    </tr>
+    <tr>
+        <td class="table-heading">Community</td>
+        <td><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></td>
+    </tr>
+    <tr>
+        <td class="table-heading">Board</td>
+        <td><?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?> (ID: <?= $board->id ?>)</td>
+    </tr>
+</table>
 
-<article class="card">
-    <h2>Create thread</h2>
-    <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-    <form class="form" method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread" novalidate>
-        <div class="field">
-            <label for="title">Title</label>
-            <input id="title" name="title" type="text" value="<?= htmlspecialchars($old['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
-        </div>
-        <div class="field">
-            <label for="body">Body</label>
-            <textarea id="body" name="body" rows="6" required><?= htmlspecialchars($old['body'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
-        </div>
-        <div class="account__actions">
-            <button class="button" type="submit">Post thread</button>
-        <a class="button button--ghost" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
-        </div>
-    </form>
-</article>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th>Create thread</th>
+    </tr>
+    <tr>
+        <td>
+            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+            <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread" novalidate>
+                <table class="form-table" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td width="140"><label for="title">Title</label></td>
+                        <td><input id="title" name="title" type="text" value="<?= htmlspecialchars($old['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required></td>
+                    </tr>
+                    <tr>
+                        <td><label for="body">Body</label></td>
+                        <td>
+                            <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
+                            <textarea id="body" name="body" rows="6" required><?= htmlspecialchars($old['body'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                        </td>
+                    </tr>
+                </table>
+                <button class="button" type="submit">Post thread</button>
+                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
+            </form>
+        </td>
+    </tr>
+</table>

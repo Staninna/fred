@@ -7,79 +7,64 @@
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 ?>
 
-<article class="card card--hero">
-    <div>
-        <p class="eyebrow">Thread</p>
-        <h1><?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?></h1>
-        <div class="tags">
-            <span class="tag">Community: <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></span>
-            <span class="tag">
-                <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
-                    Board: <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
-                </a>
-            </span>
-            <?php if ($thread->isSticky): ?><span class="tag">Sticky</span><?php endif; ?>
-            <?php if ($thread->isAnnouncement): ?><span class="tag">Announcement</span><?php endif; ?>
-            <?php if ($thread->isLocked): ?><span class="tag">Locked</span><?php endif; ?>
-        </div>
-        <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
-            <div class="account__actions" style="margin-top: 0.75rem;">
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a>
-            </div>
-        <?php endif; ?>
-    </div>
-    <div class="status">
-        <div class="status__item">
-            <div class="status__label">Posts</div>
-            <div class="status__value"><?= count($posts) ?></div>
-        </div>
-        <div class="status__item">
-            <div class="status__label">Started</div>
-            <div class="status__value"><?= date('Y-m-d H:i', $thread->createdAt) ?></div>
-        </div>
-    </div>
-</article>
-
-<article class="card">
-    <h2>Posts</h2>
-    <?php if ($posts === []): ?>
-        <p class="muted">No replies yet.</p>
-    <?php else: ?>
-        <ul class="list">
-            <?php foreach ($posts as $post): ?>
-                <li id="post-<?= $post->id ?>" class="card card--compact" style="margin-bottom: 0.75rem;">
-                    <div class="nav__title"><?= htmlspecialchars($post->authorName, ENT_QUOTES, 'UTF-8') ?></div>
-                    <div class="nav__subtitle"><?= date('Y-m-d H:i', $post->createdAt) ?></div>
-                    <div class="nav__subtitle post-body">
-                        <?= $post->bodyParsed !== null
-                            ? $post->bodyParsed
-                            : nl2br(htmlspecialchars($post->bodyRaw, ENT_QUOTES, 'UTF-8')) ?>
-                    </div>
-                    <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>
-                        <div class="nav__subtitle post-signature">
-                            <?= $post->signatureSnapshot ?>
-                        </div>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2"><?= htmlspecialchars($thread->title, ENT_QUOTES, 'UTF-8') ?></th>
+    </tr>
+    <tr>
+        <td class="table-heading">Location</td>
+        <td>
+            Community:
+            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>">
+                <?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?>
+            </a>
+            · Board:
+            <a href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">
+                <?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td class="table-heading">Started</td>
+        <td><?= date('Y-m-d H:i', $thread->createdAt) ?> · Posts: <?= count($posts) ?> <?= $thread->isLocked ? '· Locked' : '' ?></td>
+    </tr>
+    <?php if (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+        <tr>
+            <td class="table-heading">Admin</td>
+            <td><a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/admin/structure">Admin this community</a></td>
+        </tr>
     <?php endif; ?>
-</article>
+</table>
 
-<article class="card card--compact">
-    <h2>Reply</h2>
-    <?php if (($currentUser ?? null) === null || $currentUser->isGuest()): ?>
-        <p class="muted">Sign in to reply.</p>
-        <a class="button button--ghost" href="/login">Sign in</a>
-    <?php elseif ($thread->isLocked || $board->isLocked): ?>
-        <p class="muted">This thread is locked.</p>
-    <?php else: ?>
-        <form class="form" method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/t/<?= $thread->id ?>/reply" novalidate>
-            <div class="field">
-                <label for="reply_body">Message</label>
-                <textarea id="reply_body" name="body" rows="4" required></textarea>
-            </div>
-            <button class="button" type="submit">Post reply</button>
-        </form>
-    <?php endif; ?>
-</article>
+<div id="post-list">
+    <?= $renderPartial('partials/thread/posts.php', ['posts' => $posts]) ?>
+</div>
+
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th>Reply</th>
+    </tr>
+    <tr>
+        <td>
+            <?php if (($currentUser ?? null) === null || $currentUser->isGuest()): ?>
+                <div class="muted">Sign in to reply.</div>
+                <a class="button" href="/login">Sign in</a>
+            <?php elseif ($thread->isLocked || $board->isLocked): ?>
+                <div class="muted">This thread is locked.</div>
+            <?php else: ?>
+                <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/t/<?= $thread->id ?>/reply" novalidate>
+                    <table class="form-table" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="120"><label for="reply_body">Message</label></td>
+                            <td>
+                                <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'reply_body']) ?>
+                                <textarea id="reply_body" name="body" rows="4" required></textarea>
+                            </td>
+                        </tr>
+                    </table>
+                    <button class="button" type="submit">Post reply</button>
+                </form>
+            <?php endif; ?>
+        </td>
+    </tr>
+</table>
