@@ -8,6 +8,7 @@ use RuntimeException;
 
 use function extract;
 use function file_exists;
+use function htmlspecialchars;
 use function ltrim;
 use function ob_get_clean;
 use function ob_start;
@@ -57,6 +58,9 @@ final readonly class ViewRenderer
             $relative = str_replace($viewRoot . '/', '', $filePath);
             throw new RuntimeException('View not found: ' . $relative);
         }
+
+        /** @var callable(string, int): string $e */
+        $e = static fn (string $value, int $flags = ENT_QUOTES): string => htmlspecialchars($value, $flags, 'UTF-8');
 
         extract($data, EXTR_SKIP);
 
