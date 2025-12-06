@@ -155,7 +155,7 @@ final readonly class ProfileController
         if (\strlen($website) > 200) {
             $errors[] = 'Website URL is too long (max 200 characters).';
         }
-        if ($website !== '' && !\preg_match('#^https?://#i', $website)) {
+        if ($website !== '' && !preg_match('#^https?://#i', $website)) {
             $errors[] = 'Website must start with http:// or https://';
         }
 

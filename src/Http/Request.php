@@ -27,7 +27,7 @@ final readonly class Request
         $path = (string) parse_url($uri, PHP_URL_PATH);
         $path = $path === '' ? '/' : $path;
 
-        $headers = function_exists('getallheaders') ? (getallheaders() ?: []) : [];
+        $headers = \function_exists('getallheaders') ? (getallheaders() ?: []) : [];
         if ($headers === []) {
             foreach ($_SERVER as $key => $value) {
                 if (str_starts_with($key, 'HTTP_')) {
