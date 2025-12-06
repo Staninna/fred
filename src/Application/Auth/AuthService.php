@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Application\Auth;
 
 use Fred\Domain\Auth\User;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\UserRepository;
@@ -23,6 +24,7 @@ final class AuthService
     private ?CurrentUser $cached = null;
 
     public function __construct(
+        private readonly AppConfig $config,
         private readonly UserRepository $users,
         private readonly RoleRepository $roles,
         private readonly ProfileRepository $profiles,
@@ -35,6 +37,16 @@ final class AuthService
     {
         if ($this->cached !== null) {
             return $this->cached;
+        }
+
+        if ($this->allowDevImpersonation()) {
+            $devUser = $_GET['dev_user'] ?? null;
+            if (\is_string($devUser) && $devUser !== '') {
+                $user = $this->users->findByUsername($devUser);
+                if ($user !== null && !$this->bans->isBanned($user->id, time())) {
+                    return $this->cached = $this->mapUser($user);
+                }
+            }
         }
 
         $userId = $_SESSION[self::SESSION_KEY] ?? null;
@@ -160,5 +172,10 @@ final class AuthService
         $this->cached = $current;
 
         return $current;
+    }
+
+    private function allowDevImpersonation(): bool
+    {
+        return $this->config->environment !== 'production';
     }
 }

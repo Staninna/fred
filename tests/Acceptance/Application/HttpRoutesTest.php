@@ -93,7 +93,7 @@ final class HttpRoutesTest extends TestCase
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
-        $authService = new AuthService($userRepository, $roleRepository, $profileRepository, new \Fred\Infrastructure\Database\BanRepository($pdo));
+        $authService = new AuthService($config, $userRepository, $roleRepository, $profileRepository, new \Fred\Infrastructure\Database\BanRepository($pdo));
         $permissionService = new \Fred\Application\Auth\PermissionService();
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
