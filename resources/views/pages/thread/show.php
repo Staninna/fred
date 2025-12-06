@@ -7,6 +7,7 @@
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, array): string $renderPartial */
 /** @var bool $canModerate */
+/** @var array<int, \Fred\Domain\Community\Board> $allBoards */
 /** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
@@ -44,6 +45,17 @@ use Fred\Domain\Forum\Post;
             <td>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a>
                 <?php if ($canModerate): ?>
+                    <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
+                        <label for="target_board" class="small">Move to:</label>
+                        <select name="target_board" id="target_board">
+                            <?php foreach ($allBoards as $boardOption): ?>
+                                <option value="<?= $e($boardOption->slug) ?>"<?= $boardOption->id === $board->id ? ' selected' : '' ?>>
+                                    <?= $e($boardOption->name) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button class="button" type="submit">Move</button>
+                    </form>
                     <?php if ($thread->isLocked): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
                             <button class="button" type="submit">Unlock</button>

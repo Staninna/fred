@@ -44,4 +44,25 @@ final readonly class BanRepository
 
         return $statement->fetchColumn() !== false;
     }
+
+    /**
+     * @return array<int, array{ id:int, user_id:int, username:string, reason:string, expires_at:int|null, created_at:int }>
+     */
+    public function listAll(): array
+    {
+        $statement = $this->pdo->query(
+            'SELECT b.id, b.user_id, b.reason, b.expires_at, b.created_at, u.username
+             FROM bans b
+             JOIN users u ON u.id = b.user_id
+             ORDER BY b.created_at DESC'
+        );
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function delete(int $id): void
+    {
+        $statement = $this->pdo->prepare('DELETE FROM bans WHERE id = :id');
+        $statement->execute(['id' => $id]);
+    }
 }

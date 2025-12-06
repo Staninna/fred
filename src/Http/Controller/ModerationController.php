@@ -9,8 +9,12 @@ use Fred\Application\Auth\PermissionService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ModerationController
@@ -24,6 +28,10 @@ final readonly class ModerationController
         private ThreadRepository $threads,
         private PostRepository $posts,
         private \Fred\Application\Content\BbcodeParser $parser,
+        private UserRepository $users,
+        private BanRepository $bans,
+        private BoardRepository $boards,
+        private CategoryRepository $categories,
     ) {
     }
 
@@ -121,6 +129,125 @@ final readonly class ModerationController
         );
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '#post-' . $postId);
+    }
+
+    public function moveThread(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canMoveThread($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $threadId = (int) ($request->params['thread'] ?? 0);
+        $thread = $this->threads->findById($threadId);
+        if ($thread === null || $thread->communityId !== $community->id) {
+            return $this->notFound($request);
+        }
+
+        $targetBoardSlug = (string) ($request->body['target_board'] ?? '');
+        $targetBoard = $this->communityHelper->resolveBoard($community, $targetBoardSlug);
+        if ($targetBoard === null) {
+            return $this->notFound($request);
+        }
+
+        $this->threads->moveToBoard($threadId, $targetBoard->id);
+
+        return Response::redirect('/c/' . $community->slug . '/t/' . $threadId);
+    }
+
+    public function listBans(Request $request): Response
+    {
+        if (!$this->permissions->canBan($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $bans = $this->bans->listAll();
+        $body = $this->view->render('pages/moderation/bans.php', [
+            'pageTitle' => 'Bans',
+            'bans' => $bans,
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'activePath' => $request->path,
+            'errors' => [],
+            'old' => [],
+        ]);
+
+        return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+    }
+
+    public function createBan(Request $request): Response
+    {
+        if (!$this->permissions->canBan($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $username = trim((string) ($request->body['username'] ?? ''));
+        $reason = trim((string) ($request->body['reason'] ?? ''));
+        $expires = trim((string) ($request->body['expires_at'] ?? ''));
+
+        $errors = [];
+        if ($username === '') {
+            $errors[] = 'Username is required.';
+        }
+        if ($reason === '') {
+            $errors[] = 'Reason is required.';
+        }
+
+        $expiresAt = null;
+        if ($expires !== '') {
+            $expiresAt = strtotime($expires) ?: null;
+        }
+
+        $user = $username !== '' ? $this->users->findByUsername($username) : null;
+        if ($user === null) {
+            $errors[] = 'User not found.';
+        }
+
+        if ($errors === []) {
+            $this->bans->create(
+                userId: $user->id,
+                reason: $reason,
+                expiresAt: $expiresAt,
+                timestamp: time(),
+            );
+
+            return Response::redirect('/c/' . ($request->params['community'] ?? '') . '/admin/bans');
+        }
+
+        $bans = $this->bans->listAll();
+        $body = $this->view->render('pages/moderation/bans.php', [
+            'pageTitle' => 'Bans',
+            'bans' => $bans,
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'activePath' => $request->path,
+            'errors' => $errors,
+            'old' => [
+                'username' => $username,
+                'reason' => $reason,
+                'expires_at' => $expires,
+            ],
+        ]);
+
+        return new Response(422, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+    }
+
+    public function deleteBan(Request $request): Response
+    {
+        if (!$this->permissions->canBan($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $banId = (int) ($request->params['ban'] ?? 0);
+        if ($banId > 0) {
+            $this->bans->delete($banId);
+        }
+
+        return Response::redirect('/c/' . ($request->params['community'] ?? '') . '/admin/bans');
     }
 
     private function toggleLock(Request $request, bool $lock): Response

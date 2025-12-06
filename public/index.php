@@ -110,9 +110,14 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
     $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
     $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
+    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired]);
     $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
     $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
     $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
+
+    $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
+    $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);
+    $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired]);
 
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);

@@ -109,6 +109,16 @@ final class ThreadRepository
         ]);
     }
 
+    public function moveToBoard(int $threadId, int $boardId): void
+    {
+        $statement = $this->pdo->prepare('UPDATE threads SET board_id = :board_id, updated_at = :updated_at WHERE id = :id');
+        $statement->execute([
+            'board_id' => $boardId,
+            'updated_at' => time(),
+            'id' => $threadId,
+        ]);
+    }
+
     private function hydrate(array $row): Thread
     {
         return new Thread(

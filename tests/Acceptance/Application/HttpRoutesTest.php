@@ -166,9 +166,13 @@ final class HttpRoutesTest extends TestCase
         $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread']);
         $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread']);
         $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread']);
+        $router->post('/c/{community}/t/{thread}/move', [$moderationController, 'moveThread']);
         $router->get('/c/{community}/p/{post}/edit', [$moderationController, 'editPost']);
         $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost']);
         $router->post('/c/{community}/p/{post}/edit', [$moderationController, 'editPost']);
+        $router->get('/c/{community}/admin/bans', [$moderationController, 'listBans']);
+        $router->post('/c/{community}/admin/bans', [$moderationController, 'createBan']);
+        $router->post('/c/{community}/admin/bans/{ban}/delete', [$moderationController, 'deleteBan']);
         $router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
         $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
         $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);

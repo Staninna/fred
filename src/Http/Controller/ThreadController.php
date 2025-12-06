@@ -72,6 +72,7 @@ final readonly class ThreadController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
+            'allBoards' => $structure['boards'],
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

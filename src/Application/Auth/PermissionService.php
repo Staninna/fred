@@ -15,4 +15,14 @@ final readonly class PermissionService
     {
         return $user->role === 'admin';
     }
+
+    public function canMoveThread(CurrentUser $user): bool
+    {
+        return $this->canModerate($user);
+    }
+
+    public function canEditAnyPost(CurrentUser $user): bool
+    {
+        return $this->canModerate($user);
+    }
 }
