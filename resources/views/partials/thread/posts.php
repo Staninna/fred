@@ -31,6 +31,7 @@ use Fred\Domain\Forum\Post;
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">
                             <button class="button" type="submit">Delete</button>
                         </form>
+                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit">Edit</a>
                     <?php endif; ?>
                     <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>
                         <hr>

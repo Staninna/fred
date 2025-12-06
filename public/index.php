@@ -86,6 +86,7 @@ $router->group('/c/{community}', function (Router $router) use (
     $adminController,
     $profileController,
     $authRequired,
+    $moderationController
 ) {
     $router->get('/', [$communityController, 'show']);
     $router->get('/u/{username}', [$profileController, 'show']);
@@ -109,7 +110,9 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
     $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
     $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
+    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
     $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
+    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
 
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);

@@ -58,6 +58,24 @@ final class PostRepository
         $statement->execute(['id' => $id]);
     }
 
+    public function updateBody(int $id, string $raw, ?string $parsed, int $timestamp): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE posts
+             SET body_raw = :body_raw,
+                 body_parsed = :body_parsed,
+                 updated_at = :updated_at
+             WHERE id = :id'
+        );
+
+        $statement->execute([
+            'body_raw' => $raw,
+            'body_parsed' => $parsed,
+            'updated_at' => $timestamp,
+            'id' => $id,
+        ]);
+    }
+
     public function create(
         int $communityId,
         int $threadId,

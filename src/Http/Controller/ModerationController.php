@@ -23,6 +23,7 @@ final readonly class ModerationController
         private CommunityHelper $communityHelper,
         private ThreadRepository $threads,
         private PostRepository $posts,
+        private \Fred\Application\Content\BbcodeParser $parser,
     ) {
     }
 
@@ -66,6 +67,60 @@ final readonly class ModerationController
         $this->posts->delete($postId);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId);
+    }
+
+    public function editPost(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if ($request->method === 'GET') {
+            if (!$this->permissions->canModerate($this->auth->currentUser())) {
+                return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            }
+            $postId = (int) ($request->params['post'] ?? 0);
+            $post = $this->posts->findById($postId);
+            if ($post === null || $post->communityId !== $community->id) {
+                return $this->notFound($request);
+            }
+            $body = $this->view->render('pages/moderation/edit_post.php', [
+                'pageTitle' => 'Edit post',
+                'community' => $community,
+                'post' => $post,
+                'currentUser' => $this->auth->currentUser(),
+                'environment' => $this->config->environment,
+                'activePath' => $request->path,
+                'errors' => [],
+            ]);
+
+            return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $postId = (int) ($request->params['post'] ?? 0);
+        $post = $this->posts->findById($postId);
+        if ($post === null || $post->communityId !== $community->id) {
+            return $this->notFound($request);
+        }
+
+        $bodyRaw = trim((string) ($request->body['body'] ?? ''));
+        if ($bodyRaw === '') {
+            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId);
+        }
+
+        $this->posts->updateBody(
+            id: $postId,
+            raw: $bodyRaw,
+            parsed: $this->parser->parse($bodyRaw),
+            timestamp: time(),
+        );
+
+        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '#post-' . $postId);
     }
 
     private function toggleLock(Request $request, bool $lock): Response

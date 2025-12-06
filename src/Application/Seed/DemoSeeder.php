@@ -48,11 +48,13 @@ final readonly class DemoSeeder
 
         $this->roles->ensureDefaultRoles();
         $memberRole = $this->roles->findBySlug('member');
-        if ($memberRole === null) {
-            throw new \RuntimeException('Member role is missing.');
+        $moderatorRole = $this->roles->findBySlug('moderator');
+        $adminRole = $this->roles->findBySlug('admin');
+        if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
+            throw new \RuntimeException('Core roles are missing.');
         }
 
-        $users = $this->seedUsers($memberRole->id, $now);
+        $users = $this->seedUsers($memberRole->id, $moderatorRole->id, $adminRole->id, $now);
 
         $communities = $this->seedCommunities($now);
         $boardIds = [];
@@ -91,12 +93,14 @@ final readonly class DemoSeeder
     /**
      * @throws RandomException
      */
-    private function seedUsers(int $roleId, int $timestamp): array
+    private function seedUsers(int $memberRoleId, int $moderatorRoleId, int $adminRoleId, int $timestamp): array
     {
         $users = [];
 
-        $users[] = $this->ensureUser('stan', 's t a n i n n a', 'stan', $roleId, $timestamp);
-        $users[] = $this->ensureUser('demo', 'Demo User', 'password', $roleId, $timestamp);
+        $users[] = $this->ensureUser('stan', 's t a n i n n a', 'stan', $adminRoleId, $timestamp);
+        $users[] = $this->ensureUser('mod', 'Moderator', 'mod', $moderatorRoleId, $timestamp);
+        $users[] = $this->ensureUser('user', 'Regular User', 'user', $memberRoleId, $timestamp);
+        $users[] = $this->ensureUser('demo', 'Demo User', 'password', $memberRoleId, $timestamp);
 
         for ($i = 1; $i < $this->userCount; $i++) {
             $username = 'member' . $i;
@@ -110,7 +114,7 @@ final readonly class DemoSeeder
                 $username,
                 $this->faker->name(),
                 'password',
-                $roleId,
+                $memberRoleId,
                 $timestamp - random_int(0, 10_000),
             );
         }
