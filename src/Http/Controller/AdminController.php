@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -20,6 +21,7 @@ final readonly class AdminController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
+        private PermissionService $permissions,
         private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
         private BoardRepository $boards,
@@ -31,6 +33,10 @@ final readonly class AdminController
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
             return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
         $structure = $this->communityHelper->structureForCommunity($community);
@@ -69,6 +75,10 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
         $name = trim((string) ($request->body['name'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
 
@@ -86,6 +96,10 @@ final readonly class AdminController
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
             return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
         $categoryId = (int) ($request->params['category'] ?? 0);
@@ -113,6 +127,10 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
         $categoryId = (int) ($request->params['category'] ?? 0);
         $category = $this->categories->findById($categoryId);
         if ($category === null || $category->communityId !== $community->id) {
@@ -129,6 +147,10 @@ final readonly class AdminController
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
             return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
         $categoryId = (int) ($request->body['category_id'] ?? 0);
@@ -178,6 +200,10 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
         $boardId = (int) ($request->params['board'] ?? 0);
         $board = $this->boards->findById($boardId);
         if ($board === null || $board->communityId !== $community->id) {
@@ -223,6 +249,10 @@ final readonly class AdminController
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
             return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
         $boardId = (int) ($request->params['board'] ?? 0);
