@@ -26,6 +26,11 @@ final readonly class SearchService
      */
     public function searchThreads(int $communityId, ?int $boardId, ?int $userId, string $query, int $limit = 10, int $offset = 0): array
     {
+        $formatted = $this->formatQuery($query);
+        if ($formatted === '') {
+            return [];
+        }
+
         $sql = <<<SQL
 SELECT
     t.id AS thread_id,
@@ -46,7 +51,7 @@ WHERE threads_fts MATCH :query
 SQL;
 
         $params = [
-            ':query' => $this->formatQuery($query),
+            ':query' => $formatted,
             ':community_id' => $communityId,
         ];
 
@@ -91,6 +96,11 @@ SQL;
      */
     public function searchPosts(int $communityId, ?int $boardId, ?int $userId, string $query, int $limit = 10, int $offset = 0): array
     {
+        $formatted = $this->formatQuery($query);
+        if ($formatted === '') {
+            return [];
+        }
+
         $sql = <<<SQL
 SELECT
     p.id AS post_id,
@@ -113,7 +123,7 @@ WHERE posts_fts MATCH :query
 SQL;
 
         $params = [
-            ':query' => $this->formatQuery($query),
+            ':query' => $formatted,
             ':community_id' => $communityId,
         ];
 
@@ -146,17 +156,27 @@ SQL;
     private function formatQuery(string $input): string
     {
         $terms = preg_split('/\s+/', trim($input)) ?: [];
-        $terms = array_filter($terms, static fn ($term) => $term !== '');
+        $terms = array_filter($terms, static function ($term) {
+            $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term) ?? '';
+
+            return $clean !== '';
+        });
 
         if ($terms === []) {
             return '';
         }
 
         $escaped = array_map(
-            static fn (string $term): string => str_replace('"', '', $term) . '*',
+            static function (string $term): string {
+                $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term) ?? '';
+
+                return $clean === '' ? '' : $clean . '*';
+            },
             $terms,
         );
 
-        return implode(' ', $escaped);
+        $escaped = array_filter($escaped, static fn ($term) => $term !== '');
+
+        return $escaped === [] ? '' : implode(' ', $escaped);
     }
 }

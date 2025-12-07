@@ -77,6 +77,10 @@ final readonly class SearchController
                 limit: 10,
                 offset: 0,
             );
+
+            if ($threads === [] && $posts === []) {
+                $errors[] = 'No results found.';
+            }
         }
 
         $body = $this->view->render('pages/search/results.php', [
