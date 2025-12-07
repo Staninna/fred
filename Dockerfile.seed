@@ -2,7 +2,7 @@
 FROM composer:2 AS composer
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+RUN composer install --optimize-autoloader --no-interaction --no-progress
 
 # Use official PHP image with Apache
 FROM php:8.3-apache
@@ -25,10 +25,11 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 COPY --from=composer /app/vendor /var/www/html/vendor
 
-# Ensure scripts are executable, set permissions, run migrations, then ensure writable storage for www-data
+# Ensure scripts are executable, set permissions, migrate fresh, seed demo data, then ensure writable storage for www-data
 RUN chmod +x bin/migrate bin/seed \
 	&& chown -R www-data:www-data /var/www/html \
-	&& php bin/migrate \
+	&& php bin/migrate --fresh \
+	&& php bin/seed \
 	&& chown -R www-data:www-data storage || true
 
 # Expose port 80
