@@ -1,0 +1,10 @@
+.git
+.gitignore
+storage/logs
+storage/uploads
+storage/debugbar
+node_modules
+vendor/bin/.phpunit.result.cache
+*.log
+tests
+docs

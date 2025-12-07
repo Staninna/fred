@@ -10,5 +10,27 @@
 - Visit `http://localhost:8000` in your browser.
 - Alternatively, run `php public/index.php` with your preferred web server configuration.
 
+
 ## Tests
 - `./vendor/bin/phpunit`
+
+## Docker
+
+You can run Fred in a container using Docker:
+
+- Ensure `.env` exists (copy `.env.example` to `.env`) before building so configuration is available in the image.
+
+### Build the image
+```bash
+docker build -t fred-app .
+```
+
+### Run the container
+```bash
+docker run -p 8080:80 fred-app
+
+# Optional: persist uploads/logs
+docker run -p 8080:80 -v fred_storage:/var/www/html/storage fred-app
+```
+
+Then visit [http://localhost:8080](http://localhost:8080) in your browser.
