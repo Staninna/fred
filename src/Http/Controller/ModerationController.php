@@ -105,6 +105,7 @@ final readonly class ModerationController
             if ($post === null || $post->communityId !== $community->id) {
                 return $this->notFound($request);
             }
+            $structure = $this->communityHelper->structureForCommunity($community);
             $body = $this->view->render('pages/moderation/edit_post.php', [
                 'pageTitle' => 'Edit post',
                 'community' => $community,
@@ -113,6 +114,13 @@ final readonly class ModerationController
                 'environment' => $this->config->environment,
                 'activePath' => $request->path,
                 'errors' => [],
+                'currentCommunity' => $community,
+                'navSections' => $this->communityHelper->navSections(
+                    $community,
+                    $structure['categories'],
+                    $structure['boardsByCategory'],
+                ),
+                'customCss' => trim((string) ($community->customCss ?? '')),
             ]);
 
             return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
