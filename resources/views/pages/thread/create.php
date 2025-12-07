@@ -4,6 +4,7 @@
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var callable(string, array): string $renderPartial */
+/** @var callable(string, int): string $e */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;

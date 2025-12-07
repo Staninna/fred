@@ -3,6 +3,7 @@
 /** @var Profile|null $profile */
 /** @var Community $community */
 /** @var CurrentUser|null $currentUser */
+/** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Auth\Profile;

@@ -1,3 +1,4 @@
+<?php /** @var callable(string, int): string $e */ ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
         <th>Not found</th>
