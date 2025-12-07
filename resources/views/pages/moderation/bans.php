@@ -35,9 +35,26 @@
                         <td><label for="reason">Reason</label></td>
                         <td><input id="reason" name="reason" type="text" value="<?= $e($old['reason'] ?? '') ?>" required></td>
                     </tr>
+                    <?php
+                    $expiresValue = '';
+                    if (isset($old['expires_at']) && trim((string) $old['expires_at']) !== '') {
+                        $parsed = strtotime((string) $old['expires_at']);
+                        if ($parsed !== false) {
+                            $expiresValue = date('Y-m-d\TH:i', $parsed);
+                        }
+                    }
+                    ?>
                     <tr>
                         <td><label for="expires_at">Expires at</label></td>
-                        <td><input id="expires_at" name="expires_at" type="text" value="<?= $e($old['expires_at'] ?? '') ?>" placeholder="YYYY-MM-DD or empty for permanent"></td>
+                        <td>
+                            <input
+                                id="expires_at"
+                                name="expires_at"
+                                type="datetime-local"
+                                value="<?= $e($expiresValue) ?>"
+                                placeholder="Pick date/time or leave blank for permanent"
+                            >
+                        </td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Ban user</button>
