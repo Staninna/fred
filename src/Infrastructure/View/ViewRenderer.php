@@ -64,6 +64,7 @@ final readonly class ViewRenderer
         extract($data, EXTR_SKIP);
 
         ob_start();
+        echo '<!-- File rendered: ' . $filePath . '-->' . PHP_EOL;
         include $filePath;
 
         return (string) ob_get_clean();
