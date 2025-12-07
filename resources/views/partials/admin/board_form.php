@@ -54,7 +54,7 @@ $selectedCategoryId = $board?->categoryId ?? ($categories[0]->id ?? '');
         <tr>
             <td><label for="board_custom_css_<?= $e($slug ?: 'new') ?>">Custom CSS</label></td>
             <td>
-                <textarea id="board_custom_css_<?= $e($slug ?: 'new') ?>" name="custom_css" rows="3" placeholder="Optional, max 5000 characters" style="width: 100%;"><?= $e($customCss) ?></textarea>
+                <textarea id="board_custom_css_<?= $e($slug ?: 'new') ?>" name="custom_css" rows="3" placeholder="Optional, max 25000 characters" style="width: 100%;"><?= $e($customCss) ?></textarea>
             </td>
         </tr>
     </table>
