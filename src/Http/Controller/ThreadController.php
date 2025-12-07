@@ -64,8 +64,18 @@ final readonly class ThreadController
             return $this->notFound($request);
         }
 
+        $page = (int) ($request->query['page'] ?? 1);
+        $page = $page < 1 ? 1 : $page;
+        $perPage = 25;
+        $totalPosts = $this->posts->countByThreadId($thread->id);
+        $totalPages = $totalPosts === 0 ? 1 : (int) ceil($totalPosts / $perPage);
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
         $structure = $this->communityHelper->structureForCommunity($community);
-        $posts = $this->posts->listByThreadId($thread->id);
+        $posts = $this->posts->listByThreadIdPaginated($thread->id, $perPage, $offset);
         $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
         $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
@@ -82,6 +92,12 @@ final readonly class ThreadController
             'posts' => $posts,
             'profilesByUserId' => $profilesByUser,
             'attachmentsByPost' => $attachmentsByPost,
+            'totalPosts' => $totalPosts,
+            'pagination' => [
+                'page' => $page,
+                'perPage' => $perPage,
+                'totalPages' => $totalPages,
+            ],
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
             'currentCommunity' => $community,

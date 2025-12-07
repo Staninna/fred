@@ -18,20 +18,40 @@ final class ThreadRepository
      */
     public function listByBoardId(int $boardId): array
     {
+        return $this->listByBoardIdPaginated($boardId, 1000, 0);
+    }
+
+    /**
+     * @return Thread[]
+     */
+    public function listByBoardIdPaginated(int $boardId, int $limit, int $offset): array
+    {
         $statement = $this->pdo->prepare(
             'SELECT t.id, t.community_id, t.board_id, t.title, t.author_id, t.is_sticky, t.is_locked, t.is_announcement, t.created_at, t.updated_at,
                     u.display_name AS author_name
              FROM threads t
              JOIN users u ON u.id = t.author_id
              WHERE t.board_id = :board_id
-             ORDER BY t.is_sticky DESC, t.created_at DESC'
+             ORDER BY t.is_sticky DESC, t.created_at DESC
+             LIMIT :limit OFFSET :offset'
         );
 
-        $statement->execute(['board_id' => $boardId]);
+        $statement->bindValue(':board_id', $boardId, PDO::PARAM_INT);
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map([$this, 'hydrate'], $rows ?: []);
+    }
+
+    public function countByBoardId(int $boardId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM threads WHERE board_id = :board_id');
+        $statement->execute(['board_id' => $boardId]);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function findById(int $id): ?Thread

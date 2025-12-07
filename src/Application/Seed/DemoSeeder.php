@@ -140,8 +140,16 @@ final readonly class DemoSeeder
     {
         $communities = [];
         foreach ([
-            ['slug' => 'demo', 'name' => 'Demo Community', 'description' => 'Sample space to explore Fred.'],
-            ['slug' => 'retro', 'name' => 'Retro Arcade', 'description' => 'Vintage computing and retro gaming hangout.'],
+            [
+                'slug' => 'demo',
+                'name' => 'Demo Community',
+                'description' => 'Sample space to explore Fred with seeded threads, posts, and moderator tools.',
+            ],
+            [
+                'slug' => 'retro',
+                'name' => 'Retro Arcade',
+                'description' => 'Vintage computing and retro gaming hangout: share builds, CRT tips, and high scores.',
+            ],
         ] as $spec) {
             $community = $this->communities->findBySlug($spec['slug']);
             if ($community === null) {

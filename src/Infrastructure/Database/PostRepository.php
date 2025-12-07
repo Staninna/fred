@@ -18,20 +18,40 @@ final class PostRepository
      */
     public function listByThreadId(int $threadId): array
     {
+        return $this->listByThreadIdPaginated($threadId, 1000, 0);
+    }
+
+    /**
+     * @return Post[]
+     */
+    public function listByThreadIdPaginated(int $threadId, int $limit, int $offset): array
+    {
         $statement = $this->pdo->prepare(
             'SELECT p.id, p.community_id, p.thread_id, p.author_id, p.body_raw, p.body_parsed, p.signature_snapshot, p.created_at, p.updated_at,
                     u.display_name AS author_name, u.username AS author_username
              FROM posts p
              JOIN users u ON u.id = p.author_id
              WHERE p.thread_id = :thread_id
-             ORDER BY p.created_at ASC'
+             ORDER BY p.created_at ASC
+             LIMIT :limit OFFSET :offset'
         );
 
-        $statement->execute(['thread_id' => $threadId]);
+        $statement->bindValue(':thread_id', $threadId, PDO::PARAM_INT);
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map([$this, 'hydrate'], $rows ?: []);
+    }
+
+    public function countByThreadId(int $threadId): int
+    {
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM posts WHERE thread_id = :thread_id');
+        $statement->execute(['thread_id' => $threadId]);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function findById(int $id): ?Post

@@ -51,6 +51,15 @@ final class HttpRoutesTest extends TestCase
         $this->assertSame(200, $communityResponse->status);
         $this->assertStringContainsString('Main Plaza', $communityResponse->body);
 
+        $aboutResponse = $router->dispatch(new Request(
+            method: 'GET',
+            path: '/c/' . $communitySlug . '/about',
+            query: [],
+            body: [],
+        ));
+        $this->assertSame(200, $aboutResponse->status);
+        $this->assertStringContainsString('About', $aboutResponse->body);
+
         $boardResponse = $router->dispatch(new Request(
             method: 'GET',
             path: '/c/' . $communitySlug . '/b/' . $boardSlug,
@@ -185,6 +194,7 @@ final class HttpRoutesTest extends TestCase
         $router->get('/', [$communityController, 'index']);
         $router->post('/communities', [$communityController, 'store']);
         $router->get('/c/{community}', [$communityController, 'show']);
+        $router->get('/c/{community}/about', [$communityController, 'about']);
         $router->get('/c/{community}/b/{board}', [$boardController, 'show']);
         $router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create']);
         $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store']);

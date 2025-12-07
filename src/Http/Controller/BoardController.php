@@ -44,8 +44,18 @@ final readonly class BoardController
             return $this->notFound($request);
         }
 
+        $page = (int) ($request->query['page'] ?? 1);
+        $page = $page < 1 ? 1 : $page;
+        $perPage = 20;
+        $totalThreads = $this->threads->countByBoardId($board->id);
+        $totalPages = $totalThreads === 0 ? 1 : (int) ceil($totalThreads / $perPage);
+        if ($page > $totalPages) {
+            $page = $totalPages;
+        }
+        $offset = ($page - 1) * $perPage;
+
         $structure = $this->communityHelper->structureForCommunity($community);
-        $threads = $this->threads->listByBoardId($board->id);
+        $threads = $this->threads->listByBoardIdPaginated($board->id, $perPage, $offset);
 
         $currentUser = $this->auth->currentUser();
 
@@ -55,6 +65,12 @@ final readonly class BoardController
             'board' => $board,
             'category' => $category,
             'threads' => $threads,
+            'totalThreads' => $totalThreads,
+            'pagination' => [
+                'page' => $page,
+                'perPage' => $perPage,
+                'totalPages' => $totalPages,
+            ],
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
             'currentCommunity' => $community,

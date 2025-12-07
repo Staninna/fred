@@ -131,6 +131,39 @@ final readonly class CommunityController
         );
     }
 
+    public function about(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        $structure = $this->communityHelper->structureForCommunity($community);
+        $body = $this->view->render('pages/community/about.php', [
+            'pageTitle' => $community->name . ' · About',
+            'community' => $community,
+            'categories' => $structure['categories'],
+            'boardsByCategory' => $structure['boardsByCategory'],
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
+            'activePath' => $request->path,
+            'navSections' => $this->communityHelper->navSections(
+                $community,
+                $structure['categories'],
+                $structure['boardsByCategory'],
+                $this->communities->all(),
+            ),
+            'customCss' => trim((string) ($community->customCss ?? '')),
+        ]);
+
+        return new Response(
+            status: 200,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
     private function notFound(Request $request): Response
     {
         return Response::notFound(

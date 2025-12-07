@@ -33,7 +33,7 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td class="table-heading">Status</td>
-        <td><?= $board->isLocked ? 'Locked' : 'Open' ?> · Threads: <?= count($threads) ?> · Board ID: <?= $board->id ?></td>
+        <td><?= $board->isLocked ? 'Locked' : 'Open' ?> · Threads: <?= $totalThreads ?? count($threads) ?> · Board ID: <?= $board->id ?></td>
     </tr>
     <?php if (!empty($canModerate ?? false)): ?>
         <tr>
@@ -69,6 +69,28 @@ use Fred\Domain\Community\Community;
                 </td>
             </tr>
         <?php endforeach; ?>
+    <?php endif; ?>
+    <?php if (!empty($pagination) && ($pagination['totalPages'] ?? 1) > 1): ?>
+        <?php
+        $page = (int) ($pagination['page'] ?? 1);
+        $totalPages = (int) ($pagination['totalPages'] ?? 1);
+        $base = '/c/' . $e($community->slug) . '/b/' . $e($board->slug);
+        ?>
+        <tr>
+            <td colspan="2" class="pagination">
+                <?php if ($page > 1): ?>
+                    <a class="button" href="<?= $base ?>?page=<?= $page - 1 ?>">Prev</a>
+                <?php else: ?>
+                    <span class="muted">Prev</span>
+                <?php endif; ?>
+                <span class="muted">Page <?= $page ?> of <?= $totalPages ?></span>
+                <?php if ($page < $totalPages): ?>
+                    <a class="button" href="<?= $base ?>?page=<?= $page + 1 ?>">Next</a>
+                <?php else: ?>
+                    <span class="muted">Next</span>
+                <?php endif; ?>
+            </td>
+        </tr>
     <?php endif; ?>
     <tr>
         <td colspan="2">

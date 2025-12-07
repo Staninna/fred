@@ -98,6 +98,7 @@ $router->group('/c/{community}', function (Router $router) use (
     $searchController
 ) {
     $router->get('/', [$communityController, 'show']);
+    $router->get('/about', [$communityController, 'about']);
     $router->get('/u/{username}', [$profileController, 'show']);
 
     $router->group('/settings', function (Router $router) use ($profileController) {

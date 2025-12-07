@@ -429,6 +429,7 @@ final class ApplicationFlowTest extends TestCase
             $searchController
         ) {
             $router->get('/', [$communityController, 'show']);
+            $router->get('/about', [$communityController, 'about']);
             $router->get('/u/{username}', [$profileController, 'show']);
 
             $router->group('/settings', function (Router $router) use ($profileController) {
