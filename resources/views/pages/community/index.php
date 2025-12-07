@@ -52,24 +52,26 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-            <form method="post" action="/communities" novalidate>
-                <table class="form-table" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td width="140"><label for="name">Name</label></td>
-                        <td><input id="name" name="name" type="text" value="<?= $e($old['name'] ?? '') ?>" required></td>
-                    </tr>
-                    <tr>
-                        <td><label for="slug">Slug</label></td>
-                        <td><input id="slug" name="slug" type="text" value="<?= $e($old['slug'] ?? '') ?>" placeholder="auto-generated from name"></td>
-                    </tr>
-                    <tr>
-                        <td><label for="description">Description</label></td>
-                        <td><input id="description" name="description" type="text" value="<?= $e($old['description'] ?? '') ?>"></td>
-                    </tr>
-                </table>
-                <button class="button" type="submit">Create</button>
-            </form>
+            <?php if (!empty($canCreateCommunity ?? false)): ?>
+                <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+                <form method="post" action="/communities" novalidate>
+                    <table class="form-table" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td width="140"><label for="name">Name</label></td>
+                            <td><input id="name" name="name" type="text" value="<?= $e($old['name'] ?? '') ?>" required></td>
+                        </tr>
+                        <tr>
+                            <td><label for="slug">Slug</label></td>
+                            <td><input id="slug" name="slug" type="text" value="<?= $e($old['slug'] ?? '') ?>" placeholder="auto-generated from name"></td>
+                        </tr>
+                        <tr>
+                            <td><label for="description">Description</label></td>
+                            <td><input id="description" name="description" type="text" value="<?= $e($old['description'] ?? '') ?>"></td>
+                        </tr>
+                    </table>
+                    <button class="button" type="submit">Create</button>
+                </form>
+            <?php endif ?>
         </td>
     </tr>
 </table>

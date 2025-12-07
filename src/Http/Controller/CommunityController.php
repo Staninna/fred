@@ -40,6 +40,7 @@ final readonly class CommunityController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
+            'canCreateCommunity' => $this->permissions->canCreateCommunity($this->auth->currentUser()),
         ]);
 
         return new Response(
@@ -51,6 +52,10 @@ final readonly class CommunityController
 
     public function store(Request $request): Response
     {
+        if (!$this->permissions->canCreateCommunity($this->auth->currentUser())) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
         $name = trim((string) ($request->body['name'] ?? ''));
         $slug = trim((string) ($request->body['slug'] ?? ''));
         $description = trim((string) ($request->body['description'] ?? ''));

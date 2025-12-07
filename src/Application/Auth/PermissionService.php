@@ -30,6 +30,11 @@ final readonly class PermissionService
         return $this->has($user, 'thread.create');
     }
 
+    public function canCreateCommunity(CurrentUser $user): bool
+    {
+        return $user->role === 'admin';
+    }
+
     public function canReply(CurrentUser $user): bool
     {
         return $this->has($user, 'post.create');
