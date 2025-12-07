@@ -19,12 +19,14 @@
                     <tr>
                         <td width="140"><label for="username">Username</label></td>
                         <td>
-                            <input id="username" name="username" type="text" list="ban-username-options" value="<?= $e($old['username'] ?? '') ?>" required>
-                            <datalist id="ban-username-options">
+                            <select id="username" name="username" required style="min-width: 200px;">
+                                <option value="">Select user</option>
                                 <?php foreach ($usernames as $username): ?>
-                                    <option value="<?= $e($username) ?>"></option>
+                                    <option value="<?= $e($username) ?>"<?= ($old['username'] ?? '') === $username ? ' selected' : '' ?>>
+                                        <?= $e($username) ?>
+                                    </option>
                                 <?php endforeach; ?>
-                            </datalist>
+                            </select>
                         </td>
                     </tr>
                     <tr>

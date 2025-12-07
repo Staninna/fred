@@ -41,12 +41,14 @@
                     <tr>
                         <td><label for="user">User</label></td>
                         <td>
-                            <input id="user" name="user" type="text" list="username-options" value="<?= $e($userFilter?->username ?? '') ?>" placeholder="Filter by username (optional)">
-                            <datalist id="username-options">
+                            <select id="user" name="user" style="min-width: 180px;">
+                                <option value="">All users</option>
                                 <?php foreach ($usernames as $username): ?>
-                                    <option value="<?= $e($username) ?>"></option>
+                                    <option value="<?= $e($username) ?>"<?= ($userFilter?->username === $username) ? ' selected' : '' ?>>
+                                        <?= $e($username) ?>
+                                    </option>
                                 <?php endforeach; ?>
-                            </datalist>
+                            </select>
                         </td>
                     </tr>
                 </table>
