@@ -9,6 +9,7 @@ use Fred\Application\Auth\CurrentUser;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\UploadService;
 use Fred\Domain\Auth\Profile;
+use Fred\Domain\Auth\User;
 use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
