@@ -95,6 +95,10 @@ final readonly class CommunityHelper
                 'label' => 'Search',
                 'href' => '/c/' . $communitySlug . '/search',
             ];
+            $boardLinks[] = [
+                'label' => 'About',
+                'href' => '/c/' . $communitySlug . '/about',
+            ];
         }
         foreach ($categories as $category) {
             $boardLinks[] = [
