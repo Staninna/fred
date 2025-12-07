@@ -117,7 +117,7 @@ use Fred\Domain\Community\Community;
                         <table class="form-table" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td width="140">Name</td>
-                                <td><input name="name" type="text" value="<?= htmlspecialchars($category->name, ENT_QUOTES, 'UTF-8') ?>" required></td>
+                                <td><input name="name" type="text" value="<?= $e($category->name) ?>" required></td>
                             </tr>
                             <tr>
                                 <td>Position</td>

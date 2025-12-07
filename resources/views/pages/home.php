@@ -14,11 +14,11 @@
     </tr>
     <tr>
         <td class="table-heading">Environment</td>
-        <td><?= htmlspecialchars($environment, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($environment) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Base URL</td>
-        <td><?= htmlspecialchars($baseUrl, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($baseUrl) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Status</td>

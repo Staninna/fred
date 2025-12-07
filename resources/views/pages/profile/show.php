@@ -13,15 +13,15 @@ use Fred\Domain\Community\Community;
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2">Profile: <?= htmlspecialchars($user->displayName, ENT_QUOTES, 'UTF-8') ?> (@<?= htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8') ?>)</th>
+        <th colspan="2">Profile: <?= $e($user->displayName) ?> (@<?= $e($user->username) ?>)</th>
     </tr>
     <tr>
         <td class="table-heading">Community</td>
-        <td><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?> · User ID: <?= $user->id ?></td>
+        <td><?= $e($community->name) ?> · User ID: <?= $user->id ?></td>
     </tr>
     <tr>
         <td class="table-heading">Role</td>
-        <td><?= htmlspecialchars($user->roleName, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($user->roleName) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Joined</td>
@@ -31,8 +31,8 @@ use Fred\Domain\Community\Community;
         <tr>
             <td class="table-heading">Actions</td>
             <td>
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/settings/profile">Edit profile</a>
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/settings/signature">Edit signature</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/settings/profile">Edit profile</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/settings/signature">Edit signature</a>
             </td>
         </tr>
     <?php endif; ?>
@@ -47,7 +47,7 @@ use Fred\Domain\Community\Community;
             <?php if ($profile === null || trim($profile->bio) === ''): ?>
                 <div class="muted">No bio set.</div>
             <?php else: ?>
-                <div class="post-body"><?= nl2br(htmlspecialchars($profile->bio, ENT_QUOTES, 'UTF-8')) ?></div>
+                <div class="post-body"><?= nl2br($e($profile->bio)) ?></div>
             <?php endif; ?>
         </td>
     </tr>
@@ -59,7 +59,7 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td class="table-heading">Location</td>
-        <td><?= htmlspecialchars($profile?->location ?? '', ENT_QUOTES, 'UTF-8') ?: 'Not set' ?></td>
+        <td><?= $e($profile?->location ?? '') ?: 'Not set' ?></td>
     </tr>
     <tr>
         <td class="table-heading">Website</td>
@@ -67,8 +67,8 @@ use Fred\Domain\Community\Community;
             <?php if (($profile?->website ?? '') === ''): ?>
                 Not set
             <?php else: ?>
-                <a href="<?= htmlspecialchars($profile->website, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener">
-                    <?= htmlspecialchars($profile->website, ENT_QUOTES, 'UTF-8') ?>
+                <a href="<?= $e($profile->website) ?>" target="_blank" rel="noopener">
+                    <?= $e($profile->website) ?>
                 </a>
             <?php endif; ?>
         </td>
@@ -85,7 +85,7 @@ use Fred\Domain\Community\Community;
                 <div class="muted">No signature set.</div>
             <?php else: ?>
                 <div class="post-body">
-                    <?= $profile->signatureParsed !== '' ? $profile->signatureParsed : nl2br(htmlspecialchars($profile->signatureRaw, ENT_QUOTES, 'UTF-8')) ?>
+                    <?= $profile->signatureParsed !== '' ? $profile->signatureParsed : nl2br($e($profile->signatureRaw)) ?>
                 </div>
             <?php endif; ?>
         </td>

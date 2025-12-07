@@ -3,7 +3,7 @@
         <th>Not found</th>
     </tr>
     <tr>
-        <td>The route you tried (<?= htmlspecialchars($path ?? '', ENT_QUOTES, 'UTF-8') ?>) is not mapped. Head back to the home page to keep exploring.</td>
+        <td>The route you tried (<?= $e($path ?? '') ?>) is not mapped. Head back to the home page to keep exploring.</td>
     </tr>
     <tr>
         <td><a class="button" href="/">Return home</a></td>

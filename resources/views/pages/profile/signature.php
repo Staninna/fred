@@ -19,13 +19,13 @@ use Fred\Domain\Community\Community;
         <td>
             <div class="info-line">Use BBCode to format your signature. Keep it short and friendly.</div>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-            <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/settings/signature" novalidate>
+            <form method="post" action="/c/<?= $e($community->slug) ?>/settings/signature" novalidate>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="signature">Signature</label></td>
                         <td>
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'signature']) ?>
-                            <textarea id="signature" name="signature" rows="5"><?= htmlspecialchars($profile?->signatureRaw ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                            <textarea id="signature" name="signature" rows="5"><?= $e($profile?->signatureRaw ?? '') ?></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -33,7 +33,7 @@ use Fred\Domain\Community\Community;
                     </tr>
                 </table>
                 <button class="button" type="submit">Save signature</button>
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/u/<?= htmlspecialchars($currentUser?->username ?? '', ENT_QUOTES, 'UTF-8') ?>">Back to profile</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/u/<?= $e($currentUser?->username ?? '') ?>">Back to profile</a>
             </form>
         </td>
     </tr>

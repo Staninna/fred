@@ -16,11 +16,11 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td class="table-heading">Community</td>
-        <td><?= htmlspecialchars($community->name, ENT_QUOTES, 'UTF-8') ?></td>
+        <td><?= $e($community->name) ?></td>
     </tr>
     <tr>
         <td class="table-heading">Board</td>
-        <td><?= htmlspecialchars($board->name, ENT_QUOTES, 'UTF-8') ?> (ID: <?= $board->id ?>)</td>
+        <td><?= $e($board->name) ?> (ID: <?= $board->id ?>)</td>
     </tr>
 </table>
 
@@ -31,22 +31,22 @@ use Fred\Domain\Community\Community;
     <tr>
         <td>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-            <form method="post" action="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>/thread" novalidate>
+            <form method="post" action="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread" novalidate>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="title">Title</label></td>
-                        <td><input id="title" name="title" type="text" value="<?= htmlspecialchars($old['title'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required></td>
+                        <td><input id="title" name="title" type="text" value="<?= $e($old['title'] ?? '') ?>" required></td>
                     </tr>
                     <tr>
                         <td><label for="body">Body</label></td>
                         <td>
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
-                            <textarea id="body" name="body" rows="6" required><?= htmlspecialchars($old['body'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                            <textarea id="body" name="body" rows="6" required><?= $e($old['body'] ?? '') ?></textarea>
                         </td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Post thread</button>
-                <a class="button" href="/c/<?= htmlspecialchars($community->slug, ENT_QUOTES, 'UTF-8') ?>/b/<?= htmlspecialchars($board->slug, ENT_QUOTES, 'UTF-8') ?>">Cancel</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">Cancel</a>
             </form>
         </td>
     </tr>
