@@ -104,6 +104,7 @@ final class HttpRoutesTest extends TestCase
             $profileRepository,
             new \Fred\Infrastructure\Database\BanRepository($pdo),
             new \Fred\Infrastructure\Database\PermissionRepository($pdo),
+            $communityRepository,
         );
         $permissionService = new \Fred\Application\Auth\PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);

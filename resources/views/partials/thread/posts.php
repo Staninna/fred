@@ -5,6 +5,7 @@
 /** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */
 /** @var array<int, array<int, \Fred\Domain\Forum\Attachment>> $attachmentsByPost */
+/** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
@@ -20,6 +21,12 @@ use Fred\Domain\Forum\Attachment;
         <?php foreach ($posts as $post): ?>
             <tr id="post-<?= $post->id ?>">
                 <td class="author-cell">
+                    <?php $profile = $profilesByUserId[$post->authorId] ?? null; ?>
+                    <?php if (!empty($profile?->avatarPath ?? '')): ?>
+                        <div class="author-avatar">
+                            <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="<?= $e($post->authorName) ?> avatar" style="max-width: 64px; max-height: 64px;">
+                        </div>
+                    <?php endif; ?>
                     <div><strong><a href="/c/<?= $e($communitySlug) ?>/u/<?= $e($post->authorUsername) ?>"><?= $e($post->authorName) ?></a></strong></div>
                     <div class="small"><?= date('Y-m-d H:i', $post->createdAt) ?></div>
                     <div class="small">Post #<?= $post->id ?></div>

@@ -9,6 +9,7 @@ final readonly class Profile
     public function __construct(
         public int $id,
         public int $userId,
+        public int $communityId,
         public string $bio,
         public string $location,
         public string $website,

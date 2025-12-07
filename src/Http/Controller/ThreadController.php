@@ -10,6 +10,7 @@ use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\UploadService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Post;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -66,6 +67,8 @@ final readonly class ThreadController
         $structure = $this->communityHelper->structureForCommunity($community);
         $posts = $this->posts->listByThreadId($thread->id);
         $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
+        $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
+        $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
         $currentUser = $this->auth->currentUser();
 
         $body = $this->view->render('pages/thread/show.php', [
@@ -75,6 +78,7 @@ final readonly class ThreadController
             'category' => $category,
             'thread' => $thread,
             'posts' => $posts,
+            'profilesByUserId' => $profilesByUser,
             'attachmentsByPost' => $attachmentsByPost,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
@@ -200,7 +204,7 @@ final readonly class ThreadController
             timestamp: $timestamp,
         );
 
-        $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
+        $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
 
         $this->posts->create(
             communityId: $community->id,

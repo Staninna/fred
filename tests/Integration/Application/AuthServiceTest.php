@@ -11,6 +11,7 @@ use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Tests\TestCase;
 
 final class AuthServiceTest extends TestCase
@@ -20,8 +21,10 @@ final class AuthServiceTest extends TestCase
     private ProfileRepository $profileRepository;
     private BanRepository $banRepository;
     private PermissionRepository $permissionRepository;
+    private CommunityRepository $communityRepository;
     private AppConfig $appConfig;
     private \PDO $pdo;
+    private int $communityId;
 
     protected function setUp(): void
     {
@@ -39,6 +42,9 @@ final class AuthServiceTest extends TestCase
         $this->profileRepository = new ProfileRepository($this->pdo);
         $this->banRepository = new BanRepository($this->pdo);
         $this->permissionRepository = new PermissionRepository($this->pdo);
+        $this->communityRepository = new CommunityRepository($this->pdo);
+        $community = $this->communityRepository->create('test', 'Test Community', '', null, time());
+        $this->communityId = $community->id;
         $this->appConfig = new AppConfig(
             environment: 'testing',
             baseUrl: 'http://localhost',
@@ -58,6 +64,7 @@ final class AuthServiceTest extends TestCase
             profiles: $this->profileRepository,
             bans: $this->banRepository,
             permissions: $this->permissionRepository,
+            communities: $this->communityRepository,
         );
 
         $current = $auth->register('bob', 'Bobby', 'secret123');
@@ -67,7 +74,7 @@ final class AuthServiceTest extends TestCase
         $this->assertSame('member', $current->role);
         $this->assertNotNull($_SESSION['user_id'] ?? null);
 
-        $profile = (new ProfileRepository($this->pdo))->findByUserId($current->id ?? 0);
+        $profile = (new ProfileRepository($this->pdo))->findByUserAndCommunity($current->id ?? 0, $this->communityId);
         $this->assertNotNull($profile);
     }
 
@@ -80,6 +87,7 @@ final class AuthServiceTest extends TestCase
             profiles: $this->profileRepository,
             bans: $this->banRepository,
             permissions: $this->permissionRepository,
+            communities: $this->communityRepository,
         );
 
         $auth->register('jane', 'Jane', 'password1');
@@ -101,6 +109,7 @@ final class AuthServiceTest extends TestCase
             profiles: $this->profileRepository,
             bans: $this->banRepository,
             permissions: $this->permissionRepository,
+            communities: $this->communityRepository,
         );
 
         $auth->register('mallory', 'Mallory', 'topsecret');
@@ -120,6 +129,7 @@ final class AuthServiceTest extends TestCase
             profiles: $this->profileRepository,
             bans: $this->banRepository,
             permissions: $this->permissionRepository,
+            communities: $this->communityRepository,
         );
 
         $auth->register('banned', 'Banned User', 'secret');

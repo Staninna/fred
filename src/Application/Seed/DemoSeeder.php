@@ -61,6 +61,8 @@ final readonly class DemoSeeder
         $communities = $this->seedCommunities($now);
         $boardIds = [];
 
+        $this->ensureProfilesPerCommunity($users, $communities, $now);
+
         foreach ($communities as $community) {
             $boardIds = array_merge($boardIds, $this->seedCommunityContent($community, $users, $now));
             $this->assignModerators($community->id, $users, $now, $moderatorRole->id);
@@ -335,20 +337,30 @@ final readonly class DemoSeeder
                 createdAt: $timestamp,
             );
         }
-        $profile = $this->profiles->findByUserId($user->id);
-        if ($profile === null) {
-            $this->profiles->create(
-                userId: $user->id,
-                bio: '',
-                location: '',
-                website: '',
-                signatureRaw: '',
-                signatureParsed: '',
-                avatarPath: '',
-                timestamp: $timestamp,
-            );
-        }
-
         return $user;
+    }
+
+    private function ensureProfilesPerCommunity(array $users, array $communities, int $timestamp): void
+    {
+        foreach ($users as $user) {
+            foreach ($communities as $community) {
+                $existing = $this->profiles->findByUserAndCommunity($user->id, $community->id);
+                if ($existing !== null) {
+                    continue;
+                }
+
+                $this->profiles->create(
+                    userId: $user->id,
+                    communityId: $community->id,
+                    bio: '',
+                    location: '',
+                    website: '',
+                    signatureRaw: '',
+                    signatureParsed: '',
+                    avatarPath: '',
+                    timestamp: $timestamp,
+                );
+            }
+        }
     }
 }

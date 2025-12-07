@@ -93,7 +93,7 @@ final readonly class PostController
             }
         }
 
-        $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
+        $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
         $bodyParsed = $this->parser->parse($bodyText);
         $timestamp = time();
         $createdPost = $this->posts->create(

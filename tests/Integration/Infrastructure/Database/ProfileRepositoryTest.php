@@ -6,6 +6,7 @@ namespace Tests\Integration\Infrastructure\Database;
 
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Tests\TestCase;
 
@@ -19,12 +20,16 @@ final class ProfileRepositoryTest extends TestCase
         $role = $roles->findBySlug('member');
         $this->assertNotNull($role);
 
+        $communities = new CommunityRepository($pdo);
+        $community = $communities->create('test', 'Test', '', null, time());
+
         $users = new UserRepository($pdo);
         $user = $users->create('profileuser', 'Profile User', 'hash', $role->id, time());
 
         $profiles = new ProfileRepository($pdo);
         $profile = $profiles->create(
             userId: $user->id,
+            communityId: $community->id,
             bio: '',
             location: '',
             website: '',
@@ -36,8 +41,8 @@ final class ProfileRepositoryTest extends TestCase
 
         $this->assertSame($user->id, $profile->userId);
 
-        $profiles->updateSignature($user->id, 'hello', '<b>hello</b>', time());
-        $updated = $profiles->findByUserId($user->id);
+        $profiles->updateSignature($user->id, $community->id, 'hello', '<b>hello</b>', time());
+        $updated = $profiles->findByUserAndCommunity($user->id, $community->id);
 
         $this->assertNotNull($updated);
         $this->assertSame('hello', $updated->signatureRaw);

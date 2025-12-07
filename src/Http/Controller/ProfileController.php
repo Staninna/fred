@@ -46,24 +46,9 @@ final readonly class ProfileController
             return $this->notFound($request);
         }
 
-        $profile = $this->profiles->findByUserId($user->id);
+        $profile = $this->profiles->ensureExists($user->id, $community->id);
 
-        $body = $this->view->render('pages/profile/show.php', [
-            'pageTitle' => $user->displayName,
-            'community' => $community,
-            'user' => $user,
-            'profile' => $profile,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-        ]);
-
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return $this->renderProfilePage($request, $community, $user, $profile);
     }
 
     public function editSignature(Request $request): Response
@@ -73,22 +58,12 @@ final readonly class ProfileController
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
-
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
-        if ($profile === null) {
-            $profile = $this->profiles->create(
-                userId: $currentUser->id ?? 0,
-                bio: '',
-                location: '',
-                website: '',
-                signatureRaw: '',
-                signatureParsed: '',
-                avatarPath: '',
-                timestamp: time(),
-            );
+        $user = $this->users->findById($currentUser->id ?? 0);
+        if ($user === null) {
+            return $this->notFound($request);
         }
 
-        return $this->renderSignatureForm($request, $community, $currentUser, $profile, []);
+        return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
     }
 
     public function updateSignature(Request $request): Response
@@ -98,6 +73,10 @@ final readonly class ProfileController
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
+        $user = $this->users->findById($currentUser->id ?? 0);
+        if ($user === null) {
+            return $this->notFound($request);
+        }
 
         $signature = trim((string) ($request->body['signature'] ?? ''));
         $errors = [];
@@ -107,43 +86,21 @@ final readonly class ProfileController
         }
 
         if ($errors !== []) {
-            $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+            $profile = $this->profiles->ensureExists($currentUser->id ?? 0, $community->id);
 
-            return $this->renderSignatureForm($request, $community, $currentUser, $profile, $errors, 422);
+            return $this->renderProfilePage($request, $community, $user, $profile, [], $errors, []);
         }
 
         $parsed = $signature === '' ? '' : $this->parser->parse($signature);
         $this->profiles->updateSignature(
             userId: $currentUser->id ?? 0,
+            communityId: $community->id,
             raw: $signature,
             parsed: $parsed,
             timestamp: time(),
         );
 
         return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
-    }
-
-    private function renderAvatarForm(
-        Request $request,
-        Community $community,
-        CurrentUser $currentUser,
-        array $errors,
-        int $status = 200,
-    ): Response {
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
-
-        $body = $this->view->render('pages/profile/avatar.php', [
-            'pageTitle' => 'Edit avatar',
-            'community' => $community,
-            'currentUser' => $currentUser,
-            'profile' => $profile,
-            'errors' => $errors,
-            'environment' => $this->config->environment,
-            'activePath' => $request->path,
-            'currentCommunity' => $community,
-        ]);
-
-        return new Response($status, ['Content-Type' => 'text/html; charset=utf-8'], $body);
     }
 
     public function editProfile(Request $request): Response
@@ -154,9 +111,7 @@ final readonly class ProfileController
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
 
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
-
-        return $this->renderProfileForm($request, $community, $currentUser, $profile, [], []);
+        return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
     }
 
     public function editAvatar(Request $request): Response
@@ -167,20 +122,7 @@ final readonly class ProfileController
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
 
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
-
-        $body = $this->view->render('pages/profile/avatar.php', [
-            'pageTitle' => 'Edit avatar',
-            'community' => $community,
-            'currentUser' => $currentUser,
-            'profile' => $profile,
-            'errors' => [],
-            'environment' => $this->config->environment,
-            'activePath' => $request->path,
-            'currentCommunity' => $community,
-        ]);
-
-        return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+        return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
     }
 
     public function updateAvatar(Request $request): Response
@@ -190,21 +132,26 @@ final readonly class ProfileController
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
+        $user = $this->users->findById($currentUser->id ?? 0);
+        if ($user === null) {
+            return $this->notFound($request);
+        }
 
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+        $profile = $this->profiles->ensureExists($currentUser->id ?? 0, $community->id);
         $file = $request->files['avatar'] ?? null;
         if (!\is_array($file) || ($file['error'] ?? null) === UPLOAD_ERR_NO_FILE) {
-            return $this->renderAvatarForm($request, $community, $currentUser, ['Please choose a file.'], 422);
+            return $this->renderProfilePage($request, $community, $user, $profile, [], [], ['Please choose a file.']);
         }
 
         try {
             $path = $this->uploads->saveAvatar($file);
         } catch (\Throwable $exception) {
-            return $this->renderAvatarForm($request, $community, $currentUser, [$exception->getMessage()], 422);
+            return $this->renderProfilePage($request, $community, $user, $profile, [], [], [$exception->getMessage()]);
         }
 
         $this->profiles->updateProfile(
             userId: $currentUser->id ?? 0,
+            communityId: $community->id,
             bio: $profile->bio,
             location: $profile->location,
             website: $profile->website,
@@ -247,10 +194,11 @@ final readonly class ProfileController
             'website' => $website,
         ];
 
-        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+        $profile = $this->profiles->findByUserAndCommunity($currentUser->id ?? 0, $community->id);
         if ($profile === null) {
             $profile = $this->profiles->create(
                 userId: $currentUser->id ?? 0,
+                communityId: $community->id,
                 bio: '',
                 location: '',
                 website: '',
@@ -262,11 +210,12 @@ final readonly class ProfileController
         }
 
         if ($errors !== []) {
-            return $this->renderProfileForm($request, $community, $currentUser, $profile, $errors, $old, 422);
+            return $this->renderProfilePage($request, $community, $user, $profile, $errors, [], [], $old);
         }
 
         $this->profiles->updateProfile(
             userId: $currentUser->id ?? 0,
+            communityId: $community->id,
             bio: $bio,
             location: $location,
             website: $website,
@@ -295,19 +244,28 @@ final readonly class ProfileController
         return ['community' => $community, 'currentUser' => $currentUser];
     }
 
-    private function renderSignatureForm(
+    private function renderProfilePage(
         Request $request,
         Community $community,
-        CurrentUser $currentUser,
-        ?Profile $profile,
-        array $errors,
-        int $status = 200,
+        User $user,
+        Profile $profile,
+        array $profileErrors = [],
+        array $signatureErrors = [],
+        array $avatarErrors = [],
+        array $oldProfile = [],
     ): Response {
-        $body = $this->view->render('pages/profile/signature.php', [
-            'pageTitle' => 'Edit signature',
+        $status = ($profileErrors !== [] || $signatureErrors !== [] || $avatarErrors !== []) ? 422 : 200;
+        $currentUser = $this->auth->currentUser();
+
+        $body = $this->view->render('pages/profile/show.php', [
+            'pageTitle' => $user->displayName,
             'community' => $community,
+            'user' => $user,
             'profile' => $profile,
-            'errors' => $errors,
+            'profileErrors' => $profileErrors,
+            'signatureErrors' => $signatureErrors,
+            'avatarErrors' => $avatarErrors,
+            'oldProfile' => $oldProfile,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
             'currentCommunity' => $community,
@@ -329,34 +287,6 @@ final readonly class ProfileController
             auth: $this->auth,
             request: $request,
             navSections: $this->communityHelper->navForCommunity(),
-        );
-    }
-
-    private function renderProfileForm(
-        Request $request,
-        Community $community,
-        CurrentUser $currentUser,
-        ?Profile $profile,
-        array $errors,
-        array $old,
-        int $status = 200,
-    ): Response {
-        $body = $this->view->render('pages/profile/edit.php', [
-            'pageTitle' => 'Edit profile',
-            'community' => $community,
-            'profile' => $profile,
-            'errors' => $errors,
-            'old' => $old,
-            'environment' => $this->config->environment,
-            'currentUser' => $currentUser,
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-        ]);
-
-        return new Response(
-            status: $status,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
         );
     }
 }

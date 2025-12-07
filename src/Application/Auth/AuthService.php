@@ -11,6 +11,7 @@ use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 
 use function password_hash;
 use function password_verify;
@@ -31,6 +32,7 @@ final class AuthService
         private readonly ProfileRepository $profiles,
         private readonly BanRepository $bans,
         private readonly PermissionRepository $permissions,
+        private readonly CommunityRepository $communities,
     ) {
         $this->roles->ensureDefaultRoles();
         $this->permissions->ensureDefaultPermissions();
@@ -99,16 +101,20 @@ final class AuthService
             roleId: $role->id,
             createdAt: time(),
         );
-        $this->profiles->create(
-            userId: $user->id,
-            bio: '',
-            location: '',
-            website: '',
-            signatureRaw: '',
-            signatureParsed: '',
-            avatarPath: '',
-            timestamp: time(),
-        );
+        $communities = $this->communities->all();
+        foreach ($communities as $community) {
+            $this->profiles->create(
+                userId: $user->id,
+                communityId: $community->id,
+                bio: '',
+                location: '',
+                website: '',
+                signatureRaw: '',
+                signatureParsed: '',
+                avatarPath: '',
+                timestamp: time(),
+            );
+        }
 
         return $this->loginUser($user);
     }
