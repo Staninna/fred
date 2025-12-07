@@ -254,6 +254,7 @@ function trackNavigation(Request $request): ?Response
 
     if (!$skipSlice && $index !== count($history) - 1) {
         $history = array_slice($history, 0, $index + 1);
+        $index = count($history) - 1;
     }
 
     $fullPath = $request->path;
@@ -262,16 +263,17 @@ function trackNavigation(Request $request): ?Response
     }
 
     if ($index >= 0 && isset($history[$index]) && $history[$index] === $fullPath) {
-        // already at this position; do nothing
+        // already at this position; keep index as-is
     } elseif ($history === [] || $history[count($history) - 1] !== $fullPath) {
         $history[] = $fullPath;
         if (count($history) > 20) {
             $history = array_slice($history, -20);
         }
+        $index = count($history) - 1;
     }
 
     $_SESSION['nav_history'] = $history;
-    $_SESSION['nav_index'] = count($history) - 1;
+    $_SESSION['nav_index'] = $index;
 
     return null;
 }

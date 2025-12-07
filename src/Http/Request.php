@@ -17,6 +17,7 @@ final readonly class Request
         public array  $files = [],
         public array  $params = [],
         public array  $headers = [],
+        public array  $session = [],
     ) {
     }
 
@@ -46,6 +47,7 @@ final readonly class Request
             files: $_FILES ?? [],
             params: [],
             headers: $headers,
+            session: $_SESSION ?? [],
         );
     }
 
