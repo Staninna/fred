@@ -167,10 +167,19 @@ try {
         $config = $container->get(AppConfig::class);
         $auth = $container->get(AuthService::class);
 
+        $debug = [];
+        if ($config->environment !== 'production') {
+            $debug = [
+                'errorMessage' => $exception->getMessage(),
+                'errorTrace' => $exception->getTraceAsString(),
+            ];
+        }
+
         $body = $view->render('errors/500.php', [
             'pageTitle' => 'Server error',
             'environment' => $config->environment,
             'currentUser' => $auth->currentUser(),
+            ...$debug,
         ]);
     } catch (\Throwable) {
         $body = '<h1>Server Error</h1>';
