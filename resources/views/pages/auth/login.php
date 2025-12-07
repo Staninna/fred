@@ -14,6 +14,7 @@
             <div class="info-line">Access member-only actions. New here? <a href="/register">Create an account</a>.</div>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
             <form method="post" action="/login" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="username">Username</label></td>

@@ -64,6 +64,7 @@ use Fred\Domain\Forum\Post;
                 <?php endif; ?>
                 <?php if (!empty($canMoveThread ?? false)): ?>
                     <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
+                        <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                         <label for="target_board" class="small">Move to:</label>
                         <?php
                         $boardOptions = array_map(
@@ -84,10 +85,12 @@ use Fred\Domain\Forum\Post;
                 <?php if (!empty($canLockThread ?? false)): ?>
                     <?php if ($thread->isLocked): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Unlock</button>
                         </form>
                     <?php else: ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/lock">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Lock</button>
                         </form>
                     <?php endif; ?>
@@ -95,10 +98,12 @@ use Fred\Domain\Forum\Post;
                 <?php if (!empty($canStickyThread ?? false)): ?>
                     <?php if ($thread->isSticky): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unsticky">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Unsticky</button>
                         </form>
                     <?php else: ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/sticky">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Sticky</button>
                         </form>
                     <?php endif; ?>
@@ -106,10 +111,12 @@ use Fred\Domain\Forum\Post;
                 <?php if (!empty($canModerate ?? false)): ?>
                     <?php if ($thread->isAnnouncement): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unannounce">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Unannounce</button>
                         </form>
                     <?php else: ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/announce">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Mark as announcement</button>
                         </form>
                     <?php endif; ?>
@@ -129,6 +136,7 @@ use Fred\Domain\Forum\Post;
         'attachmentsByPost' => $attachmentsByPost ?? [],
         'canReport' => !($currentUser?->isGuest() ?? true),
         'currentUserId' => $currentUser?->id,
+        'page' => $pagination['page'] ?? 1,
     ]) ?>
 </div>
 
@@ -173,6 +181,7 @@ use Fred\Domain\Forum\Post;
                     'textareaLabel' => 'Message',
                     'bodyValue' => '',
                     'includeAttachment' => true,
+                    'page' => $pagination['page'] ?? 1,
                     'renderPartial' => $renderPartial,
                 ]) ?>
             <?php endif; ?>

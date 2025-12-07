@@ -16,6 +16,7 @@ $customCss = $board?->customCss ?? '';
 $selectedCategoryId = $board?->categoryId ?? ($categories[0]->id ?? '');
 ?>
 <form method="post" action="<?= $e($action) ?>" novalidate>
+    <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
     <table class="form-table" cellpadding="0" cellspacing="0">
         <tr>
             <td width="140"><label for="board_name_<?= $e($slug ?: 'new') ?>">Name</label></td>

@@ -86,7 +86,8 @@ final readonly class ModerationController
 
         $this->posts->delete($postId);
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId);
+        $page = isset($request->query['page']) ? '?page=' . (int) $request->query['page'] : '';
+        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . $page);
     }
 
     public function editPost(Request $request): Response
@@ -115,6 +116,7 @@ final readonly class ModerationController
                 'activePath' => $request->path,
                 'errors' => [],
                 'currentCommunity' => $community,
+                'page' => (int) ($request->query['page'] ?? 1),
                 'navSections' => $this->communityHelper->navSections(
                     $community,
                     $structure['categories'],
@@ -138,7 +140,8 @@ final readonly class ModerationController
 
         $bodyRaw = trim((string) ($request->body['body'] ?? ''));
         if ($bodyRaw === '') {
-            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId);
+            $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
+            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . $page);
         }
 
         $this->posts->updateBody(
@@ -148,7 +151,8 @@ final readonly class ModerationController
             timestamp: time(),
         );
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '#post-' . $postId);
+        $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
+        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . $page . $postId);
     }
 
     public function moveThread(Request $request): Response
@@ -199,7 +203,8 @@ final readonly class ModerationController
 
         $reason = trim((string) ($request->body['reason'] ?? ''));
         if ($reason === '' || \strlen($reason) > 500) {
-            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?report_error=1#post-' . $postId);
+            $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
+            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?report_error=1' . $page . '#post-' . $postId);
         }
 
         $this->reports->create(
@@ -210,7 +215,8 @@ final readonly class ModerationController
             timestamp: time(),
         );
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?reported=1#post-' . $postId);
+        $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
+        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?reported=1' . $page . '#post-' . $postId);
     }
 
     public function listBans(Request $request): Response

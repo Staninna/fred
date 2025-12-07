@@ -53,6 +53,7 @@ use Fred\Domain\Community\Community;
                 <td>
                     <?php if ($report->status === 'open'): ?>
                         <form method="post" action="/c/<?= $e($community->slug) ?>/admin/reports/<?= $report->id ?>/resolve">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                             <button class="button" type="submit">Mark resolved</button>
                         </form>
                     <?php else: ?>

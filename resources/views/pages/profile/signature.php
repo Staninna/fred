@@ -21,6 +21,7 @@ use Fred\Domain\Community\Community;
             <div class="info-line">Use BBCode to format your signature. Keep it short and friendly.</div>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/signature" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="signature">Signature</label></td>

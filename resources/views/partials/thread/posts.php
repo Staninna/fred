@@ -8,6 +8,7 @@
 /** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
 /** @var bool $canReport */
 /** @var int|null $currentUserId */
+/** @var int $page */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
@@ -41,14 +42,18 @@ use Fred\Domain\Forum\Attachment;
                     </div>
                     <?php if (!empty($canDeleteAnyPost ?? false)): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
+                            <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
                             <button class="button" type="submit">Delete</button>
                         </form>
                     <?php endif; ?>
                     <?php if (!empty($canEditAnyPost ?? false)): ?>
-                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit">Edit</a>
+                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit?page=<?= (int) ($page ?? 1) ?>">Edit</a>
                     <?php endif; ?>
                     <?php if (!empty($canReport ?? false) && ($currentUserId ?? null) !== $post->authorId): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/report">
+                            <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
+                            <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
                             <label class="small" for="report_reason_<?= $post->id ?>">Report reason</label>
                             <input id="report_reason_<?= $post->id ?>" name="reason" type="text" maxlength="200" required placeholder="Spam, abuse...">
                             <button class="button" type="submit">Report</button>

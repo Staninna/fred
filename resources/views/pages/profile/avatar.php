@@ -16,6 +16,7 @@
             <div class="info-line">Upload an image (png, jpg, gif, webp). Max 500 KB.</div>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140">Current avatar</td>

@@ -31,6 +31,7 @@ $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
 <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
 
 <form method="post" action="/c/<?= $e($community->slug) ?>/admin/settings" novalidate>
+    <?= $renderPartial('partials/csrf.php') ?>
     <table class="section-table" cellpadding="0" cellspacing="0">
         <tr>
             <th colspan="2">Basics</th>

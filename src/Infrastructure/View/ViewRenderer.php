@@ -17,9 +17,11 @@ use function str_replace;
 
 final readonly class ViewRenderer
 {
+    /** @param array<string, mixed> $sharedData */
     public function __construct(
         private string  $viewPath,
         private ?string $defaultLayout = 'layout/default.php',
+        private array $sharedData = [],
     ) {
     }
 
@@ -54,6 +56,8 @@ final readonly class ViewRenderer
 
     private function renderFile(string $filePath, array $data, string $viewRoot): string
     {
+        $data = array_merge($this->sharedData, $data);
+
         if (!file_exists($filePath)) {
             $relative = str_replace($viewRoot . '/', '', $filePath);
             throw new RuntimeException('View not found: ' . $relative);

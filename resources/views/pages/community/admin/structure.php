@@ -42,6 +42,7 @@ use Fred\Domain\Community\Community;
                 <div class="muted">No categories to reorder.</div>
             <?php else: ?>
                 <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories/reorder">
+                    <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                     <table class="form-table" cellpadding="0" cellspacing="0">
                         <?php foreach ($categories as $category): ?>
                             <tr>
@@ -69,6 +70,7 @@ use Fred\Domain\Community\Community;
                 <div class="muted">No boards to reorder.</div>
             <?php else: ?>
                 <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards/reorder">
+                    <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                     <table class="form-table" cellpadding="0" cellspacing="0">
                         <?php foreach ($categories as $category): ?>
                             <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
@@ -107,6 +109,7 @@ use Fred\Domain\Community\Community;
                             <?= $e($moderator['username']) ?>
                             <span class="small muted">(since <?= date('Y-m-d', (int) $moderator['assigned_at']) ?>)</span>
                             <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators/<?= $moderator['user_id'] ?>/delete">
+                                <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                                 <button class="button" type="submit">Remove</button>
                             </form>
                         </li>
@@ -119,6 +122,7 @@ use Fred\Domain\Community\Community;
         <td class="table-heading">Add moderator</td>
         <td>
             <form method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators" novalidate>
+                <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                 <label for="mod_username">Username</label>
                 <?php
                 $modUserOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
@@ -144,6 +148,7 @@ use Fred\Domain\Community\Community;
     <tr>
         <td>
             <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories" novalidate>
+                <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="category_name">Name</label></td>
@@ -173,6 +178,7 @@ use Fred\Domain\Community\Community;
             <tr>
                 <td>
                     <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories/<?= $category->id ?>" novalidate>
+                        <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                         <table class="form-table" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td width="140">Name</td>

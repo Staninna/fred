@@ -8,9 +8,12 @@
 /** @var string $textareaLabel */
 /** @var string $bodyValue */
 /** @var bool $includeAttachment */
+/** @var int $page */
 ?>
 
 <form method="post" action="<?= $e($action) ?>" enctype="multipart/form-data" novalidate>
+    <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
+    <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
     <table class="form-table" cellpadding="0" cellspacing="0">
         <tr>
             <td width="120"><label for="<?= $e($textareaId) ?>"><?= $e($textareaLabel) ?></label></td>

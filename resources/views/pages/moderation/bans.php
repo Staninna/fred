@@ -15,6 +15,7 @@
         <td colspan="3">
             <?= $renderPartial('partials/errors.php', ['errors' => $errors ?? []]) ?>
             <form method="post" action="<?= $e($_SERVER['REQUEST_URI'] ?? '') ?>" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="username">Username</label></td>
@@ -84,6 +85,7 @@
                 <td><?= date('Y-m-d H:i', (int) $ban['created_at']) ?></td>
                 <td>
                     <form class="inline-form" method="post" action="/c/<?= $e($_GET['community'] ?? '') ?>/admin/bans/<?= $ban['id'] ?>/delete">
+                        <?= $renderPartial('partials/csrf.php') ?>
                         <button class="button" type="submit">Remove</button>
                     </form>
                 </td>

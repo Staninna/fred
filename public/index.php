@@ -17,6 +17,7 @@ use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
+use Fred\Application\Security\CsrfGuard;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
@@ -39,13 +40,32 @@ $container->addShared('basePath', $basePath);
 $container->addShared('env', $env);
 
 $container->addShared(AppConfig::class, static fn () => ConfigLoader::fromArray($container->get('env'), $container->get('basePath')));
+$container->addShared(CsrfGuard::class, static fn () => new CsrfGuard());
 $container->addShared(PDO::class, static fn () => ConnectionFactory::make($container->get(AppConfig::class)));
 $container->addShared(SqliteSessionHandler::class, static fn () => new SqliteSessionHandler($container->get(PDO::class)));
 $container->addShared(FileLogger::class, static fn () => new FileLogger($container->get(AppConfig::class)->logsPath . '/app.log'));
 $container->addShared(NullLogger::class, static fn () => new NullLogger());
 $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
-$container->addShared(ViewRenderer::class, static fn () => new ViewRenderer($container->get('basePath') . '/resources/views'));
+$container->addShared(ViewRenderer::class, static fn () => new ViewRenderer(
+    viewPath: $container->get('basePath') . '/resources/views',
+    sharedData: [
+        'csrfToken' => $container->get(CsrfGuard::class)->token(),
+    ],
+));
 $container->addShared(Router::class, static fn () => new Router($container->get('basePath') . '/public'));
+
+$config = $container->get(AppConfig::class);
+$cookieSecure = str_starts_with($config->baseUrl, 'https://');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'secure' => $cookieSecure,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+ini_set('session.use_strict_mode', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_secure', $cookieSecure ? '1' : '0');
 
 $sessionHandler = $container->get(SqliteSessionHandler::class);
 session_set_save_handler($sessionHandler, true);
@@ -176,6 +196,34 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
 });
 
 $request = Request::fromGlobals();
+
+$csrf = $container->get(CsrfGuard::class);
+if ($request->method === 'POST' && !$csrf->isValid($request)) {
+    try {
+        $view = $container->get(ViewRenderer::class);
+        $config = $container->get(AppConfig::class);
+        $auth = $container->get(AuthService::class);
+        $communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
+
+        $body = $view->render('errors/419.php', [
+            'pageTitle' => 'CSRF token mismatch',
+            'environment' => $config->environment,
+            'currentUser' => $auth->currentUser(),
+            'activePath' => $request->path,
+            'navSections' => $communityHelper->navForCommunity(),
+            'currentCommunity' => null,
+        ]);
+    } catch (\Throwable) {
+        $body = '<h1>CSRF token mismatch</h1>';
+    }
+
+    (new Response(
+        status: 419,
+        headers: ['Content-Type' => 'text/html; charset=utf-8'],
+        body: $body,
+    ))->send();
+    exit;
+}
 
 $navResponse = trackNavigation($request);
 if ($navResponse instanceof Response) {

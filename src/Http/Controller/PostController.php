@@ -76,7 +76,8 @@ final readonly class PostController
 
         $bodyText = trim((string) ($request->body['body'] ?? ''));
         if ($bodyText === '') {
-            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
+            $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
         }
 
         $attachmentFile = $request->files['attachment'] ?? null;
@@ -119,7 +120,8 @@ final readonly class PostController
             );
         }
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '#post-' . $createdPost->id);
+        $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
+        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $createdPost->id);
     }
 
     private function notFound(Request $request): Response

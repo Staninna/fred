@@ -22,6 +22,7 @@ use Fred\Domain\Community\Community;
             <div class="info-line">Update your bio, location and website. These fields are plain text.</div>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/profile" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="bio">Bio</label></td>

@@ -33,6 +33,7 @@
                         Signed in as <?= $e($currentUser->displayName) ?> |
                     <?php endif; ?>
                     <form class="inline-form" method="post" action="/logout">
+                        <?= $renderPartial('partials/csrf.php') ?>
                         <button class="button" type="submit">Sign out</button>
                     </form>
                 <?php else: ?>

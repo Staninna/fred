@@ -13,6 +13,7 @@
         <td>
             <?= $renderPartial('partials/errors.php', ['errors' => $profileErrors ?? []]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/profile" novalidate>
+                <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="bio">Bio</label></td>

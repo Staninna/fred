@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\UploadService;
+use Fred\Application\Security\CsrfGuard;
 use Fred\Application\Search\SearchService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
@@ -49,6 +50,7 @@ final class ApplicationFlowTest extends TestCase
 
         $router = $app['router'];
         $context = $app['context'];
+        $token = $app['csrfToken'];
 
         $home = $router->dispatch(new Request(
             method: 'GET',
@@ -81,7 +83,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $context['community']->slug . '/t/' . $context['thread']->id . '/reply',
             query: [],
-            body: ['body' => 'Guest attempt'],
+            body: ['body' => 'Guest attempt', '_token' => $token],
         ));
         $this->assertSame('/login', $reply->headers['Location'] ?? null);
 
@@ -102,6 +104,7 @@ final class ApplicationFlowTest extends TestCase
         $router = $app['router'];
         $context = $app['context'];
         $repos = $app['repos'];
+        $token = $app['csrfToken'];
 
         $register = $router->dispatch(new Request(
             method: 'POST',
@@ -112,6 +115,7 @@ final class ApplicationFlowTest extends TestCase
                 'display_name' => 'New Member',
                 'password' => 'secret1',
                 'password_confirmation' => 'secret1',
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $register->status);
@@ -121,7 +125,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/logout',
             query: [],
-            body: [],
+            body: ['_token' => $token],
         ));
         $this->assertSame(302, $logout->status);
 
@@ -132,6 +136,7 @@ final class ApplicationFlowTest extends TestCase
             body: [
                 'username' => 'newmember',
                 'password' => 'secret1',
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $login->status);
@@ -147,6 +152,7 @@ final class ApplicationFlowTest extends TestCase
             body: [
                 'title' => 'Member thread',
                 'body' => 'Hello as member',
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $threadResponse->status);
@@ -164,7 +170,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $context['community']->slug . '/t/' . $threadId . '/reply',
             query: [],
-            body: ['body' => 'Member reply'],
+            body: ['body' => 'Member reply', '_token' => $token],
         ));
         $this->assertSame(302, $reply->status);
         $replyLocation = $reply->headers['Location'] ?? '';
@@ -181,7 +187,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $context['community']->slug . '/t/' . $threadId . '/lock',
             query: [],
-            body: [],
+            body: ['_token' => $token],
         ));
         $this->assertSame(403, $lock->status);
     }
@@ -195,6 +201,7 @@ final class ApplicationFlowTest extends TestCase
         $router = $app['router'];
         $context = $app['context'];
         $repos = $app['repos'];
+        $token = $app['csrfToken'];
 
         $threadId = $context['thread']->id;
         $communitySlug = $context['community']->slug;
@@ -203,7 +210,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $communitySlug . '/t/' . $threadId . '/lock',
             query: [],
-            body: [],
+            body: ['_token' => $token],
         ));
         $this->assertSame(302, $lock->status);
         $this->assertTrue($repos['threads']->findById($threadId)?->isLocked);
@@ -212,7 +219,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $communitySlug . '/t/' . $threadId . '/unlock',
             query: [],
-            body: [],
+            body: ['_token' => $token],
         ));
         $this->assertSame(302, $unlock->status);
         $this->assertFalse($repos['threads']->findById($threadId)?->isLocked);
@@ -221,7 +228,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $communitySlug . '/t/' . $threadId . '/move',
             query: [],
-            body: ['target_board' => $context['second_board']->slug],
+            body: ['target_board' => $context['second_board']->slug, '_token' => $token],
         ));
         $this->assertSame(302, $move->status);
         $this->assertSame($context['second_board']->id, $repos['threads']->findById($threadId)?->boardId);
@@ -230,7 +237,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $communitySlug . '/p/' . $context['post']->id . '/edit',
             query: [],
-            body: ['body' => 'Updated by moderator'],
+            body: ['body' => 'Updated by moderator', '_token' => $token],
         ));
         $this->assertSame(302, $edit->status);
         $this->assertSame('Updated by moderator', $repos['posts']->findById($context['post']->id)?->bodyRaw);
@@ -239,7 +246,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $communitySlug . '/p/' . $context['post']->id . '/delete',
             query: [],
-            body: [],
+            body: ['_token' => $token],
         ));
         $this->assertSame(302, $delete->status);
         $this->assertNull($repos['posts']->findById($context['post']->id));
@@ -262,6 +269,7 @@ final class ApplicationFlowTest extends TestCase
                 'username' => $userToBan->username,
                 'reason' => 'Spam',
                 'expires_at' => '',
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $banResponse->status);
@@ -278,6 +286,7 @@ final class ApplicationFlowTest extends TestCase
         $router = $app['router'];
         $repos = $app['repos'];
         $memberUser = $app['context']['users']['member'];
+        $token = $app['csrfToken'];
 
         $createCommunity = $router->dispatch(new Request(
             method: 'POST',
@@ -287,6 +296,7 @@ final class ApplicationFlowTest extends TestCase
                 'name' => 'Side Plaza',
                 'slug' => 'side',
                 'description' => 'Second square',
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $createCommunity->status);
@@ -302,6 +312,7 @@ final class ApplicationFlowTest extends TestCase
             body: [
                 'name' => 'Updates',
                 'position' => 1,
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $categoryResponse->status);
@@ -319,6 +330,7 @@ final class ApplicationFlowTest extends TestCase
                 'slug' => 'announcements',
                 'description' => 'News and updates',
                 'position' => 1,
+                '_token' => $token,
             ],
         ));
         $this->assertSame(302, $boardResponse->status);
@@ -329,7 +341,7 @@ final class ApplicationFlowTest extends TestCase
             method: 'POST',
             path: '/c/' . $newCommunity->slug . '/admin/moderators',
             query: [],
-            body: ['username' => $memberUser->username],
+            body: ['username' => $memberUser->username, '_token' => $token],
         ));
         $this->assertSame(302, $promote->status);
         $updatedMember = $repos['users']->findById($memberUser->id);
@@ -384,8 +396,18 @@ final class ApplicationFlowTest extends TestCase
         $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
+        $csrfGuard = new CsrfGuard();
+        $csrfToken = $csrfGuard->token();
 
         $router = new Router($this->basePath('public'));
+
+        $csrfProtect = static function (Request $request, callable $next) use ($csrfGuard): Response {
+            if ($request->method === 'POST' && !$csrfGuard->isValid($request)) {
+                return new Response(419, ['Content-Type' => 'text/plain; charset=utf-8'], 'CSRF token mismatch');
+            }
+
+            return $next($request);
+        };
 
         $authController = new AuthController($view, $config, $authService, $communityHelper);
         $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
@@ -407,12 +429,12 @@ final class ApplicationFlowTest extends TestCase
         };
 
         $router->get('/', [$communityController, 'index']);
-        $router->post('/communities', [$communityController, 'store']);
+        $router->post('/communities', [$communityController, 'store'], [$csrfProtect]);
         $router->get('/login', [$authController, 'showLoginForm']);
-        $router->post('/login', [$authController, 'login']);
+        $router->post('/login', [$authController, 'login'], [$csrfProtect]);
         $router->get('/register', [$authController, 'showRegisterForm']);
-        $router->post('/register', [$authController, 'register']);
-        $router->post('/logout', [$authController, 'logout']);
+        $router->post('/register', [$authController, 'register'], [$csrfProtect]);
+        $router->post('/logout', [$authController, 'logout'], [$csrfProtect]);
 
         $router->get('/c/{community}', [$communityController, 'show']);
         $router->get('/uploads/{type}/{year}/{month}/{file}', [$uploadController, 'serve']);
@@ -426,63 +448,64 @@ final class ApplicationFlowTest extends TestCase
             $profileController,
             $authRequired,
             $moderationController,
-            $searchController
+            $searchController,
+            $csrfProtect
         ) {
             $router->get('/', [$communityController, 'show']);
             $router->get('/about', [$communityController, 'about']);
             $router->get('/u/{username}', [$profileController, 'show']);
 
-            $router->group('/settings', function (Router $router) use ($profileController) {
+            $router->group('/settings', function (Router $router) use ($profileController, $authRequired, $csrfProtect) {
                 $router->get('/profile', [$profileController, 'editProfile']);
-                $router->post('/profile', [$profileController, 'updateProfile']);
+                $router->post('/profile', [$profileController, 'updateProfile'], [$authRequired, $csrfProtect]);
                 $router->get('/signature', [$profileController, 'editSignature']);
-                $router->post('/signature', [$profileController, 'updateSignature']);
+                $router->post('/signature', [$profileController, 'updateSignature'], [$authRequired, $csrfProtect]);
                 $router->get('/avatar', [$profileController, 'editAvatar']);
-                $router->post('/avatar', [$profileController, 'updateAvatar']);
+                $router->post('/avatar', [$profileController, 'updateAvatar'], [$authRequired, $csrfProtect]);
             }, [$authRequired]);
 
             $router->get('/b/{board}', [$boardController, 'show']);
-            $router->group('/b/{board}', function (Router $router) use ($threadController) {
+            $router->group('/b/{board}', function (Router $router) use ($threadController, $authRequired, $csrfProtect) {
                 $router->get('/thread/new', [$threadController, 'create']);
-                $router->post('/thread', [$threadController, 'store']);
+                $router->post('/thread', [$threadController, 'store'], [$authRequired, $csrfProtect]);
             }, [$authRequired]);
 
             $router->get('/t/{thread}', [$threadController, 'show']);
-            $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired]);
-            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired]);
-            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
-            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
-            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
-            $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired]);
-            $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired]);
-            $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired]);
+            $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $csrfProtect]);
+            $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $csrfProtect]);
             $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
-            $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
-            $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
-            $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired]);
+            $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $csrfProtect]);
+            $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $csrfProtect]);
+            $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $csrfProtect]);
 
             $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
-            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);
-            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired]);
+            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect]);
+            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $csrfProtect]);
             $router->get('/search', [$searchController, 'search']);
 
-            $router->group('/admin', function (Router $router) use ($adminController) {
+            $router->group('/admin', function (Router $router) use ($adminController, $authRequired, $csrfProtect) {
                 $router->get('/structure', [$adminController, 'structure']);
-                $router->post('/custom-css', [$adminController, 'updateCommunityCss']);
-                $router->post('/categories', [$adminController, 'createCategory']);
-                $router->post('/categories/reorder', [$adminController, 'reorderCategories']);
-                $router->post('/categories/{category}', [$adminController, 'updateCategory']);
-                $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory']);
-                $router->post('/boards', [$adminController, 'createBoard']);
-                $router->post('/boards/reorder', [$adminController, 'reorderBoards']);
-                $router->post('/boards/{board}', [$adminController, 'updateBoard']);
-                $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard']);
-                $router->post('/moderators', [$adminController, 'addModerator']);
-                $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator']);
+                $router->post('/custom-css', [$adminController, 'updateCommunityCss'], [$authRequired, $csrfProtect]);
+                $router->post('/categories', [$adminController, 'createCategory'], [$authRequired, $csrfProtect]);
+                $router->post('/categories/reorder', [$adminController, 'reorderCategories'], [$authRequired, $csrfProtect]);
+                $router->post('/categories/{category}', [$adminController, 'updateCategory'], [$authRequired, $csrfProtect]);
+                $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory'], [$authRequired, $csrfProtect]);
+                $router->post('/boards', [$adminController, 'createBoard'], [$authRequired, $csrfProtect]);
+                $router->post('/boards/reorder', [$adminController, 'reorderBoards'], [$authRequired, $csrfProtect]);
+                $router->post('/boards/{board}', [$adminController, 'updateBoard'], [$authRequired, $csrfProtect]);
+                $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard'], [$authRequired, $csrfProtect]);
+                $router->post('/moderators', [$adminController, 'addModerator'], [$authRequired, $csrfProtect]);
+                $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator'], [$authRequired, $csrfProtect]);
                 $router->get('/reports', [$adminController, 'reports']);
-                $router->post('/reports/{report}/resolve', [$adminController, 'resolveReport']);
+                $router->post('/reports/{report}/resolve', [$adminController, 'resolveReport'], [$authRequired, $csrfProtect]);
                 $router->get('/settings', [$adminController, 'settings']);
-                $router->post('/settings', [$adminController, 'updateSettings']);
+                $router->post('/settings', [$adminController, 'updateSettings'], [$authRequired, $csrfProtect]);
                 $router->get('/users', [$adminController, 'users']);
             }, [$authRequired]);
         });
@@ -502,6 +525,7 @@ final class ApplicationFlowTest extends TestCase
             'router' => $router,
             'auth' => $authService,
             'context' => $seed,
+            'csrfToken' => $csrfToken,
             'repos' => [
                 'users' => $userRepository,
                 'threads' => $threadRepository,
