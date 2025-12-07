@@ -16,6 +16,7 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
+use Fred\Application\Seed\CustomThemeSeeder;
 use Faker\Factory as FakerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
@@ -54,8 +55,16 @@ $seeder = new DemoSeeder(
     parser: null,
 );
 
+// Themed community/boards showcase
+$themedSeeder = new CustomThemeSeeder(
+    communities: new CommunityRepository($pdo),
+    categories: new CategoryRepository($pdo),
+    boards: new BoardRepository($pdo),
+);
+
 try {
     $result = $seeder->seed();
+    $themedSeeder->seed();
     $communityIds = $result['community_ids'] ?? [];
     $userIds = $result['user_ids'] ?? [];
     $boardIds = $result['board_ids'] ?? [];
