@@ -11,6 +11,7 @@ use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
@@ -28,6 +29,7 @@ final readonly class DemoSeeder
         private ThreadRepository $threads,
         private PostRepository $posts,
         private ProfileRepository $profiles,
+        private CommunityModeratorRepository $communityModerators,
         private Generator $faker,
         private int $boardCount = 4,
         private int $threadsPerBoard = 3,
@@ -61,6 +63,7 @@ final readonly class DemoSeeder
 
         foreach ($communities as $community) {
             $boardIds = array_merge($boardIds, $this->seedCommunityContent($community, $users, $now));
+            $this->assignModerators($community->id, $users, $now, $moderatorRole->id);
         }
 
         return [
@@ -120,6 +123,15 @@ final readonly class DemoSeeder
         }
 
         return $users;
+    }
+
+    private function assignModerators(int $communityId, array $users, int $timestamp, int $moderatorRoleId): void
+    {
+        foreach ($users as $user) {
+            if (\in_array($user->username, ['mod'], true)) {
+                $this->communityModerators->assign($communityId, $user->id, $timestamp);
+            }
+        }
     }
 
     private function seedCommunities(int $timestamp): array
