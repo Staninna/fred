@@ -9,6 +9,7 @@ use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\ConnectionFactory;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
@@ -44,6 +45,7 @@ $seeder = new DemoSeeder(
     threads: new ThreadRepository($pdo),
     posts: new PostRepository($pdo),
     profiles: new ProfileRepository($pdo),
+    communityModerators: new CommunityModeratorRepository($pdo),
     faker: $faker,
     boardCount: max(1, $boardCount),
     threadsPerBoard: max(1, $threadsPerBoard),
