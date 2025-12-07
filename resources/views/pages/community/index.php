@@ -46,13 +46,13 @@ use Fred\Domain\Community\Community;
     <?php endif; ?>
 </table>
 
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th>Create community</th>
-    </tr>
-    <tr>
-        <td>
-            <?php if (!empty($canCreateCommunity ?? false)): ?>
+<?php if (!empty($canCreateCommunity ?? false)): ?>
+    <table class="section-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <th>Create community</th>
+        </tr>
+        <tr>
+            <td>
                 <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
                 <form method="post" action="/communities" novalidate>
                     <table class="form-table" cellpadding="0" cellspacing="0">
@@ -71,7 +71,7 @@ use Fred\Domain\Community\Community;
                     </table>
                     <button class="button" type="submit">Create</button>
                 </form>
-            <?php endif ?>
-        </td>
-    </tr>
-</table>
+            </td>
+        </tr>
+    </table>
+<?php endif; ?>
