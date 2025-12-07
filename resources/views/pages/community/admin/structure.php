@@ -43,6 +43,22 @@ use Fred\Domain\Community\Community;
                     <button class="button" type="submit">Save community CSS</button>
                 </div>
             </form>
+            <details style="margin-top:8px;">
+                <summary class="button" style="list-style:none;">Styling tips</summary>
+                <div class="small" style="margin-top:6px;">
+                    <p>Base theme variables you can override:</p>
+                    <pre>:root {
+  --bg; --panel; --panel-alt;
+  --border; --border-strong;
+  --text; --muted; --link; --link-visited;
+  --accent; --banner; --banner-text;
+}</pre>
+                    <p>Examples:</p>
+                    <pre>:root { --link: #b03060; --accent: #ffe6a7; }
+.page-frame { border-radius: 6px; }</pre>
+                    <p>Per-board overrides apply after community CSS when viewing that board/thread. Avoid <code>@import</code>; keep it short.</p>
+                </div>
+            </details>
         </td>
     </tr>
 </table>
