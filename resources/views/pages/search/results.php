@@ -41,14 +41,16 @@
                     <tr>
                         <td><label for="user">User</label></td>
                         <td>
-                            <select id="user" name="user" style="min-width: 180px;">
-                                <option value="">All users</option>
-                                <?php foreach ($usernames as $username): ?>
-                                    <option value="<?= $e($username) ?>"<?= ($userFilter?->username === $username) ? ' selected' : '' ?>>
-                                        <?= $e($username) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <?php
+                            $userOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
+                            echo $renderPartial('partials/select.php', [
+                                'name' => 'user',
+                                'id' => 'user',
+                                'placeholder' => 'All users',
+                                'options' => $userOptions,
+                                'selected' => $userFilter?->username ?? '',
+                            ]);
+                            ?>
                         </td>
                     </tr>
                 </table>

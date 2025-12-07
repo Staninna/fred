@@ -61,12 +61,16 @@ use Fred\Domain\Community\Community;
         <td>
             <form method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators" novalidate>
                 <label for="mod_username">Username</label>
-                <select id="mod_username" name="username" required style="min-width: 200px;">
-                    <option value="">Select user</option>
-                    <?php foreach ($usernames as $username): ?>
-                        <option value="<?= $e($username) ?>"><?= $e($username) ?></option>
-                    <?php endforeach; ?>
-                </select>
+                <?php
+                $modUserOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
+                echo $renderPartial('partials/select.php', [
+                    'name' => 'username',
+                    'id' => 'mod_username',
+                    'placeholder' => 'Select user',
+                    'options' => $modUserOptions,
+                    'selected' => '',
+                ]);
+                ?>
                 <button class="button" type="submit">Assign</button>
                 <div class="small muted">User will be given the Moderator role if they do not already have it.</div>
             </form>
