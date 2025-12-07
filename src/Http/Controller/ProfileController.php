@@ -271,6 +271,7 @@ final readonly class ProfileController
             'currentUser' => $currentUser,
             'currentCommunity' => $community,
             'activePath' => $request->path,
+            'customCss' => trim((string) ($community->customCss ?? '')),
         ]);
 
         return new Response(

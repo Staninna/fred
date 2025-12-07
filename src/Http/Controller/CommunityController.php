@@ -42,6 +42,7 @@ final readonly class CommunityController
             'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
             'canCreateCommunity' => $this->permissions->canCreateCommunity($this->auth->currentUser()),
             'currentCommunity' => null,
+            'customCss' => '',
         ]);
 
         return new Response(
@@ -118,6 +119,7 @@ final readonly class CommunityController
                 $structure['categories'],
                 $structure['boardsByCategory'],
             ),
+            'customCss' => trim((string) ($community->customCss ?? '')),
         ]);
 
         return new Response(

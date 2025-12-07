@@ -1,36 +1,57 @@
+/* Nostalgic palette with gentle contrast */
+:root {
+    --bg: #c9d2dc;
+    --panel: #f7f7fb;
+    --panel-alt: #e3e7ef;
+    --border: #5a6a7a;
+    --border-strong: #1f2f45;
+    --text: #0f1a2a;
+    --muted: #4f5b6b;
+    --link: #0c3ea1;
+    --link-visited: #5a2f87;
+    --accent: #ffd27f;
+    --banner: #0a2e5c;
+    --banner-text: #fef8ea;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    padding: 10px;
-    background: #c0c0c0;
+    padding: 12px;
+    background: var(--bg);
     font-family: "Verdana", "Arial", "Helvetica", sans-serif;
-    color: #000000;
+    color: var(--text);
 }
 
 a:link {
-    color: #0000ee;
+    color: var(--link);
     text-decoration: underline;
 }
 
 a:visited {
-    color: #551a8b;
+    color: var(--link-visited);
     text-decoration: underline;
 }
 
 a:hover {
-    color: #0000ee;
+    color: var(--link);
     text-decoration: underline;
 }
 
 a:active {
-    color: #0000ee;
+    color: var(--link);
 }
 
 .page-frame {
-    width: 980px;
+    width: 1040px;
     margin: 0 auto;
-    border: 1px solid #666666;
-    background: #f7f7f7;
+    border: 1px solid var(--border);
+    background: var(--panel);
     border-collapse: collapse;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
 }
 
 .page-frame td {
@@ -38,15 +59,15 @@ a:active {
 }
 
 .banner {
-    background: #003366;
-    color: #ffffff;
-    padding: 6px 8px;
-    border-bottom: 2px solid #000000;
+    background: linear-gradient(90deg, var(--banner), #1f4a7d);
+    color: var(--banner-text);
+    padding: 10px 12px;
+    border-bottom: 3px solid var(--border-strong);
 }
 
 .banner-title {
     margin: 0;
-    font-size: 18px;
+    font-size: 19px;
     font-weight: bold;
 }
 
@@ -57,58 +78,60 @@ a:active {
 
 .banner a,
 .banner a:visited {
-    color: #ffe7c6;
+    color: var(--accent);
 }
 
 .banner-links {
-    margin-top: 4px;
+    margin-top: 6px;
     font-size: 12px;
 }
 
 .sidebar {
-    width: 220px;
-    background: #e0e0e0;
-    border-right: 1px solid #999999;
-    padding: 6px;
+    width: 240px;
+    background: var(--panel-alt);
+    border-right: 1px solid var(--border);
+    padding: 8px;
 }
 
 .content {
-    padding: 8px;
+    padding: 12px;
     background: #ffffff;
 }
 
 hr {
-    border: 0;
-    border-top: 1px solid #999999;
-    margin: 8px 0;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
 }
 
 .section-table {
     width: 100%;
-    border: 1px solid #666666;
+    border: 1px solid var(--border);
     border-collapse: collapse;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-size: 13px;
+    background: #fdfdfd;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.5) inset;
 }
 
 .section-table th {
-    background: #dcdcdc;
+    background: #d9dce4;
     text-align: left;
-    border: 1px solid #999999;
-    padding: 4px;
+    border: 1px solid var(--border);
+    padding: 6px 8px;
     font-size: 13px;
 }
 
 .section-table td {
-    border: 1px solid #999999;
-    padding: 4px;
+    border: 1px solid #d0d4dc;
+    padding: 8px;
 }
 
 .table-heading {
-    background: #efefef;
+    background: #eef1f6;
     font-weight: bold;
-    padding: 4px;
-    border: 1px solid #999999;
+    padding: 6px 8px;
+    border: 1px solid #d0d4dc;
 }
 
 .nav-list {
@@ -121,9 +144,13 @@ hr {
     margin: 2px 0;
 }
 
+.nav-history .button {
+    margin-right: 6px;
+}
+
 .info-line {
     font-size: 12px;
-    color: #333333;
+    color: var(--muted);
 }
 
 .small {
@@ -132,23 +159,34 @@ hr {
 }
 
 .muted {
-    color: #555555;
+    color: var(--muted);
     font-size: 12px;
 }
 
 .button {
-    border: 2px outset #c0c0c0;
-    background: #dcdcdc;
-    color: #000000;
-    padding: 2px 8px;
+    border: 1px solid var(--border);
+    background: linear-gradient(#ffffff, #e2e7ef);
+    color: var(--text);
+    padding: 4px 8px;
     font-size: 12px;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
 }
 
 .button:active {
-    border-style: inset;
+    background: #cbd7ea;
+}
+
+.button:hover {
+    background: linear-gradient(#f7faff, #d8e1ef);
+}
+
+.button.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 input[type="text"],
@@ -156,15 +194,17 @@ input[type="password"],
 input[type="number"],
 textarea,
 select {
-    border: 1px solid #666666;
+    border: 1px solid var(--border);
     background: #ffffff;
-    padding: 2px;
+    padding: 3px;
     font-family: inherit;
     font-size: 12px;
+    border-radius: 2px;
 }
 
 textarea {
-    width: 98%;
+    width: 100%;
+    resize: vertical;
 }
 
 .form-table {
@@ -174,15 +214,15 @@ textarea {
 }
 
 .form-table td {
-    padding: 3px 4px;
+    padding: 4px 4px;
     font-size: 12px;
 }
 
 .notice {
-    border: 1px solid #999999;
-    background: #f0f0f0;
-    padding: 6px;
-    margin-bottom: 8px;
+    border: 1px solid #f3d888;
+    background: #fff8e2;
+    padding: 8px;
+    margin-bottom: 10px;
 }
 
 .alert {
@@ -198,8 +238,8 @@ textarea {
 }
 
 .post-table .author-cell {
-    width: 180px;
-    background: #f2f2f2;
+    width: 200px;
+    background: #f2f4f9;
 }
 
 .post-table .body-cell {
@@ -207,7 +247,7 @@ textarea {
 }
 
 .post-body {
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .post-table tr:target td {
@@ -218,8 +258,8 @@ textarea {
 .bbcode-toolbar {
     margin: 4px 0;
     padding: 4px;
-    border: 1px solid #999999;
-    background: #efefef;
+    border: 1px solid var(--border);
+    background: #eef1f6;
     font-size: 12px;
 }
 
@@ -248,10 +288,39 @@ pre {
     font-family: "Courier New", monospace;
 }
 
+.author-avatar img {
+    border: 1px solid var(--border);
+    padding: 2px;
+    background: #fff;
+    margin-bottom: 6px;
+}
+
 .footer {
-    background: #dcdcdc;
-    border-top: 1px solid #999999;
+    background: #dfe3ea;
+    border-top: 1px solid var(--border);
     padding: 6px 8px;
     font-size: 12px;
     text-align: center;
+}
+
+@media (max-width: 1100px) {
+    .page-frame {
+        width: 100%;
+    }
+
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .page-frame tr:first-child td {
+        display: block;
+    }
+
+    .page-frame td.sidebar,
+    .page-frame td.content {
+        display: block;
+        width: 100%;
+    }
 }

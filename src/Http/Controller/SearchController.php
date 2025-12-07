@@ -105,6 +105,7 @@ final readonly class SearchController
                 $structure['categories'],
                 $structure['boardsByCategory'],
             ),
+            'customCss' => trim((string) ($community->customCss ?? '')),
         ]);
 
         return new Response(

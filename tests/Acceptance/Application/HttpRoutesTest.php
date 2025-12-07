@@ -127,6 +127,7 @@ final class HttpRoutesTest extends TestCase
             $communityHelper,
             $categoryRepository,
             $boardRepository,
+            $communityRepository,
             new \Fred\Infrastructure\Database\CommunityModeratorRepository($pdo), // Missing
             $userRepository, // Missing
             $roleRepository, // Missing

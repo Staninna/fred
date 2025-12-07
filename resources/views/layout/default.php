@@ -2,6 +2,7 @@
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
 /** @var \Fred\Domain\Community\Community|null $currentCommunity */
+/** @var string|null $customCss */
 ?>
 
 <!DOCTYPE html>
@@ -10,6 +11,11 @@
     <meta charset="UTF-8">
     <title><?= $e($pageTitle ?? 'Fred Forum') ?></title>
     <link rel="stylesheet" href="/css/layout.css">
+    <?php if (!empty($customCss ?? '')): ?>
+        <style id="custom-css">
+            <?= $customCss ?>
+        </style>
+    <?php endif; ?>
     <script src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
 </head>
 <body>

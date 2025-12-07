@@ -11,6 +11,7 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
@@ -28,6 +29,7 @@ final readonly class AdminController
         private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
         private BoardRepository $boards,
+        private CommunityRepository $communities,
         private CommunityModeratorRepository $communityModerators,
         private UserRepository $users,
         private RoleRepository $roles,
@@ -70,6 +72,7 @@ final readonly class AdminController
                     ],
                 ],
             ],
+            'customCss' => trim((string) ($community->customCss ?? '')),
         ]);
 
         return new Response(
@@ -176,6 +179,10 @@ final readonly class AdminController
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
+        $customCss = trim((string) ($request->body['custom_css'] ?? ''));
+        if (\strlen($customCss) > 25000) {
+            return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
+        }
 
         if ($name === '') {
             return $this->structure($request, ['Board name is required.']);
@@ -197,7 +204,7 @@ final readonly class AdminController
             description: $description,
             position: $position,
             isLocked: $isLocked,
-            customCss: null,
+            customCss: $customCss !== '' ? $customCss : null,
             timestamp: time(),
         );
 
@@ -227,6 +234,10 @@ final readonly class AdminController
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
+        $customCss = trim((string) ($request->body['custom_css'] ?? ''));
+        if (\strlen($customCss) > 25000) {
+            return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
+        }
 
         if ($name === '') {
             return $this->structure($request, ['Board name is required.']);
@@ -248,7 +259,7 @@ final readonly class AdminController
             description: $description,
             position: $position,
             isLocked: $isLocked,
-            customCss: $board->customCss,
+            customCss: $customCss !== '' ? $customCss : null,
             timestamp: time(),
         );
 
@@ -273,6 +284,33 @@ final readonly class AdminController
         }
 
         $this->boards->delete($board->id);
+
+        return Response::redirect('/c/' . $community->slug . '/admin/structure');
+    }
+
+    public function updateCommunityCss(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $css = trim((string) ($request->body['custom_css'] ?? ''));
+        if (\strlen($css) > 8000) {
+            return $this->structure($request, ['Community CSS is too long (max 8000 characters).']);
+        }
+
+        $this->communities->update(
+            id: $community->id,
+            name: $community->name,
+            description: $community->description,
+            customCss: $css !== '' ? $css : null,
+            timestamp: time(),
+        );
 
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
     }

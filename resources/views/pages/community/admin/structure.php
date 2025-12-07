@@ -30,6 +30,23 @@ use Fred\Domain\Community\Community;
     </tr>
 </table>
 
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2">Community theme (CSS)</th>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <form method="post" action="/c/<?= $e($community->slug) ?>/admin/custom-css" novalidate>
+                <div class="small muted">Custom CSS is injected after the base theme. Max 8000 characters.</div>
+                <textarea name="custom_css" rows="6" style="width: 100%;"><?= $e($community->customCss ?? '') ?></textarea>
+                <div style="margin-top:6px;">
+                    <button class="button" type="submit">Save community CSS</button>
+                </div>
+            </form>
+        </td>
+    </tr>
+</table>
+
 <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -182,6 +199,12 @@ use Fred\Domain\Community\Community;
                             <td>Status</td>
                             <td><label><input type="checkbox" name="is_locked" value="1"> Locked</label></td>
                         </tr>
+                        <tr>
+                            <td><label for="board_custom_css">Custom CSS</label></td>
+                            <td>
+                                <textarea id="board_custom_css" name="custom_css" rows="3" placeholder="Optional, max 5000 characters" style="width: 100%;"></textarea>
+                            </td>
+                        </tr>
                     </table>
                     <button class="button" type="submit">Add board</button>
                 </form>
@@ -229,6 +252,10 @@ use Fred\Domain\Community\Community;
                                 <tr>
                                     <td>Status</td>
                                     <td><label><input type="checkbox" name="is_locked" value="1"<?= $board->isLocked ? ' checked' : '' ?>> Locked</label></td>
+                                </tr>
+                                <tr>
+                                    <td>Custom CSS</td>
+                                    <td><textarea name="custom_css" rows="3" style="width: 100%;"><?= $e($board->customCss ?? '') ?></textarea></td>
                                 </tr>
                             </table>
                             <button class="button" type="submit">Update</button>

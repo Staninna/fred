@@ -135,6 +135,7 @@ $router->group('/c/{community}', function (Router $router) use (
 
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);
+        $router->post('/custom-css', [$adminController, 'updateCommunityCss']);
         $router->post('/categories', [$adminController, 'createCategory']);
         $router->post('/categories/{category}', [$adminController, 'updateCategory']);
         $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory']);

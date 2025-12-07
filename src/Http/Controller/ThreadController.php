@@ -97,6 +97,7 @@ final readonly class ThreadController
                 $structure['categories'],
                 $structure['boardsByCategory'],
             ),
+            'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
         ]);
 
         return new Response(
@@ -260,6 +261,7 @@ final readonly class ThreadController
                 $structure['categories'],
                 $structure['boardsByCategory'],
             ),
+            'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
         ]);
 
         return new Response(
