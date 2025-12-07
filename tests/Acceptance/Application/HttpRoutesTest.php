@@ -96,6 +96,7 @@ final class HttpRoutesTest extends TestCase
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
         $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
+        $reportRepository = new \Fred\Infrastructure\Database\ReportRepository($pdo);
         $uploadService = new \Fred\Application\Content\UploadService($config);
         $authService = new AuthService(
             users: $userRepository,
@@ -127,6 +128,7 @@ final class HttpRoutesTest extends TestCase
             new \Fred\Infrastructure\Database\CommunityModeratorRepository($pdo), // Missing
             $userRepository, // Missing
             $roleRepository, // Missing
+            $reportRepository,
         );
         $boardController = new BoardController(
             $view,
@@ -177,6 +179,7 @@ final class HttpRoutesTest extends TestCase
             new \Fred\Infrastructure\Database\BanRepository($pdo), // Missing
             $boardRepository, // Missing
             $categoryRepository, // Missing
+            $reportRepository,
         );
 
         $router->get('/', [$communityController, 'index']);

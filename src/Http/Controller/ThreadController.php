@@ -70,6 +70,8 @@ final readonly class ThreadController
         $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
         $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
         $currentUser = $this->auth->currentUser();
+        $reportNotice = isset($request->query['reported']) ? 'Thank you. A moderator will review this post.' : null;
+        $reportError = isset($request->query['report_error']) ? 'Report could not be submitted. Reason is required.' : null;
 
         $body = $this->view->render('pages/thread/show.php', [
             'pageTitle' => $thread->title,
@@ -98,6 +100,8 @@ final readonly class ThreadController
                 $structure['boardsByCategory'],
             ),
             'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
+            'reportNotice' => $reportNotice,
+            'reportError' => $reportError,
         ]);
 
         return new Response(

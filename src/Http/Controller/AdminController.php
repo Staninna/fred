@@ -15,6 +15,7 @@ use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -33,6 +34,7 @@ final readonly class AdminController
         private CommunityModeratorRepository $communityModerators,
         private UserRepository $users,
         private RoleRepository $roles,
+        private ReportRepository $reports,
     ) {
     }
 
@@ -63,15 +65,7 @@ final readonly class AdminController
             'currentUser' => $this->auth->currentUser(),
             'currentCommunity' => $community,
             'activePath' => $request->path,
-            'navSections' => [
-                [
-                    'title' => 'Admin',
-                    'items' => [
-                        ['label' => 'Structure', 'href' => '/c/' . $community->slug . '/admin/structure'],
-                        ['label' => 'View community', 'href' => '/c/' . $community->slug],
-                    ],
-                ],
-            ],
+            'navSections' => $this->adminNav($community, 'structure'),
             'customCss' => trim((string) ($community->customCss ?? '')),
         ]);
 
@@ -80,6 +74,79 @@ final readonly class AdminController
             headers: ['Content-Type' => 'text/html; charset=utf-8'],
             body: $body,
         );
+    }
+
+    public function settings(Request $request, array $errors = [], array $old = []): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $body = $this->view->render('pages/community/admin/settings.php', [
+            'pageTitle' => 'Settings · ' . $community->name,
+            'community' => $community,
+            'errors' => $errors,
+            'old' => $old,
+            'saved' => isset($request->query['saved']),
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
+            'activePath' => $request->path,
+            'navSections' => $this->adminNav($community, 'settings'),
+        ]);
+
+        return new Response(
+            status: $errors === [] ? 200 : 422,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
+    public function updateSettings(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $name = trim((string) ($request->body['name'] ?? ''));
+        $description = trim((string) ($request->body['description'] ?? ''));
+        $customCss = trim((string) ($request->body['custom_css'] ?? ''));
+
+        $errors = [];
+        if ($name === '') {
+            $errors[] = 'Name is required.';
+        }
+        if (\strlen($customCss) > 8000) {
+            $errors[] = 'Community CSS is too long (max 8000 characters).';
+        }
+
+        if ($errors !== []) {
+            return $this->settings($request, $errors, [
+                'name' => $name,
+                'description' => $description,
+                'custom_css' => $customCss,
+            ]);
+        }
+
+        $this->communities->update(
+            id: $community->id,
+            name: $name,
+            description: $description,
+            customCss: $customCss !== '' ? $customCss : null,
+            timestamp: time(),
+        );
+
+        return Response::redirect('/c/' . $community->slug . '/admin/settings?saved=1');
     }
 
     public function createCategory(Request $request): Response
@@ -134,6 +201,29 @@ final readonly class AdminController
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
     }
 
+    public function reorderCategories(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $positions = $request->body['category_positions'] ?? [];
+        $categories = $this->categories->listByCommunityId($community->id);
+        $now = time();
+
+        foreach ($categories as $category) {
+            $newPosition = isset($positions[$category->id]) ? (int) $positions[$category->id] : $category->position;
+            $this->categories->update($category->id, $category->name, $newPosition, $now);
+        }
+
+        return Response::redirect('/c/' . $community->slug . '/admin/structure');
+    }
+
     public function deleteCategory(Request $request): Response
     {
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
@@ -152,6 +242,38 @@ final readonly class AdminController
         }
 
         $this->categories->delete($category->id);
+
+        return Response::redirect('/c/' . $community->slug . '/admin/structure');
+    }
+
+    public function reorderBoards(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $positions = $request->body['board_positions'] ?? [];
+        $boards = $this->boards->listByCommunityId($community->id);
+        $now = time();
+
+        foreach ($boards as $board) {
+            $newPosition = isset($positions[$board->id]) ? (int) $positions[$board->id] : $board->position;
+            $this->boards->update(
+                id: $board->id,
+                slug: $board->slug,
+                name: $board->name,
+                description: $board->description,
+                position: $newPosition,
+                isLocked: $board->isLocked,
+                customCss: $board->customCss,
+                timestamp: $now,
+            );
+        }
 
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
     }
@@ -395,6 +517,99 @@ final readonly class AdminController
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
     }
 
+    public function reports(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $status = (string) ($request->query['status'] ?? 'open');
+        $statusFilter = $status === 'all' ? null : $status;
+
+        $reports = $this->reports->listWithContext($community->id, $statusFilter);
+
+        $body = $this->view->render('pages/community/admin/reports.php', [
+            'pageTitle' => 'Reports · ' . $community->name,
+            'community' => $community,
+            'reports' => $reports,
+            'status' => $status,
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
+            'activePath' => $request->path,
+            'navSections' => $this->adminNav($community, 'reports'),
+        ]);
+
+        return new Response(
+            status: 200,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
+    public function resolveReport(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $reportId = (int) ($request->params['report'] ?? 0);
+        $report = $this->reports->findById($reportId);
+        if ($report === null || $report->communityId !== $community->id) {
+            return $this->notFound($request);
+        }
+
+        $this->reports->updateStatus($reportId, 'closed', time());
+
+        return Response::redirect('/c/' . $community->slug . '/admin/reports');
+    }
+
+    public function users(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $query = trim((string) ($request->query['q'] ?? ''));
+        $role = trim((string) ($request->query['role'] ?? ''));
+
+        $users = $this->users->search($query, $role !== '' ? $role : null, 100);
+
+        $body = $this->view->render('pages/community/admin/users.php', [
+            'pageTitle' => 'Users · ' . $community->name,
+            'community' => $community,
+            'users' => $users,
+            'query' => $query,
+            'role' => $role,
+            'environment' => $this->config->environment,
+            'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
+            'activePath' => $request->path,
+            'navSections' => $this->adminNav($community, 'users'),
+        ]);
+
+        return new Response(
+            status: 200,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
     private function notFound(Request $request): Response
     {
         return Response::notFound(
@@ -404,6 +619,30 @@ final readonly class AdminController
             request: $request,
             navSections: $this->communityHelper->navForCommunity(),
         );
+    }
+
+    private function adminNav(\Fred\Domain\Community\Community $community, string $active): array
+    {
+        $links = [
+            ['key' => 'structure', 'label' => 'Structure', 'href' => '/c/' . $community->slug . '/admin/structure'],
+            ['key' => 'settings', 'label' => 'Settings', 'href' => '/c/' . $community->slug . '/admin/settings'],
+            ['key' => 'users', 'label' => 'Users', 'href' => '/c/' . $community->slug . '/admin/users'],
+            ['key' => 'reports', 'label' => 'Reports', 'href' => '/c/' . $community->slug . '/admin/reports'],
+            ['key' => 'view', 'label' => 'View community', 'href' => '/c/' . $community->slug],
+        ];
+
+        $items = array_map(static function (array $link) use ($active): array {
+            $label = $link['label'] . ($link['key'] === $active ? ' *' : '');
+
+            return ['label' => $label, 'href' => $link['href']];
+        }, $links);
+
+        return [
+            [
+                'title' => 'Admin',
+                'items' => $items,
+            ],
+        ];
     }
 
 }

@@ -15,6 +15,7 @@ use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ModerationController
@@ -32,6 +33,7 @@ final readonly class ModerationController
         private BanRepository $bans,
         private BoardRepository $boards,
         private CategoryRepository $categories,
+        private ReportRepository $reports,
     ) {
     }
 
@@ -167,6 +169,40 @@ final readonly class ModerationController
         $this->threads->moveToBoard($threadId, $targetBoard->id);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $threadId);
+    }
+
+    public function reportPost(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        $currentUser = $this->auth->currentUser();
+        if ($currentUser->isGuest()) {
+            return Response::redirect('/login');
+        }
+
+        $postId = (int) ($request->params['post'] ?? 0);
+        $post = $this->posts->findById($postId);
+        if ($post === null || $post->communityId !== $community->id) {
+            return $this->notFound($request);
+        }
+
+        $reason = trim((string) ($request->body['reason'] ?? ''));
+        if ($reason === '' || \strlen($reason) > 500) {
+            return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?report_error=1#post-' . $postId);
+        }
+
+        $this->reports->create(
+            communityId: $community->id,
+            postId: $postId,
+            reporterId: $currentUser->id ?? 0,
+            reason: $reason,
+            timestamp: time(),
+        );
+
+        return Response::redirect('/c/' . $community->slug . '/t/' . $post->threadId . '?reported=1#post-' . $postId);
     }
 
     public function listBans(Request $request): Response

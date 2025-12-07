@@ -127,6 +127,7 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
     $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
     $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
+    $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired]);
 
     $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
     $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);
@@ -137,13 +138,20 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->get('/structure', [$adminController, 'structure']);
         $router->post('/custom-css', [$adminController, 'updateCommunityCss']);
         $router->post('/categories', [$adminController, 'createCategory']);
+        $router->post('/categories/reorder', [$adminController, 'reorderCategories']);
         $router->post('/categories/{category}', [$adminController, 'updateCategory']);
         $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory']);
         $router->post('/boards', [$adminController, 'createBoard']);
+        $router->post('/boards/reorder', [$adminController, 'reorderBoards']);
         $router->post('/boards/{board}', [$adminController, 'updateBoard']);
         $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard']);
         $router->post('/moderators', [$adminController, 'addModerator']);
         $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator']);
+        $router->get('/reports', [$adminController, 'reports']);
+        $router->post('/reports/{report}/resolve', [$adminController, 'resolveReport']);
+        $router->get('/settings', [$adminController, 'settings']);
+        $router->post('/settings', [$adminController, 'updateSettings']);
+        $router->get('/users', [$adminController, 'users']);
     }, [$authRequired]);
 });
 

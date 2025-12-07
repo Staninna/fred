@@ -26,44 +26,70 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td class="table-heading">Note</td>
-        <td>Use the forms below to add or edit categories and boards.</td>
+        <td>Use the forms below to add or edit categories and boards. For community details and theme overrides, visit the Settings tab.</td>
+    </tr>
+</table>
+
+<?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2">Reorder categories</th>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <?php if ($categories === []): ?>
+                <div class="muted">No categories to reorder.</div>
+            <?php else: ?>
+                <form method="post" action="/c/<?= $e($community->slug) ?>/admin/categories/reorder">
+                    <table class="form-table" cellpadding="0" cellspacing="0">
+                        <?php foreach ($categories as $category): ?>
+                            <tr>
+                                <td width="200"><?= $e($category->name) ?></td>
+                                <td>
+                                    <input name="category_positions[<?= $category->id ?>]" type="number" value="<?= $category->position ?>" style="width:90px;">
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </table>
+                    <button class="button" type="submit">Save category order</button>
+                </form>
+            <?php endif; ?>
+        </td>
     </tr>
 </table>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th colspan="2">Community theme (CSS)</th>
+        <th colspan="2">Reorder boards</th>
     </tr>
     <tr>
         <td colspan="2">
-            <form method="post" action="/c/<?= $e($community->slug) ?>/admin/custom-css" novalidate>
-                <div class="small muted">Custom CSS is injected after the base theme. Max 8000 characters.</div>
-                <textarea name="custom_css" rows="6" style="width: 100%;"><?= $e($community->customCss ?? '') ?></textarea>
-                <div style="margin-top:6px;">
-                    <button class="button" type="submit">Save community CSS</button>
-                </div>
-            </form>
-            <details style="margin-top:8px;">
-                <summary class="button" style="list-style:none;">Styling tips</summary>
-                <div class="small" style="margin-top:6px;">
-                    <p>Base theme variables you can override:</p>
-                    <pre>:root {
-  --bg; --panel; --panel-alt;
-  --border; --border-strong;
-  --text; --muted; --link; --link-visited;
-  --accent; --banner; --banner-text;
-}</pre>
-                    <p>Examples:</p>
-                    <pre>:root { --link: #b03060; --accent: #ffe6a7; }
-.page-frame { border-radius: 6px; }</pre>
-                    <p>Per-board overrides load after community CSS when you view that board or thread. Avoid using <code>@import</code>. The length limit is 25000 characters.</p>
-                </div>
-            </details>
+            <?php if ($boardTotal === 0): ?>
+                <div class="muted">No boards to reorder.</div>
+            <?php else: ?>
+                <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards/reorder">
+                    <table class="form-table" cellpadding="0" cellspacing="0">
+                        <?php foreach ($categories as $category): ?>
+                            <?php $categoryBoards = $boardsByCategory[$category->id] ?? []; ?>
+                            <?php if ($categoryBoards === []): continue; endif; ?>
+                            <tr>
+                                <td colspan="2" class="table-heading"><?= $e($category->name) ?></td>
+                            </tr>
+                            <?php foreach ($categoryBoards as $board): ?>
+                                <tr>
+                                    <td width="200"><?= $e($board->name) ?></td>
+                                    <td><input name="board_positions[<?= $board->id ?>]" type="number" value="<?= $board->position ?>" style="width:90px;"></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </table>
+                    <button class="button" type="submit">Save board order</button>
+                </form>
+            <?php endif; ?>
         </td>
     </tr>
 </table>
-
-<?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>

@@ -6,6 +6,8 @@
 /** @var string $communitySlug */
 /** @var array<int, array<int, \Fred\Domain\Forum\Attachment>> $attachmentsByPost */
 /** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
+/** @var bool $canReport */
+/** @var int|null $currentUserId */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
@@ -44,6 +46,13 @@ use Fred\Domain\Forum\Attachment;
                     <?php endif; ?>
                     <?php if (!empty($canEditAnyPost ?? false)): ?>
                         <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit">Edit</a>
+                    <?php endif; ?>
+                    <?php if (!empty($canReport ?? false) && ($currentUserId ?? null) !== $post->authorId): ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/report">
+                            <label class="small" for="report_reason_<?= $post->id ?>">Report reason</label>
+                            <input id="report_reason_<?= $post->id ?>" name="reason" type="text" maxlength="200" required placeholder="Spam, abuse...">
+                            <button class="button" type="submit">Report</button>
+                        </form>
                     <?php endif; ?>
                     <?php foreach ($attachmentsByPost[$post->id] ?? [] as $attachment): ?>
                         <div class="attachment">

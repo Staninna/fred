@@ -101,6 +101,47 @@ final readonly class UserRepository
         return $statement->fetchAll(PDO::FETCH_COLUMN) ?: [];
     }
 
+    /**
+     * @return User[]
+     */
+    public function search(string $query, ?string $roleSlug = null, int $limit = 50, int $offset = 0): array
+    {
+        $sql = <<<SQL
+SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,
+       r.slug AS role_slug, r.name AS role_name
+FROM users u
+JOIN roles r ON r.id = u.role_id
+WHERE 1=1
+SQL;
+
+        $params = [];
+        if ($query !== '') {
+            $sql .= ' AND (u.username LIKE :search OR u.display_name LIKE :search)';
+            $params[':search'] = '%' . $query . '%';
+        }
+
+        if ($roleSlug !== null && $roleSlug !== '') {
+            $sql .= ' AND r.slug = :role_slug';
+            $params[':role_slug'] = $roleSlug;
+        }
+
+        $sql .= ' ORDER BY u.created_at DESC LIMIT :limit OFFSET :offset';
+
+        $statement = $this->pdo->prepare($sql);
+
+        foreach ($params as $key => $value) {
+            $statement->bindValue($key, $value);
+        }
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $statement->execute();
+
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map([$this, 'hydrate'], $rows ?: []);
+    }
+
     private function hydrate(array $row): User
     {
         return new User(

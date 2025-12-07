@@ -26,6 +26,13 @@ use Fred\Domain\Forum\Post;
 
 ?>
 
+<?php if (!empty($reportNotice ?? null)): ?>
+    <div class="notice"><?= $e($reportNotice) ?></div>
+<?php endif; ?>
+<?php if (!empty($reportError ?? null)): ?>
+    <div class="notice"><?= $e($reportError) ?></div>
+<?php endif; ?>
+
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
         <th colspan="2"><?= $e($thread->title) ?></th>
@@ -120,6 +127,8 @@ use Fred\Domain\Forum\Post;
         'communitySlug' => $community->slug,
         'profilesByUserId' => $profilesByUserId ?? [],
         'attachmentsByPost' => $attachmentsByPost ?? [],
+        'canReport' => !($currentUser?->isGuest() ?? true),
+        'currentUserId' => $currentUser?->id,
     ]) ?>
 </div>
 
