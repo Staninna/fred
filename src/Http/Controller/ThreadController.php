@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\UploadService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Request;
@@ -16,6 +17,7 @@ use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -33,6 +35,8 @@ final readonly class ThreadController
         private PostRepository $posts,
         private BbcodeParser $parser,
         private ProfileRepository $profiles,
+        private UploadService $uploads,
+        private AttachmentRepository $attachments,
     ) {
     }
 
@@ -61,6 +65,7 @@ final readonly class ThreadController
 
         $structure = $this->communityHelper->structureForCommunity($community);
         $posts = $this->posts->listByThreadId($thread->id);
+        $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $currentUser = $this->auth->currentUser();
 
         $body = $this->view->render('pages/thread/show.php', [
@@ -70,8 +75,10 @@ final readonly class ThreadController
             'category' => $category,
             'thread' => $thread,
             'posts' => $posts,
+            'attachmentsByPost' => $attachmentsByPost,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
+            'currentCommunity' => $community,
             'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
             'canLockThread' => $this->permissions->canLockThread($currentUser, $community->id),
             'canStickyThread' => $this->permissions->canStickyThread($currentUser, $community->id),
@@ -151,6 +158,7 @@ final readonly class ThreadController
 
         $title = trim((string) ($request->body['title'] ?? ''));
         $bodyText = trim((string) ($request->body['body'] ?? ''));
+        $attachmentFile = $request->files['attachment'] ?? null;
 
         $errors = [];
         if ($title === '') {
@@ -166,6 +174,18 @@ final readonly class ThreadController
                 'title' => $title,
                 'body' => $bodyText,
             ], 422);
+        }
+
+        $attachmentPath = null;
+        if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
+            } catch (\Throwable $exception) {
+                return $this->renderCreate($request, $community, $board, ['Attachment error: ' . $exception->getMessage()], [
+                    'title' => $title,
+                    'body' => $bodyText,
+                ], 422);
+            }
         }
 
         $timestamp = time();
@@ -192,6 +212,22 @@ final readonly class ThreadController
             timestamp: $timestamp,
         );
 
+        if ($attachmentPath !== null) {
+            $post = $this->posts->listByThreadId($thread->id)[0] ?? null;
+            if ($post !== null) {
+                $this->attachments->create(
+                    communityId: $community->id,
+                    postId: $post->id,
+                    userId: $currentUser->id ?? 0,
+                    path: $attachmentPath,
+                    originalName: (string) ($attachmentFile['name'] ?? ''),
+                    mimeType: (string) ($attachmentFile['type'] ?? ''),
+                    sizeBytes: (int) ($attachmentFile['size'] ?? 0),
+                    createdAt: $timestamp,
+                );
+            }
+        }
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
@@ -213,6 +249,7 @@ final readonly class ThreadController
             'old' => $old,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

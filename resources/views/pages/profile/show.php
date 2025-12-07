@@ -25,6 +25,16 @@ use Fred\Domain\Community\Community;
         <td><?= $e($user->roleName) ?></td>
     </tr>
     <tr>
+        <td class="table-heading">Avatar</td>
+        <td>
+            <?php if (!empty($profile?->avatarPath ?? '')): ?>
+                <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="Avatar" style="max-width: 120px; max-height: 120px;">
+            <?php else: ?>
+                <span class="muted">No avatar set.</span>
+            <?php endif; ?>
+        </td>
+    </tr>
+    <tr>
         <td class="table-heading">Joined</td>
         <td><?= date('Y-m-d', $user->createdAt) ?></td>
     </tr>
@@ -34,6 +44,7 @@ use Fred\Domain\Community\Community;
             <td>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/settings/profile">Edit profile</a>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/settings/signature">Edit signature</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/settings/avatar">Edit avatar</a>
             </td>
         </tr>
     <?php endif; ?>

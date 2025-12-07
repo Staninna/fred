@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\CurrentUser;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\UploadService;
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Community;
 use Fred\Http\Request;
@@ -28,6 +29,7 @@ final readonly class ProfileController
         private UserRepository $users,
         private ProfileRepository $profiles,
         private BbcodeParser $parser,
+        private UploadService $uploads,
     ) {
     }
 
@@ -53,6 +55,7 @@ final readonly class ProfileController
             'profile' => $profile,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'activePath' => $request->path,
         ]);
 
@@ -120,6 +123,29 @@ final readonly class ProfileController
         return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
     }
 
+    private function renderAvatarForm(
+        Request $request,
+        Community $community,
+        CurrentUser $currentUser,
+        array $errors,
+        int $status = 200,
+    ): Response {
+        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+
+        $body = $this->view->render('pages/profile/avatar.php', [
+            'pageTitle' => 'Edit avatar',
+            'community' => $community,
+            'currentUser' => $currentUser,
+            'profile' => $profile,
+            'errors' => $errors,
+            'environment' => $this->config->environment,
+            'activePath' => $request->path,
+            'currentCommunity' => $community,
+        ]);
+
+        return new Response($status, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+    }
+
     public function editProfile(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
@@ -131,6 +157,62 @@ final readonly class ProfileController
         $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
 
         return $this->renderProfileForm($request, $community, $currentUser, $profile, [], []);
+    }
+
+    public function editAvatar(Request $request): Response
+    {
+        $context = $this->resolveCommunityAndUser($request);
+        if ($context instanceof Response) {
+            return $context;
+        }
+        ['community' => $community, 'currentUser' => $currentUser] = $context;
+
+        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+
+        $body = $this->view->render('pages/profile/avatar.php', [
+            'pageTitle' => 'Edit avatar',
+            'community' => $community,
+            'currentUser' => $currentUser,
+            'profile' => $profile,
+            'errors' => [],
+            'environment' => $this->config->environment,
+            'activePath' => $request->path,
+            'currentCommunity' => $community,
+        ]);
+
+        return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+    }
+
+    public function updateAvatar(Request $request): Response
+    {
+        $context = $this->resolveCommunityAndUser($request);
+        if ($context instanceof Response) {
+            return $context;
+        }
+        ['community' => $community, 'currentUser' => $currentUser] = $context;
+
+        $profile = $this->profiles->findByUserId($currentUser->id ?? 0);
+        $file = $request->files['avatar'] ?? null;
+        if (!\is_array($file) || ($file['error'] ?? null) === UPLOAD_ERR_NO_FILE) {
+            return $this->renderAvatarForm($request, $community, $currentUser, ['Please choose a file.'], 422);
+        }
+
+        try {
+            $path = $this->uploads->saveAvatar($file);
+        } catch (\Throwable $exception) {
+            return $this->renderAvatarForm($request, $community, $currentUser, [$exception->getMessage()], 422);
+        }
+
+        $this->profiles->updateProfile(
+            userId: $currentUser->id ?? 0,
+            bio: $profile->bio,
+            location: $profile->location,
+            website: $profile->website,
+            avatarPath: $path,
+            timestamp: time(),
+        );
+
+        return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
     }
 
     public function updateProfile(Request $request): Response
@@ -228,6 +310,7 @@ final readonly class ProfileController
             'errors' => $errors,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
+            'currentCommunity' => $community,
             'activePath' => $request->path,
         ]);
 
@@ -266,6 +349,7 @@ final readonly class ProfileController
             'old' => $old,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
+            'currentCommunity' => $community,
             'activePath' => $request->path,
         ]);
 

@@ -95,6 +95,8 @@ final class HttpRoutesTest extends TestCase
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
+        $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
+        $uploadService = new \Fred\Application\Content\UploadService($config);
         $authService = new AuthService(
             $config,
             $userRepository,
@@ -148,6 +150,8 @@ final class HttpRoutesTest extends TestCase
             $postRepository,
             new BbcodeParser(),
             $profileRepository,
+            $uploadService,
+            $attachmentRepository,
         );
         $postController = new PostController(
             $authService,
@@ -159,6 +163,8 @@ final class HttpRoutesTest extends TestCase
             new BbcodeParser(),
             $profileRepository,
             $permissionService,
+            $uploadService,
+            $attachmentRepository,
         );
         $moderationController = new ModerationController(
             $view,

@@ -4,8 +4,10 @@
 /** @var bool $canEditAnyPost */
 /** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */
+/** @var array<int, array<int, \Fred\Domain\Forum\Attachment>> $attachmentsByPost */
 
 use Fred\Domain\Forum\Post;
+use Fred\Domain\Forum\Attachment;
 ?>
 
 <?php if ($posts === []): ?>
@@ -18,7 +20,7 @@ use Fred\Domain\Forum\Post;
         <?php foreach ($posts as $post): ?>
             <tr id="post-<?= $post->id ?>">
                 <td class="author-cell">
-                    <div><strong><?= $e($post->authorName) ?></strong></div>
+                    <div><strong><a href="/c/<?= $e($communitySlug) ?>/u/<?= $e($post->authorUsername) ?>"><?= $e($post->authorName) ?></a></strong></div>
                     <div class="small"><?= date('Y-m-d H:i', $post->createdAt) ?></div>
                     <div class="small">Post #<?= $post->id ?></div>
                 </td>
@@ -36,6 +38,12 @@ use Fred\Domain\Forum\Post;
                     <?php if (!empty($canEditAnyPost ?? false)): ?>
                         <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit">Edit</a>
                     <?php endif; ?>
+                    <?php foreach ($attachmentsByPost[$post->id] ?? [] as $attachment): ?>
+                        <div class="attachment">
+                            <div class="small muted">Attachment: <?= $e($attachment->originalName) ?></div>
+                            <img src="/uploads/<?= $e($attachment->path) ?>" alt="<?= $e($attachment->originalName) ?>" style="max-width: 360px; display: block; margin-top: 4px;">
+                        </div>
+                    <?php endforeach; ?>
                     <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>
                         <hr>
                         <div class="small">

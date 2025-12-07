@@ -7,9 +7,11 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\UploadService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
@@ -29,6 +31,8 @@ final readonly class PostController
         private BbcodeParser $parser,
         private ProfileRepository $profiles,
         private PermissionService $permissions,
+        private UploadService $uploads,
+        private AttachmentRepository $attachments,
     ) {
     }
 
@@ -75,6 +79,20 @@ final readonly class PostController
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
         }
 
+        $attachmentFile = $request->files['attachment'] ?? null;
+        $attachmentPath = null;
+        if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            try {
+                $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
+            } catch (\Throwable $exception) {
+                return new Response(
+                    status: 422,
+                    headers: ['Content-Type' => 'text/plain; charset=utf-8'],
+                    body: 'Attachment error: ' . $exception->getMessage(),
+                );
+            }
+        }
+
         $profile = $currentUser->id !== null ? $this->profiles->findByUserId($currentUser->id) : null;
         $bodyParsed = $this->parser->parse($bodyText);
         $timestamp = time();
@@ -87,6 +105,19 @@ final readonly class PostController
             signatureSnapshot: $profile?->signatureParsed,
             timestamp: $timestamp,
         );
+
+        if ($attachmentPath !== null) {
+            $this->attachments->create(
+                communityId: $community->id,
+                postId: $createdPost->id,
+                userId: $currentUser->id ?? 0,
+                path: $attachmentPath,
+                originalName: (string) ($attachmentFile['name'] ?? ''),
+                mimeType: (string) ($attachmentFile['type'] ?? ''),
+                sizeBytes: (int) ($attachmentFile['size'] ?? 0),
+                createdAt: $timestamp,
+            );
+        }
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '#post-' . $createdPost->id);
     }

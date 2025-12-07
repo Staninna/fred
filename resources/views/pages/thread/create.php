@@ -32,7 +32,7 @@ use Fred\Domain\Community\Community;
     <tr>
         <td>
             <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
-            <form method="post" action="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread" novalidate>
+            <form method="post" action="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread" enctype="multipart/form-data" novalidate>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="title">Title</label></td>
@@ -44,6 +44,10 @@ use Fred\Domain\Community\Community;
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
                             <textarea id="body" name="body" rows="6" required><?= $e($old['body'] ?? '') ?></textarea>
                         </td>
+                    </tr>
+                    <tr>
+                        <td><label for="attachment">Attachment</label></td>
+                        <td><input id="attachment" name="attachment" type="file" accept=".png,.jpg,.jpeg,.gif,.webp"></td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Post thread</button>

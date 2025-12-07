@@ -12,6 +12,7 @@ use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\SearchController;
+use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -61,6 +62,7 @@ $moderationController = $container->get(ModerationController::class);
 $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
 $searchController = $container->get(SearchController::class);
+$uploadController = $container->get(UploadController::class);
 
 $authRequired = static function (Request $request, callable $next) use ($authService): Response {
     if ($authService->currentUser()->isGuest()) {
@@ -79,6 +81,7 @@ $router->post('/register', [$authController, 'register']);
 $router->post('/logout', [$authController, 'logout']);
 
 $router->get('/c/{community}', [$communityController, 'show']);
+$router->get('/uploads/{type}/{year}/{month}/{file}', [$uploadController, 'serve']);
 
 $router->group('/c/{community}', function (Router $router) use (
     $communityController,
@@ -99,6 +102,8 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/profile', [$profileController, 'updateProfile']);
         $router->get('/signature', [$profileController, 'editSignature']);
         $router->post('/signature', [$profileController, 'updateSignature']);
+        $router->get('/avatar', [$profileController, 'editAvatar']);
+        $router->post('/avatar', [$profileController, 'updateAvatar']);
     }, [$authRequired]);
 
     $router->get('/b/{board}', [$boardController, 'show']);

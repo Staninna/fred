@@ -14,6 +14,7 @@ final readonly class Request
         public string $path,
         public array  $query,
         public array  $body,
+        public array  $files = [],
         public array  $params = [],
         public array  $headers = [],
     ) {
@@ -42,6 +43,7 @@ final readonly class Request
             path: $path,
             query: $_GET ?? [],
             body: $_POST ?? [],
+            files: $_FILES ?? [],
             params: [],
             headers: $headers,
         );
@@ -54,6 +56,7 @@ final readonly class Request
             path: $this->path,
             query: $this->query,
             body: $this->body,
+            files: $this->files,
             params: $params,
             headers: $this->headers,
         );
