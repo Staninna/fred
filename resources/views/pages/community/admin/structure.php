@@ -56,7 +56,7 @@ use Fred\Domain\Community\Community;
                     <p>Examples:</p>
                     <pre>:root { --link: #b03060; --accent: #ffe6a7; }
 .page-frame { border-radius: 6px; }</pre>
-                    <p>Per-board overrides apply after community CSS when viewing that board/thread. Avoid <code>@import</code>; keep it short.</p>
+                    <p>Per-board overrides load after community CSS when you view that board or thread. Avoid using <code>@import</code>. The length limit is 25000 characters.</p>
                 </div>
             </details>
         </td>
@@ -175,55 +175,14 @@ use Fred\Domain\Community\Community;
             <?php if ($categories === []): ?>
                 <div class="muted">Create a category first to add boards.</div>
             <?php else: ?>
-                <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards" novalidate>
-                    <table class="form-table" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td width="140"><label for="board_name">Name</label></td>
-                            <td><input id="board_name" name="name" type="text" required></td>
-                        </tr>
-                        <tr>
-                            <td><label for="board_slug">Slug</label></td>
-                            <td><input id="board_slug" name="slug" type="text" placeholder="auto-generated from name"></td>
-                        </tr>
-                        <tr>
-                            <td><label for="board_description">Description</label></td>
-                            <td><input id="board_description" name="description" type="text"></td>
-                        </tr>
-                        <tr>
-                            <td><label for="board_position">Position</label></td>
-                            <td><input id="board_position" name="position" type="number" value="0"></td>
-                        </tr>
-                        <tr>
-                            <td><label for="board_category_id">Category</label></td>
-                            <td>
-                                <?php
-                                $categoryOptions = array_map(
-                                    static fn ($category) => ['value' => (string) $category->id, 'label' => $category->name],
-                                    $categories
-                                );
-                                echo $renderPartial('partials/select.php', [
-                                    'name' => 'category_id',
-                                    'id' => 'board_category_id',
-                                    'options' => $categoryOptions,
-                                    'selected' => $categories[0]->id ?? '',
-                                    'required' => true,
-                                ]);
-                                ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Status</td>
-                            <td><label><input type="checkbox" name="is_locked" value="1"> Locked</label></td>
-                        </tr>
-                        <tr>
-                            <td><label for="board_custom_css">Custom CSS</label></td>
-                            <td>
-                                <textarea id="board_custom_css" name="custom_css" rows="3" placeholder="Optional, max 5000 characters" style="width: 100%;"></textarea>
-                            </td>
-                        </tr>
-                    </table>
-                    <button class="button" type="submit">Add board</button>
-                </form>
+                <?= $renderPartial('partials/admin/board_form.php', [
+                    'action' => '/c/' . $community->slug . '/admin/boards',
+                    'submitLabel' => 'Add board',
+                    'board' => null,
+                    'categories' => $categories,
+                    'includeCategorySelect' => true,
+                    'deleteAction' => null,
+                ]) ?>
             <?php endif; ?>
         </td>
     </tr>
@@ -247,36 +206,14 @@ use Fred\Domain\Community\Community;
             <?php foreach ($categoryBoards as $board): ?>
                 <tr>
                     <td colspan="2">
-                        <form method="post" action="/c/<?= $e($community->slug) ?>/admin/boards/<?= $board->id ?>" novalidate>
-                            <table class="form-table" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td width="140">Name</td>
-                                    <td><input name="name" type="text" value="<?= $e($board->name) ?>" required></td>
-                                </tr>
-                                <tr>
-                                    <td>Slug</td>
-                                    <td><input name="slug" type="text" value="<?= $e($board->slug) ?>" required></td>
-                                </tr>
-                                <tr>
-                                    <td>Description</td>
-                                    <td><input name="description" type="text" value="<?= $e($board->description) ?>"></td>
-                                </tr>
-                                <tr>
-                                    <td>Position</td>
-                                    <td><input name="position" type="number" value="<?= $board->position ?>"></td>
-                                </tr>
-                                <tr>
-                                    <td>Status</td>
-                                    <td><label><input type="checkbox" name="is_locked" value="1"<?= $board->isLocked ? ' checked' : '' ?>> Locked</label></td>
-                                </tr>
-                                <tr>
-                                    <td>Custom CSS</td>
-                                    <td><textarea name="custom_css" rows="3" style="width: 100%;"><?= $e($board->customCss ?? '') ?></textarea></td>
-                                </tr>
-                            </table>
-                            <button class="button" type="submit">Update</button>
-                            <button class="button" type="submit" formaction="/c/<?= $e($community->slug) ?>/admin/boards/<?= $board->id ?>/delete">Delete</button>
-                        </form>
+                        <?= $renderPartial('partials/admin/board_form.php', [
+                            'action' => '/c/' . $community->slug . '/admin/boards/' . $board->id,
+                            'submitLabel' => 'Update',
+                            'board' => $board,
+                            'categories' => $categories,
+                            'includeCategorySelect' => false,
+                            'deleteAction' => '/c/' . $community->slug . '/admin/boards/' . $board->id . '/delete',
+                        ]) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>
