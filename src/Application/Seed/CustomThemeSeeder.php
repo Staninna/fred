@@ -14,6 +14,7 @@ final readonly class CustomThemeSeeder
         private CommunityRepository $communities,
         private CategoryRepository $categories,
         private BoardRepository $boards,
+        private ?ProgressTracker $progress = null,
     ) {
     }
 
@@ -21,8 +22,11 @@ final readonly class CustomThemeSeeder
     {
         $existing = $this->communities->findBySlug('themed');
         if ($existing !== null) {
+            $this->log('Themed community already present');
             return;
         }
+
+        $this->log('Seeding themed community');
 
         $timestamp = time();
         $community = $this->communities->create(
@@ -78,5 +82,12 @@ CSS,
                 timestamp: $timestamp,
             );
         }
+
+        $this->log('Themed community seeded with 5 boards');
+    }
+
+    private function log(string $message): void
+    {
+        $this->progress?->log($message);
     }
 }

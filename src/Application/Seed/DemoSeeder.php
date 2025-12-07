@@ -36,6 +36,7 @@ final readonly class DemoSeeder
         private int $postsPerThread = 5,
         private int $userCount = 6,
         private ?BbcodeParser $parser = null,
+        private ?ProgressTracker $progress = null,
     ) {
     }
 
@@ -44,6 +45,7 @@ final readonly class DemoSeeder
      */
     public function seed(): array
     {
+        $this->log('Seeding demo data');
         $this->faker->seed(1234);
         $now = time();
         $this->faker->unique(true);
@@ -55,18 +57,25 @@ final readonly class DemoSeeder
         if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
             throw new \RuntimeException('Core roles are missing.');
         }
+        $this->log('Core roles ensured');
 
         $users = $this->seedUsers($memberRole->id, $moderatorRole->id, $adminRole->id, $now);
+        $this->log('Users ready: ' . \count($users));
 
         $communities = $this->seedCommunities($now);
         $boardIds = [];
+        $this->log('Communities ready: ' . \count($communities));
 
         $this->ensureProfilesPerCommunity($users, $communities, $now);
+        $this->log('Profiles ensured across communities');
 
         foreach ($communities as $community) {
             $boardIds = array_merge($boardIds, $this->seedCommunityContent($community, $users, $now));
             $this->assignModerators($community->id, $users, $now, $moderatorRole->id);
+            $this->log('Moderators assigned for community ' . $community->slug);
         }
+
+        $this->log('Demo seeding complete');
 
         return [
             'community_ids' => array_map(static fn ($c) => $c->id, $communities),
@@ -286,6 +295,8 @@ final readonly class DemoSeeder
                 );
             }
         }
+
+        $this->log('Threads/posts seeded for board ' . $boardSlug . ': +' . $toCreate . ' threads');
     }
 
     private function parser(): BbcodeParser
@@ -370,5 +381,10 @@ final readonly class DemoSeeder
                 );
             }
         }
+    }
+
+    private function log(string $message): void
+    {
+        $this->progress?->log($message);
     }
 }

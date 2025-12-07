@@ -17,6 +17,7 @@ use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Application\Seed\CustomThemeSeeder;
+use Fred\Application\Seed\ProgressTracker;
 use Faker\Factory as FakerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
@@ -32,10 +33,14 @@ $pdo = ConnectionFactory::make($config);
 $faker = FakerFactory::create();
 $faker->seed(1234);
 
-$boardCount = (int) ($argv[1] ?? 4);
-$threadsPerBoard = (int) ($argv[2] ?? 6);
-$postsPerThread = (int) ($argv[3] ?? 8);
-$userCount = (int) ($argv[4] ?? 10);
+$boardCount = (int) ($argv[1] ?? 5);
+$threadsPerBoard = (int) ($argv[2] ?? 60);
+$postsPerThread = (int) ($argv[3] ?? 80);
+$userCount = (int) ($argv[4] ?? 50);
+
+$progress = new ProgressTracker(static function (string $message): void {
+    fwrite(STDOUT, "[seed] {$message}\n");
+});
 
 $seeder = new DemoSeeder(
     roles: new RoleRepository($pdo),
@@ -53,6 +58,7 @@ $seeder = new DemoSeeder(
     postsPerThread: max(1, $postsPerThread),
     userCount: max(2, $userCount),
     parser: null,
+    progress: $progress,
 );
 
 // Themed community/boards showcase
@@ -60,6 +66,7 @@ $themedSeeder = new CustomThemeSeeder(
     communities: new CommunityRepository($pdo),
     categories: new CategoryRepository($pdo),
     boards: new BoardRepository($pdo),
+    progress: $progress,
 );
 
 try {
