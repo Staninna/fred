@@ -88,7 +88,8 @@ $router->group('/c/{community}', function (Router $router) use (
     $adminController,
     $profileController,
     $authRequired,
-    $moderationController
+    $moderationController,
+    $searchController
 ) {
     $router->get('/', [$communityController, 'show']);
     $router->get('/u/{username}', [$profileController, 'show']);

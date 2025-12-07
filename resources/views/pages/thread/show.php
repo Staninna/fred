@@ -13,7 +13,7 @@
 /** @var bool $canEditAnyPost */
 /** @var bool $canDeleteAnyPost */
 /** @var bool $canBanUsers */
-/** @var array<int, \Fred\Domain\Community\Board> $allBoards */
+/** @var array<int, Board> $allBoards */
 /** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
