@@ -35,9 +35,17 @@ use Tests\TestCase;
 
 final class AllRoutesTest extends TestCase
 {
-    public function testAllGetRoutesDoNotProduceServerErrors(): void
+    /**
+     * @dataProvider roleProvider
+     */
+    public function testAllGetRoutesDoNotProduceServerErrors(string $role): void
     {
+        session_start();
         [$router, $context] = $this->buildApp();
+
+        $userId = $context[$role . '_id'] ?? null;
+        $_SESSION['user_id'] = $userId;
+
         $routes = $router->getRoutes();
 
         $getRoutes = array_merge(
@@ -50,7 +58,7 @@ final class AllRoutesTest extends TestCase
             '{board}' => $context['board_slug'],
             '{thread}' => (string) $context['thread_id'],
             '{post}' => (string) $context['post_id'],
-            '{username}' => $context['username'],
+            '{username}' => $context['member_username'],
             '{ban}' => (string) $context['ban_id'],
             '{category}' => (string) $context['category_id'],
         ];
@@ -60,7 +68,7 @@ final class AllRoutesTest extends TestCase
         foreach ($getRoutes as $route) {
             $path = str_replace(array_keys($replacements), array_values($replacements), $route);
 
-            // Skip routes with remaining placeholders
+            // Skip routes with remaining placeholders that are not optional
             if (str_contains($path, '{')) {
                 continue;
             }
@@ -73,15 +81,25 @@ final class AllRoutesTest extends TestCase
             ));
 
             if ($response->status >= 500) {
-                $errors[] = "Route $path returned status " . $response->status;
+                $errors[] = "[$role] Route $path returned status " . $response->status;
             }
 
             if (str_contains($response->body, 'Server error') || str_contains($response->body, 'exception_message')) {
-                $errors[] = "Route $path returned a server error message.";
+                $errors[] = "[$role] Route $path returned a server error message.";
             }
         }
 
         $this->assertEmpty($errors, "Server errors detected on the following routes:\n" . implode("\n", $errors));
+    }
+
+    public static function roleProvider(): array
+    {
+        return [
+            'guest' => ['guest'],
+            'member' => ['member'],
+            'moderator' => ['moderator'],
+            'admin' => ['admin'],
+        ];
     }
 
     /**
@@ -205,7 +223,8 @@ final class AllRoutesTest extends TestCase
             $roleRepository,
             $threadRepository,
             $postRepository,
-            $banRepository
+            $banRepository,
+            $communityModeratorRepository
         );
 
         return [$router, $seed];
@@ -220,15 +239,24 @@ final class AllRoutesTest extends TestCase
         RoleRepository $roles,
         ThreadRepository $threads,
         PostRepository $posts,
-        \Fred\Infrastructure\Database\BanRepository $bans
+        \Fred\Infrastructure\Database\BanRepository $bans,
+        CommunityModeratorRepository $communityModerators
     ): array {
         $roles->ensureDefaultRoles();
-        $member = $roles->findBySlug('member');
-        $this->assertNotNull($member);
+        $memberRole = $roles->findBySlug('member');
+        $this->assertNotNull($memberRole);
+        $moderatorRole = $roles->findBySlug('moderator');
+        $this->assertNotNull($moderatorRole);
+        $adminRole = $roles->findBySlug('admin');
+        $this->assertNotNull($adminRole);
 
-        $user = $users->create('tester', 'Test User', password_hash('secret', PASSWORD_BCRYPT), $member->id, time());
+        $memberUser = $users->create('member', 'Member User', password_hash('secret', PASSWORD_BCRYPT), $memberRole->id, time());
+        $moderatorUser = $users->create('moderator', 'Moderator User', password_hash('secret', PASSWORD_BCRYPT), $moderatorRole->id, time());
+        $adminUser = $users->create('admin', 'Admin User', password_hash('secret', PASSWORD_BCRYPT), $adminRole->id, time());
 
         $community = $communities->create('main', 'Main Plaza', 'A cozy square', null, time());
+        $communityModerators->assign($community->id, $moderatorUser->id, time());
+
         $category = $categories->create($community->id, 'Lobby', 1, time());
         $board = $boards->create(
             communityId: $community->id,
@@ -239,7 +267,6 @@ final class AllRoutesTest extends TestCase
             position: 1,
             isLocked: false,
             customCss: null,
-
             timestamp: time(),
         );
 
@@ -247,7 +274,7 @@ final class AllRoutesTest extends TestCase
             communityId: $community->id,
             boardId: $board->id,
             title: 'Welcome aboard',
-            authorId: $user->id,
+            authorId: $memberUser->id,
             isSticky: false,
             isLocked: false,
             isAnnouncement: false,
@@ -257,14 +284,14 @@ final class AllRoutesTest extends TestCase
         $post = $posts->create(
             communityId: $community->id,
             threadId: $thread->id,
-            authorId: $user->id,
+            authorId: $memberUser->id,
             bodyRaw: 'First message',
             bodyParsed: null,
             signatureSnapshot: null,
             timestamp: time(),
         );
 
-        $bannedUser = $users->create('banned', 'Banned User', '', $member->id, time());
+        $bannedUser = $users->create('banned', 'Banned User', '', $memberRole->id, time());
         $bans->create(
             userId: $bannedUser->id,
             reason: 'naughty',
@@ -279,9 +306,13 @@ final class AllRoutesTest extends TestCase
             'board_slug' => $board->slug,
             'thread_id' => $thread->id,
             'post_id' => $post->id,
-            'username' => $user->username,
+            'member_username' => $memberUser->username,
             'ban_id' => $ban->id,
             'category_id' => $category->id,
+            'guest_id' => null,
+            'member_id' => $memberUser->id,
+            'moderator_id' => $moderatorUser->id,
+            'admin_id' => $adminUser->id,
         ];
     }
 }
