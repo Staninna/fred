@@ -38,19 +38,17 @@ use Fred\Domain\Community\Community;
                         <td width="140"><label for="title">Title</label></td>
                         <td><input id="title" name="title" type="text" value="<?= $e($old['title'] ?? '') ?>" required></td>
                     </tr>
-                    <tr>
-                        <td><label for="body">Body</label></td>
-                        <td>
-                            <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
-                            <textarea id="body" name="body" rows="6" required><?= $e($old['body'] ?? '') ?></textarea>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><label for="attachment">Attachment</label></td>
-                        <td><input id="attachment" name="attachment" type="file" accept=".png,.jpg,.jpeg,.gif,.webp"></td>
-                    </tr>
                 </table>
-                <button class="button" type="submit">Post thread</button>
+                <?= $renderPartial('partials/thread/message_form.php', [
+                    'action' => '/c/' . $community->slug . '/b/' . $board->slug . '/thread',
+                    'submitLabel' => 'Post thread',
+                    'textareaId' => 'body',
+                    'textareaName' => 'body',
+                    'textareaLabel' => 'Body',
+                    'bodyValue' => $old['body'] ?? '',
+                    'includeAttachment' => true,
+                    'renderPartial' => $renderPartial,
+                ]) ?>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">Cancel</a>
             </form>
         </td>

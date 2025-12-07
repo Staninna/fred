@@ -135,22 +135,16 @@ use Fred\Domain\Forum\Post;
             <?php elseif ($thread->isLocked || $board->isLocked): ?>
                 <div class="muted">This thread is locked.</div>
             <?php else: ?>
-                <form method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/reply" enctype="multipart/form-data" novalidate>
-                    <table class="form-table" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td width="120"><label for="reply_body">Message</label></td>
-                            <td>
-                                <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'reply_body']) ?>
-                                <textarea id="reply_body" name="body" rows="4" required></textarea>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><label for="attachment">Attachment</label></td>
-                            <td><input id="attachment" name="attachment" type="file" accept=".png,.jpg,.jpeg,.gif,.webp"></td>
-                        </tr>
-                    </table>
-                    <button class="button" type="submit">Post reply</button>
-                </form>
+                <?= $renderPartial('partials/thread/message_form.php', [
+                    'action' => '/c/' . $community->slug . '/t/' . $thread->id . '/reply',
+                    'submitLabel' => 'Post reply',
+                    'textareaId' => 'reply_body',
+                    'textareaName' => 'body',
+                    'textareaLabel' => 'Message',
+                    'bodyValue' => '',
+                    'includeAttachment' => true,
+                    'renderPartial' => $renderPartial,
+                ]) ?>
             <?php endif; ?>
         </td>
     </tr>

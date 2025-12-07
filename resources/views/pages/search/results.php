@@ -67,52 +67,22 @@
     <tr>
         <th>Thread matches</th>
     </tr>
-    <?php if (($query ?? '') === '' || $threads === []): ?>
-        <tr><td class="muted">No thread matches.</td></tr>
-    <?php else: ?>
-        <?php foreach ($threads as $row): ?>
-            <tr>
-                <td>
-                    <div><a href="/c/<?= $e($community->slug) ?>/t/<?= (int) $row['thread_id'] ?>"><?= $e($row['title']) ?></a></div>
-                    <div class="small">
-                        Board: <a href="/c/<?= $e($community->slug) ?>/b/<?= $e($row['board_slug']) ?>"><?= $e($row['board_name']) ?></a>
-                        · Author: <?= $e($row['author_name']) ?>
-                        · <?= date('Y-m-d H:i', (int) $row['created_at']) ?>
-                    </div>
-                    <?php if (!empty($row['snippet'] ?? '')): ?>
-                        <div class="small muted"><?= $e($row['snippet']) ?></div>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-    <?php endif; ?>
+    <?= $renderPartial('partials/search/result_list.php', [
+        'items' => $threads,
+        'emptyMessage' => 'No thread matches.',
+        'type' => 'thread',
+        'community' => $community,
+    ]) ?>
 </table>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
         <th>Post matches</th>
     </tr>
-    <?php if (($query ?? '') === '' || $posts === []): ?>
-        <tr><td class="muted">No post matches.</td></tr>
-    <?php else: ?>
-        <?php foreach ($posts as $row): ?>
-            <tr>
-                <td>
-                    <div>
-                        <a href="/c/<?= $e($community->slug) ?>/t/<?= (int) $row['thread_id'] ?>#post-<?= (int) $row['post_id'] ?>">
-                            <?= $e($row['thread_title']) ?> · Post #<?= (int) $row['post_id'] ?>
-                        </a>
-                    </div>
-                    <div class="small">
-                        Board: <a href="/c/<?= $e($community->slug) ?>/b/<?= $e($row['board_slug']) ?>"><?= $e($row['board_name']) ?></a>
-                        · Author: <?= $e($row['author_name']) ?>
-                        · <?= date('Y-m-d H:i', (int) $row['created_at']) ?>
-                    </div>
-                    <?php if (!empty($row['snippet'] ?? '')): ?>
-                        <div class="small muted"><?= $e($row['snippet']) ?></div>
-                    <?php endif; ?>
-                </td>
-            </tr>
-        <?php endforeach; ?>
-    <?php endif; ?>
+    <?= $renderPartial('partials/search/result_list.php', [
+        'items' => $posts,
+        'emptyMessage' => 'No post matches.',
+        'type' => 'post',
+        'community' => $community,
+    ]) ?>
 </table>
