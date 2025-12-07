@@ -127,7 +127,7 @@ final class AuthServiceTest extends TestCase
         $_SESSION = [];
 
         $user = $this->userRepository->findByUsername('banned');
-        $this->bans->create($user->id, 'Because', null, time());
+        $this->banRepository->create($user->id, 'Because', null, time());
 
         $this->assertFalse($auth->login('banned', 'secret'));
         $this->assertTrue($auth->currentUser()->isGuest());

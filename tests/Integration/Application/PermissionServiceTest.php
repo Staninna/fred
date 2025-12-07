@@ -7,6 +7,7 @@ namespace Tests\Integration\Application;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Auth\CurrentUser;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
@@ -18,6 +19,7 @@ final class PermissionServiceTest extends TestCase
     private RoleRepository $roles;
     private PermissionRepository $permissions;
     private CommunityModeratorRepository $communityModerators;
+    private CommunityRepository $communities;
     private UserRepository $users;
 
     protected function setUp(): void
@@ -28,6 +30,7 @@ final class PermissionServiceTest extends TestCase
         $this->permissions = new PermissionRepository($this->pdo);
         $this->communityModerators = new CommunityModeratorRepository($this->pdo);
         $this->users = new UserRepository($this->pdo);
+        $this->communities = new CommunityRepository($this->pdo);
         $this->roles->ensureDefaultRoles();
         $this->permissions->ensureDefaultPermissions();
     }
@@ -57,14 +60,16 @@ final class PermissionServiceTest extends TestCase
     public function testModeratorNeedsAssignmentPerCommunity(): void
     {
         $service = new PermissionService($this->permissions, $this->communityModerators);
-        $moderator = $this->user('moderator', 10);
+        $community = $this->communities->create('demo', 'Demo', 'Demo community', null, time());
+        $moderatorUser = $this->createUserWithRole('moderator');
+        $moderator = $this->user('moderator', $moderatorUser->id);
 
-        $this->assertFalse($service->canModerate($moderator, 1));
+        $this->assertFalse($service->canModerate($moderator, $community->id));
 
-        $this->communityModerators->assign(1, 10, time());
-        $this->assertTrue($service->canModerate($moderator, 1));
-        $this->assertTrue($service->canLockThread($moderator, 1));
-        $this->assertFalse($service->canModerate($moderator, 2));
+        $this->communityModerators->assign($community->id, $moderatorUser->id, time());
+        $this->assertTrue($service->canModerate($moderator, $community->id));
+        $this->assertTrue($service->canLockThread($moderator, $community->id));
+        $this->assertFalse($service->canModerate($moderator, $community->id + 1));
     }
 
     public function testMemberCannotModerate(): void
@@ -74,5 +79,21 @@ final class PermissionServiceTest extends TestCase
 
         $this->assertFalse($service->canModerate($member, 1));
         $this->assertFalse($service->canBan($member, 1));
+    }
+
+    private function createUserWithRole(string $roleSlug): \Fred\Domain\Auth\User
+    {
+        $role = $this->roles->findBySlug($roleSlug);
+        if ($role === null) {
+            throw new \RuntimeException('Role not found: ' . $roleSlug);
+        }
+
+        return $this->users->create(
+            username: $roleSlug . '_user',
+            displayName: ucfirst($roleSlug) . ' User',
+            passwordHash: password_hash('password', PASSWORD_BCRYPT),
+            roleId: $role->id,
+            createdAt: time(),
+        );
     }
 }
