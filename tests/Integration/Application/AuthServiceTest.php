@@ -110,4 +110,26 @@ final class AuthServiceTest extends TestCase
         $this->assertFalse($auth->login('mallory', 'wrong'));
         $this->assertTrue($auth->currentUser()->isGuest());
     }
+
+    public function testBannedUserCannotLogin(): void
+    {
+        $auth = new AuthService(
+            config: $this->appConfig,
+            users: $this->userRepository,
+            roles: $this->roleRepository,
+            profiles: $this->profileRepository,
+            bans: $this->banRepository,
+            permissions: $this->permissionRepository,
+        );
+
+        $auth->register('banned', 'Banned User', 'secret');
+        $auth->logout();
+        $_SESSION = [];
+
+        $user = $this->userRepository->findByUsername('banned');
+        $this->bans->create($user->id, 'Because', null, time());
+
+        $this->assertFalse($auth->login('banned', 'secret'));
+        $this->assertTrue($auth->currentUser()->isGuest());
+    }
 }
