@@ -5,13 +5,24 @@ declare(strict_types=1);
 namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\PermissionRepository;
 use Tests\TestCase;
 
 final class AuthServiceTest extends TestCase
 {
+    private UserRepository $userRepository;
+    private RoleRepository $roleRepository;
+    private ProfileRepository $profileRepository;
+    private BanRepository $banRepository;
+    private PermissionRepository $permissionRepository;
+    private AppConfig $appConfig;
+    private \PDO $pdo;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -21,15 +32,32 @@ final class AuthServiceTest extends TestCase
         }
 
         $_SESSION = [];
+
+        $this->pdo = $this->makeMigratedPdo();
+        $this->userRepository = new UserRepository($this->pdo);
+        $this->roleRepository = new RoleRepository($this->pdo);
+        $this->profileRepository = new ProfileRepository($this->pdo);
+        $this->banRepository = new BanRepository($this->pdo);
+        $this->permissionRepository = new PermissionRepository($this->pdo);
+        $this->appConfig = new AppConfig(
+            environment: 'testing',
+            baseUrl: 'http://localhost',
+            databasePath: ':memory:',
+            uploadsPath: $this->createTempDir('fred-uploads-'),
+            logsPath: $this->createTempDir('fred-logs-'),
+            basePath: $this->basePath(),
+        );
     }
 
     public function testRegisterCreatesUserAndLogsIn(): void
     {
-        $pdo = $this->makeMigratedPdo();
         $auth = new AuthService(
-            users: new UserRepository($pdo),
-            roles: new RoleRepository($pdo),
-            profiles: new ProfileRepository($pdo),
+            config: $this->appConfig,
+            users: $this->userRepository,
+            roles: $this->roleRepository,
+            profiles: $this->profileRepository,
+            bans: $this->banRepository,
+            permissions: $this->permissionRepository,
         );
 
         $current = $auth->register('bob', 'Bobby', 'secret123');
@@ -39,17 +67,19 @@ final class AuthServiceTest extends TestCase
         $this->assertSame('member', $current->role);
         $this->assertNotNull($_SESSION['user_id'] ?? null);
 
-        $profile = (new ProfileRepository($pdo))->findByUserId($current->id ?? 0);
+        $profile = (new ProfileRepository($this->pdo))->findByUserId($current->id ?? 0);
         $this->assertNotNull($profile);
     }
 
     public function testLoginAndLogout(): void
     {
-        $pdo = $this->makeMigratedPdo();
         $auth = new AuthService(
-            users: new UserRepository($pdo),
-            roles: new RoleRepository($pdo),
-            profiles: new ProfileRepository($pdo),
+            config: $this->appConfig,
+            users: $this->userRepository,
+            roles: $this->roleRepository,
+            profiles: $this->profileRepository,
+            bans: $this->banRepository,
+            permissions: $this->permissionRepository,
         );
 
         $auth->register('jane', 'Jane', 'password1');
@@ -64,11 +94,13 @@ final class AuthServiceTest extends TestCase
 
     public function testLoginFailsWithWrongPassword(): void
     {
-        $pdo = $this->makeMigratedPdo();
         $auth = new AuthService(
-            users: new UserRepository($pdo),
-            roles: new RoleRepository($pdo),
-            profiles: new ProfileRepository($pdo),
+            config: $this->appConfig,
+            users: $this->userRepository,
+            roles: $this->roleRepository,
+            profiles: $this->profileRepository,
+            bans: $this->banRepository,
+            permissions: $this->permissionRepository,
         );
 
         $auth->register('mallory', 'Mallory', 'topsecret');

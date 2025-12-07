@@ -11,8 +11,8 @@ use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\ModerationController;
-use Fred.Http\Controller.PostController;
-use Fred\Http.Controller.ThreadController;
+use Fred\Http\Controller\PostController;
+use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
@@ -24,6 +24,8 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\PermissionRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 use Fred\Application\Content\BbcodeParser;
 use Tests\TestCase;
@@ -93,8 +95,15 @@ final class HttpRoutesTest extends TestCase
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
-        $authService = new AuthService($config, $userRepository, $roleRepository, $profileRepository, new \Fred\Infrastructure\Database\BanRepository($pdo));
-        $permissionService = new \Fred\Application\Auth\PermissionService();
+        $authService = new AuthService(
+            $config,
+            $userRepository,
+            $roleRepository,
+            $profileRepository,
+            new \Fred\Infrastructure\Database\BanRepository($pdo),
+            new \Fred\Infrastructure\Database\PermissionRepository($pdo),
+        );
+        $permissionService = new \Fred\Application\Auth\PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
@@ -103,21 +112,27 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
+            $permissionService, // Corrected: should be PermissionService
             $communityHelper,
-            $communityRepository,
+            $communityRepository, // Added: missing CommunityRepository
         );
         $adminController = new AdminController(
             $view,
             $config,
             $authService,
+            $permissionService, // Corrected: should be PermissionService
             $communityHelper,
             $categoryRepository,
             $boardRepository,
+            new \Fred\Infrastructure\Database\CommunityModeratorRepository($pdo), // Missing
+            $userRepository, // Missing
+            $roleRepository, // Missing
         );
         $boardController = new BoardController(
             $view,
             $config,
             $authService,
+            $permissionService, // Corrected: should be PermissionService
             $communityHelper,
             $categoryRepository,
             $threadRepository,
@@ -143,6 +158,7 @@ final class HttpRoutesTest extends TestCase
             $postRepository,
             new BbcodeParser(),
             $profileRepository,
+            $permissionService,
         );
         $moderationController = new ModerationController(
             $view,
@@ -152,6 +168,11 @@ final class HttpRoutesTest extends TestCase
             $communityHelper,
             $threadRepository,
             $postRepository,
+            new \Fred\Application\Content\BbcodeParser(), // Missing
+            $userRepository, // Missing
+            new \Fred\Infrastructure\Database\BanRepository($pdo), // Missing
+            $boardRepository, // Missing
+            $categoryRepository, // Missing
         );
 
         $router->get('/', [$communityController, 'index']);
