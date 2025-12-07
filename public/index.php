@@ -14,6 +14,7 @@ use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
+use Fred\Http\Navigation\NavigationTracker;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -52,6 +53,7 @@ $container->addShared(ViewRenderer::class, static fn () => new ViewRenderer(
         'csrfToken' => $container->get(CsrfGuard::class)->token(),
     ],
 ));
+$container->addShared(NavigationTracker::class, static fn () => new NavigationTracker());
 $container->addShared(Router::class, static fn () => new Router($container->get('basePath') . '/public'));
 
 $config = $container->get(AppConfig::class);
@@ -72,6 +74,7 @@ session_set_save_handler($sessionHandler, true);
 session_start();
 
 $router = $container->get(Router::class);
+$navigationTracker = $container->get(NavigationTracker::class);
 $authService = $container->get(AuthService::class);
 $communityController = $container->get(CommunityController::class);
 $boardController = $container->get(BoardController::class);
@@ -225,7 +228,7 @@ if ($request->method === 'POST' && !$csrf->isValid($request)) {
     exit;
 }
 
-$navResponse = trackNavigation($request);
+$navResponse = $navigationTracker->track($request, $_SESSION);
 if ($navResponse instanceof Response) {
     $navResponse->send();
     exit;
@@ -269,83 +272,3 @@ try {
 
 $response->send();
 
-function trackNavigation(Request $request): ?Response
-{
-    $method = strtoupper($request->method);
-    $history = $_SESSION['nav_history'] ?? [];
-    $index = $_SESSION['nav_index'] ?? (count($history) > 0 ? count($history) - 1 : -1);
-
-    $history = is_array($history) ? $history : [];
-    $index = is_int($index) ? $index : (count($history) > 0 ? count($history) - 1 : -1);
-
-    if ($request->path === '/nav/back') {
-        if ($index > 0) {
-            $index--;
-        }
-        $_SESSION['nav_index'] = $index;
-        $_SESSION['nav_skip_slice'] = true;
-        $target = $history[$index] ?? '/';
-
-        return Response::redirect($target);
-    }
-
-    if ($request->path === '/nav/forward') {
-        if ($index < count($history) - 1) {
-            $index++;
-        }
-        $_SESSION['nav_index'] = $index;
-        $_SESSION['nav_skip_slice'] = true;
-        $target = $history[$index] ?? '/';
-
-        return Response::redirect($target);
-    }
-
-    if ($method !== 'GET' || !isTrackablePath($request->path)) {
-        return null;
-    }
-
-    $skipSlice = (bool) ($_SESSION['nav_skip_slice'] ?? false);
-    $_SESSION['nav_skip_slice'] = false;
-
-    if (!$skipSlice && $index !== count($history) - 1) {
-        $history = array_slice($history, 0, $index + 1);
-        $index = count($history) - 1;
-    }
-
-    $fullPath = $request->path;
-    if ($request->query !== []) {
-        $fullPath .= '?' . http_build_query($request->query);
-    }
-
-    if ($index >= 0 && isset($history[$index]) && $history[$index] === $fullPath) {
-        // already at this position; keep index as-is
-    } elseif ($history === [] || $history[count($history) - 1] !== $fullPath) {
-        $history[] = $fullPath;
-        if (count($history) > 20) {
-            $history = array_slice($history, -20);
-        }
-        $index = count($history) - 1;
-    }
-
-    $_SESSION['nav_history'] = $history;
-    $_SESSION['nav_index'] = $index;
-
-    return null;
-}
-
-function isTrackablePath(string $path): bool
-{
-    if ($path === '/nav/back' || $path === '/nav/forward') {
-        return false;
-    }
-
-    // Skip static assets and uploads
-    if (preg_match('#\\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|txt)$#i', $path)) {
-        return false;
-    }
-    if (str_starts_with($path, '/uploads/')) {
-        return false;
-    }
-
-    return true;
-}
