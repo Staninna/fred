@@ -61,6 +61,7 @@ final readonly class Request
             files: $this->files,
             params: $params,
             headers: $this->headers,
+            session: $this->session,
         );
     }
 
