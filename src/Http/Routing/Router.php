@@ -109,6 +109,14 @@ final class Router
         );
     }
 
+    public function getRoutes(): array
+    {
+        return [
+            'static' => $this->staticRoutes,
+            'dynamic' => $this->dynamicRoutes,
+        ];
+    }
+
     private function addRoute(string $method, string $path, callable $handler, array $middleware = []): void
     {
         $fullPath = $this->applyGroupPrefix($path);
@@ -117,6 +125,7 @@ final class Router
         if (str_contains($fullPath, '{')) {
             [$regex, $paramNames] = $this->compileRoute($fullPath);
             $this->dynamicRoutes[$method][] = [
+                'path' => $fullPath,
                 'regex' => $regex,
                 'paramNames' => $paramNames,
                 'handler' => $handler,
@@ -127,6 +136,7 @@ final class Router
         }
 
         $this->staticRoutes[$method][$fullPath] = [
+            'path' => $fullPath,
             'handler' => $handler,
             'middleware' => $combinedMiddleware,
         ];
