@@ -12,13 +12,17 @@ use function finfo_file;
 use function finfo_open;
 use function is_dir;
 use function is_file;
+use function ltrim;
 use function mkdir;
 use function move_uploaded_file;
 use function pathinfo;
 use function preg_match;
+use function rtrim;
 use function sprintf;
 use function strtolower;
+use function str_starts_with;
 use function uniqid;
+use function unlink;
 
 use const FILEINFO_MIME_TYPE;
 use const PATHINFO_EXTENSION;
@@ -109,6 +113,20 @@ final class UploadService
         }
 
         return $relativePath;
+    }
+
+    public function delete(string $relativePath): void
+    {
+        $base = rtrim($this->config->uploadsPath, '/');
+        if (!str_starts_with($base, '/')) {
+            $base = rtrim($this->config->basePath, '/') . '/' . ltrim($base, '/');
+        }
+
+        $absolute = rtrim($base, '/') . '/' . ltrim($relativePath, '/');
+
+        if (is_file($absolute)) {
+            @unlink($absolute);
+        }
     }
 
     private function detectMime(string $path, string $fallbackType): string

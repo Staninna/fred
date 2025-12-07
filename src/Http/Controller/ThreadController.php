@@ -20,6 +20,8 @@ use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\View\ViewRenderer;
+use PDO;
+use Throwable;
 
 use function trim;
 
@@ -38,6 +40,7 @@ final readonly class ThreadController
         private ProfileRepository $profiles,
         private UploadService $uploads,
         private AttachmentRepository $attachments,
+        private PDO $pdo,
     ) {
     }
 
@@ -202,51 +205,71 @@ final readonly class ThreadController
         }
 
         $attachmentPath = null;
-        if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-            try {
+
+        try {
+            $this->pdo->beginTransaction();
+
+            if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
                 $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
-            } catch (\Throwable $exception) {
-                return $this->renderCreate($request, $community, $board, ['Attachment error: ' . $exception->getMessage()], [
+            }
+
+            $timestamp = time();
+            $thread = $this->threads->create(
+                communityId: $community->id,
+                boardId: $board->id,
+                title: $title,
+                authorId: $currentUser->id ?? 0,
+                isSticky: false,
+                isLocked: false,
+                isAnnouncement: false,
+                timestamp: $timestamp,
+            );
+
+            $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
+
+            $post = $this->posts->create(
+                communityId: $community->id,
+                threadId: $thread->id,
+                authorId: $currentUser->id ?? 0,
+                bodyRaw: $bodyText,
+                bodyParsed: $this->parser->parse($bodyText),
+                signatureSnapshot: $profile?->signatureParsed,
+                timestamp: $timestamp,
+            );
+
+            if ($attachmentPath !== null) {
+                $this->attachments->create(
+                    communityId: $community->id,
+                    postId: $post->id,
+                    userId: $currentUser->id ?? 0,
+                    path: $attachmentPath,
+                    originalName: (string) ($attachmentFile['name'] ?? ''),
+                    mimeType: (string) ($attachmentFile['type'] ?? ''),
+                    sizeBytes: (int) ($attachmentFile['size'] ?? 0),
+                    createdAt: $timestamp,
+                );
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            if ($attachmentPath !== null) {
+                $this->uploads->delete($attachmentPath);
+            }
+
+            return $this->renderCreate(
+                $request,
+                $community,
+                $board,
+                ['Could not create thread. Please try again.'],
+                [
                     'title' => $title,
                     'body' => $bodyText,
-                ], 422);
-            }
-        }
-
-        $timestamp = time();
-        $thread = $this->threads->create(
-            communityId: $community->id,
-            boardId: $board->id,
-            title: $title,
-            authorId: $currentUser->id ?? 0,
-            isSticky: false,
-            isLocked: false,
-            isAnnouncement: false,
-            timestamp: $timestamp,
-        );
-
-        $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
-
-        $post = $this->posts->create(
-            communityId: $community->id,
-            threadId: $thread->id,
-            authorId: $currentUser->id ?? 0,
-            bodyRaw: $bodyText,
-            bodyParsed: $this->parser->parse($bodyText),
-            signatureSnapshot: $profile?->signatureParsed,
-            timestamp: $timestamp,
-        );
-
-        if ($attachmentPath !== null) {
-            $this->attachments->create(
-                communityId: $community->id,
-                postId: $post->id,
-                userId: $currentUser->id ?? 0,
-                path: $attachmentPath,
-                originalName: (string) ($attachmentFile['name'] ?? ''),
-                mimeType: (string) ($attachmentFile['type'] ?? ''),
-                sizeBytes: (int) ($attachmentFile['size'] ?? 0),
-                createdAt: $timestamp,
+                ],
+                500,
             );
         }
 

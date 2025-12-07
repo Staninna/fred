@@ -6,6 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Application\Content\UploadService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -16,6 +17,7 @@ use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ReportRepository;
+use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ModerationController
@@ -34,6 +36,8 @@ final readonly class ModerationController
         private BoardRepository $boards,
         private CategoryRepository $categories,
         private ReportRepository $reports,
+        private AttachmentRepository $attachments,
+        private UploadService $uploads,
     ) {
     }
 
@@ -82,6 +86,11 @@ final readonly class ModerationController
         $post = $this->posts->findById($postId);
         if ($post === null || $post->communityId !== $community->id) {
             return $this->notFound($request);
+        }
+
+        $attachments = $this->attachments->listByPostId($postId);
+        foreach ($attachments as $attachment) {
+            $this->uploads->delete($attachment->path);
         }
 
         $this->posts->delete($postId);
