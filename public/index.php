@@ -127,6 +127,8 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/boards', [$adminController, 'createBoard']);
         $router->post('/boards/{board}', [$adminController, 'updateBoard']);
         $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard']);
+        $router->post('/moderators', [$adminController, 'addModerator']);
+        $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator']);
     }, [$authRequired]);
 });
 

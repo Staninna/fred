@@ -10,6 +10,7 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\PermissionRepository;
 
 use function password_hash;
 use function password_verify;
@@ -29,8 +30,10 @@ final class AuthService
         private readonly RoleRepository $roles,
         private readonly ProfileRepository $profiles,
         private readonly BanRepository $bans,
+        private readonly PermissionRepository $permissions,
     ) {
         $this->roles->ensureDefaultRoles();
+        $this->permissions->ensureDefaultPermissions();
     }
 
     public function currentUser(): CurrentUser

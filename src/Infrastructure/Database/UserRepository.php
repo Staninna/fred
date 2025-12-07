@@ -82,6 +82,15 @@ final readonly class UserRepository
         return $user;
     }
 
+    public function updateRole(int $userId, int $roleId): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users SET role_id = :role_id WHERE id = :id');
+        $statement->execute([
+            'role_id' => $roleId,
+            'id' => $userId,
+        ]);
+    }
+
     private function hydrate(array $row): User
     {
         return new User(

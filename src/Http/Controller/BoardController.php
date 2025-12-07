@@ -47,6 +47,8 @@ final readonly class BoardController
         $structure = $this->communityHelper->structureForCommunity($community);
         $threads = $this->threads->listByBoardId($board->id);
 
+        $currentUser = $this->auth->currentUser();
+
         $body = $this->view->render('pages/board/show.php', [
             'pageTitle' => $board->name,
             'community' => $community,
@@ -54,8 +56,9 @@ final readonly class BoardController
             'category' => $category,
             'threads' => $threads,
             'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
+            'currentUser' => $currentUser,
+            'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
+            'canCreateThread' => $this->permissions->canCreateThread($currentUser),
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

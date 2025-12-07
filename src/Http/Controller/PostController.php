@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -27,6 +28,7 @@ final readonly class PostController
         private PostRepository $posts,
         private BbcodeParser $parser,
         private ProfileRepository $profiles,
+        private PermissionService $permissions,
     ) {
     }
 
@@ -50,6 +52,14 @@ final readonly class PostController
         $currentUser = $this->auth->currentUser();
         if ($currentUser->isGuest()) {
             return Response::redirect('/login');
+        }
+
+        if (!$this->permissions->canReply($currentUser)) {
+            return new Response(
+                status: 403,
+                headers: ['Content-Type' => 'text/html; charset=utf-8'],
+                body: 'Forbidden',
+            );
         }
 
         if ($thread->isLocked || $board->isLocked) {

@@ -104,7 +104,7 @@ final readonly class CommunityController
             'boardsByCategory' => $structure['boardsByCategory'],
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
+            'canModerate' => $this->permissions->canModerate($this->auth->currentUser(), $community->id),
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
                 $community,

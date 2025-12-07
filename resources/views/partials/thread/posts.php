@@ -1,7 +1,8 @@
 <?php
 /** @var array<int, Post> $posts */
 /** @var callable(string, int): string $e */
-/** @var bool $canModerate */
+/** @var bool $canEditAnyPost */
+/** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */
 
 use Fred\Domain\Forum\Post;
@@ -27,10 +28,12 @@ use Fred\Domain\Forum\Post;
                             ? $post->bodyParsed
                             : nl2br($e($post->bodyRaw)) ?>
                     </div>
-                    <?php if (!empty($canModerate ?? false)): ?>
+                    <?php if (!empty($canDeleteAnyPost ?? false)): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">
                             <button class="button" type="submit">Delete</button>
                         </form>
+                    <?php endif; ?>
+                    <?php if (!empty($canEditAnyPost ?? false)): ?>
                         <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit">Edit</a>
                     <?php endif; ?>
                     <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>

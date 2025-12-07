@@ -11,6 +11,9 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\RoleRepository;
+use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -25,6 +28,9 @@ final readonly class AdminController
         private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
         private BoardRepository $boards,
+        private CommunityModeratorRepository $communityModerators,
+        private UserRepository $users,
+        private RoleRepository $roles,
     ) {
     }
 
@@ -35,17 +41,19 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
         $structure = $this->communityHelper->structureForCommunity($community);
+        $moderators = $this->communityModerators->listByCommunity($community->id);
 
         $body = $this->view->render('pages/community/admin/structure.php', [
             'pageTitle' => 'Admin · ' . $community->name,
             'community' => $community,
             'categories' => $structure['categories'],
             'boardsByCategory' => $structure['boardsByCategory'],
+            'moderators' => $moderators,
             'errors' => $errors,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
@@ -75,7 +83,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -98,7 +106,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -127,7 +135,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -149,7 +157,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -200,7 +208,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -251,7 +259,7 @@ final readonly class AdminController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -262,6 +270,86 @@ final readonly class AdminController
         }
 
         $this->boards->delete($board->id);
+
+        return Response::redirect('/c/' . $community->slug . '/admin/structure');
+    }
+
+    public function addModerator(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        $currentUser = $this->auth->currentUser();
+        if (!$this->permissions->canModerate($currentUser, $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        if ($currentUser->role !== 'admin') {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $username = trim((string) ($request->body['username'] ?? ''));
+        $errors = [];
+        if ($username === '') {
+            $errors[] = 'Username is required.';
+        }
+
+        $this->roles->ensureDefaultRoles();
+
+        $user = $username !== '' ? $this->users->findByUsername($username) : null;
+        if ($user === null) {
+            $errors[] = 'User not found.';
+        }
+
+        if ($user !== null && $user->roleSlug === 'guest') {
+            $memberRole = $this->roles->findBySlug('member');
+            if ($memberRole !== null) {
+                $this->users->updateRole($user->id, $memberRole->id);
+                $user = $this->users->findById($user->id) ?? $user;
+            }
+        }
+
+        if ($user !== null && $user->roleSlug === 'member') {
+            $modRole = $this->roles->findBySlug('moderator');
+            if ($modRole === null) {
+                $errors[] = 'Moderator role is missing.';
+            } else {
+                $this->users->updateRole($user->id, $modRole->id);
+                $user = $this->users->findById($user->id) ?? $user;
+            }
+        }
+
+        if ($errors === [] && $user !== null) {
+            $this->communityModerators->assign($community->id, $user->id, time());
+
+            return Response::redirect('/c/' . $community->slug . '/admin/structure');
+        }
+
+        return $this->structure($request, $errors);
+    }
+
+    public function removeModerator(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        $currentUser = $this->auth->currentUser();
+        if (!$this->permissions->canModerate($currentUser, $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        if ($currentUser->role !== 'admin') {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $userId = (int) ($request->params['user'] ?? 0);
+        if ($userId > 0) {
+            $this->communityModerators->remove($community->id, $userId);
+        }
 
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
     }

@@ -61,6 +61,7 @@ final readonly class ThreadController
 
         $structure = $this->communityHelper->structureForCommunity($community);
         $posts = $this->posts->listByThreadId($thread->id);
+        $currentUser = $this->auth->currentUser();
 
         $body = $this->view->render('pages/thread/show.php', [
             'pageTitle' => $thread->title,
@@ -70,8 +71,14 @@ final readonly class ThreadController
             'thread' => $thread,
             'posts' => $posts,
             'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
+            'currentUser' => $currentUser,
+            'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
+            'canLockThread' => $this->permissions->canLockThread($currentUser, $community->id),
+            'canStickyThread' => $this->permissions->canStickyThread($currentUser, $community->id),
+            'canMoveThread' => $this->permissions->canMoveThread($currentUser, $community->id),
+            'canEditAnyPost' => $this->permissions->canEditAnyPost($currentUser, $community->id),
+            'canDeleteAnyPost' => $this->permissions->canDeleteAnyPost($currentUser, $community->id),
+            'canBanUsers' => $this->permissions->canBan($currentUser, $community->id),
             'allBoards' => $structure['boards'],
             'activePath' => $request->path,
             'navSections' => $this->communityHelper->navSections(
@@ -96,8 +103,13 @@ final readonly class ThreadController
         }
         ['community' => $community, 'board' => $board] = $context;
 
-        if ($this->auth->currentUser()->isGuest()) {
+        $currentUser = $this->auth->currentUser();
+        if ($currentUser->isGuest()) {
             return Response::redirect('/login');
+        }
+
+        if (!$this->permissions->canCreateThread($currentUser)) {
+            return $this->renderCreate($request, $community, $board, ['You do not have permission to create threads.'], [], 403);
         }
 
         return $this->renderCreate($request, $community, $board, []);
@@ -114,6 +126,20 @@ final readonly class ThreadController
         $currentUser = $this->auth->currentUser();
         if ($currentUser->isGuest()) {
             return Response::redirect('/login');
+        }
+
+        if (!$this->permissions->canCreateThread($currentUser)) {
+            return $this->renderCreate(
+                $request,
+                $community,
+                $board,
+                ['You do not have permission to create threads.'],
+                [
+                    'title' => $request->body['title'] ?? '',
+                    'body' => $request->body['body'] ?? '',
+                ],
+                403,
+            );
         }
 
         if ($board->isLocked) {

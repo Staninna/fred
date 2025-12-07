@@ -6,6 +6,7 @@
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, int): string $e */
 /** @var bool $canModerate */
+/** @var bool $canCreateThread */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;
@@ -73,8 +74,10 @@ use Fred\Domain\Community\Community;
         <td colspan="2">
             <?php if ($board->isLocked): ?>
                 <span class="muted">Board locked.</span>
-            <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+            <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated() && !empty($canCreateThread ?? false)): ?>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread/new">New thread</a>
+            <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
+                <span class="muted">You do not have permission to create threads.</span>
             <?php else: ?>
                 <a class="button" href="/login">Sign in to post</a>
             <?php endif; ?>

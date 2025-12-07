@@ -62,7 +62,7 @@ final readonly class ModerationController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canDeleteAnyPost($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -85,7 +85,7 @@ final readonly class ModerationController
         }
 
         if ($request->method === 'GET') {
-            if (!$this->permissions->canModerate($this->auth->currentUser())) {
+            if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
                 return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
             }
             $postId = (int) ($request->params['post'] ?? 0);
@@ -106,7 +106,7 @@ final readonly class ModerationController
             return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -138,7 +138,7 @@ final readonly class ModerationController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canMoveThread($this->auth->currentUser())) {
+        if (!$this->permissions->canMoveThread($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -161,7 +161,12 @@ final readonly class ModerationController
 
     public function listBans(Request $request): Response
     {
-        if (!$this->permissions->canBan($this->auth->currentUser())) {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -174,6 +179,7 @@ final readonly class ModerationController
             'activePath' => $request->path,
             'errors' => [],
             'old' => [],
+            'navSections' => $this->communityHelper->navForCommunity($community),
         ]);
 
         return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
@@ -181,7 +187,12 @@ final readonly class ModerationController
 
     public function createBan(Request $request): Response
     {
-        if (!$this->permissions->canBan($this->auth->currentUser())) {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -231,6 +242,7 @@ final readonly class ModerationController
                 'reason' => $reason,
                 'expires_at' => $expires,
             ],
+            'navSections' => $this->communityHelper->navForCommunity($community),
         ]);
 
         return new Response(422, ['Content-Type' => 'text/html; charset=utf-8'], $body);
@@ -238,7 +250,12 @@ final readonly class ModerationController
 
     public function deleteBan(Request $request): Response
     {
-        if (!$this->permissions->canBan($this->auth->currentUser())) {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -247,7 +264,7 @@ final readonly class ModerationController
             $this->bans->delete($banId);
         }
 
-        return Response::redirect('/c/' . ($request->params['community'] ?? '') . '/admin/bans');
+        return Response::redirect('/c/' . $community->slug . '/admin/bans');
     }
 
     private function toggleLock(Request $request, bool $lock): Response
@@ -257,7 +274,7 @@ final readonly class ModerationController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canLockThread($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
@@ -279,7 +296,7 @@ final readonly class ModerationController
             return $this->notFound($request);
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser())) {
+        if (!$this->permissions->canStickyThread($this->auth->currentUser(), $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 

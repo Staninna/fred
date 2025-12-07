@@ -5,6 +5,7 @@
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
+/** @var array<int, array{user_id:int, username:string, assigned_at:int}> $moderators */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
@@ -29,6 +30,43 @@ use Fred\Domain\Community\Community;
 </table>
 
 <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+
+<table class="section-table" cellpadding="0" cellspacing="0">
+    <tr>
+        <th colspan="2">Moderators</th>
+    </tr>
+    <tr>
+        <td class="table-heading" width="200">Current moderators</td>
+        <td>
+            <?php if ($moderators === []): ?>
+                <div class="muted">No moderators assigned.</div>
+            <?php else: ?>
+                <ul class="nav-list">
+                    <?php foreach ($moderators as $moderator): ?>
+                        <li>
+                            <?= $e($moderator['username']) ?>
+                            <span class="small muted">(since <?= date('Y-m-d', (int) $moderator['assigned_at']) ?>)</span>
+                            <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators/<?= $moderator['user_id'] ?>/delete">
+                                <button class="button" type="submit">Remove</button>
+                            </form>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </td>
+    </tr>
+    <tr>
+        <td class="table-heading">Add moderator</td>
+        <td>
+            <form method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators" novalidate>
+                <label for="mod_username">Username</label>
+                <input id="mod_username" name="username" type="text" required>
+                <button class="button" type="submit">Assign</button>
+                <div class="small muted">User will be given the Moderator role if they do not already have it.</div>
+            </form>
+        </td>
+    </tr>
+</table>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
