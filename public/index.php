@@ -28,9 +28,6 @@ use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
 use League\Container\ReflectionContainer;
 
-use function http_build_query;
-use function strtoupper;
-
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $basePath = dirname(__DIR__);
