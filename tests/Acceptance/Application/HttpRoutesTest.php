@@ -110,7 +110,7 @@ final class HttpRoutesTest extends TestCase
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
-        $authController = new AuthController($view, $config, $authService);
+        $authController = new AuthController($view, $config, $authService, $communityHelper);
         $communityController = new CommunityController(
             $view,
             $config,

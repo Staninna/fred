@@ -147,7 +147,7 @@ final class AllRoutesTest extends TestCase
 
         $router = new Router($this->basePath('public'));
 
-        $authController = new AuthController($view, $config, $authService);
+        $authController = new AuthController($view, $config, $authService, $communityHelper);
         $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository);
         $boardController = new BoardController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository);

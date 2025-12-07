@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -16,6 +17,7 @@ final readonly class AuthController
         private ViewRenderer $view,
         private AppConfig    $config,
         private AuthService  $auth,
+        private CommunityHelper $communityHelper,
     ) {
     }
 
@@ -139,6 +141,9 @@ final readonly class AuthController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,
+            'navSections' => $this->communityHelper->navForCommunity(),
+            'currentCommunity' => null,
+            'customCss' => '',
         ]);
 
         return new Response(
@@ -157,6 +162,9 @@ final readonly class AuthController
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
             'activePath' => $request->path,
+            'navSections' => $this->communityHelper->navForCommunity(),
+            'currentCommunity' => null,
+            'customCss' => '',
         ]);
 
         return new Response(
