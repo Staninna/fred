@@ -243,7 +243,7 @@ function trackNavigation(Request $request): ?Response
         return Response::redirect($target);
     }
 
-    if ($method !== 'GET') {
+    if ($method !== 'GET' || !isTrackablePath($request->path)) {
         return null;
     }
 
@@ -267,4 +267,21 @@ function trackNavigation(Request $request): ?Response
     $_SESSION['nav_index'] = count($history) - 1;
 
     return null;
+}
+
+function isTrackablePath(string $path): bool
+{
+    if ($path === '/nav/back' || $path === '/nav/forward') {
+        return false;
+    }
+
+    // Skip static assets and uploads
+    if (preg_match('#\\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|txt)$#i', $path)) {
+        return false;
+    }
+    if (str_starts_with($path, '/uploads/')) {
+        return false;
+    }
+
+    return true;
 }
