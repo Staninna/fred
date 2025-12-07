@@ -228,6 +228,7 @@ function trackNavigation(Request $request): ?Response
             $index--;
         }
         $_SESSION['nav_index'] = $index;
+        $_SESSION['nav_skip_slice'] = true;
         $target = $history[$index] ?? '/';
 
         return Response::redirect($target);
@@ -238,6 +239,7 @@ function trackNavigation(Request $request): ?Response
             $index++;
         }
         $_SESSION['nav_index'] = $index;
+        $_SESSION['nav_skip_slice'] = true;
         $target = $history[$index] ?? '/';
 
         return Response::redirect($target);
@@ -247,7 +249,10 @@ function trackNavigation(Request $request): ?Response
         return null;
     }
 
-    if ($index !== count($history) - 1) {
+    $skipSlice = (bool) ($_SESSION['nav_skip_slice'] ?? false);
+    $_SESSION['nav_skip_slice'] = false;
+
+    if (!$skipSlice && $index !== count($history) - 1) {
         $history = array_slice($history, 0, $index + 1);
     }
 
@@ -256,7 +261,9 @@ function trackNavigation(Request $request): ?Response
         $fullPath .= '?' . http_build_query($request->query);
     }
 
-    if ($history === [] || $history[count($history) - 1] !== $fullPath) {
+    if ($index >= 0 && isset($history[$index]) && $history[$index] === $fullPath) {
+        // already at this position; do nothing
+    } elseif ($history === [] || $history[count($history) - 1] !== $fullPath) {
         $history[] = $fullPath;
         if (count($history) > 20) {
             $history = array_slice($history, -20);
