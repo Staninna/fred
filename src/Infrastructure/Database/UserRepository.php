@@ -91,6 +91,16 @@ final readonly class UserRepository
         ]);
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function listUsernames(): array
+    {
+        $statement = $this->pdo->query('SELECT username FROM users ORDER BY username ASC');
+
+        return $statement->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    }
+
     private function hydrate(array $row): User
     {
         return new User(

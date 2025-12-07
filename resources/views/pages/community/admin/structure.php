@@ -6,6 +6,7 @@
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
 /** @var array<int, array{user_id:int, username:string, assigned_at:int}> $moderators */
+/** @var array<int, string> $usernames */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
@@ -60,7 +61,12 @@ use Fred\Domain\Community\Community;
         <td>
             <form method="post" action="/c/<?= $e($community->slug) ?>/admin/moderators" novalidate>
                 <label for="mod_username">Username</label>
-                <input id="mod_username" name="username" type="text" required>
+                <input id="mod_username" name="username" type="text" list="mod-username-options" required>
+                <datalist id="mod-username-options">
+                    <?php foreach ($usernames as $username): ?>
+                        <option value="<?= $e($username) ?>"></option>
+                    <?php endforeach; ?>
+                </datalist>
                 <button class="button" type="submit">Assign</button>
                 <div class="small muted">User will be given the Moderator role if they do not already have it.</div>
             </form>

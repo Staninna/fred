@@ -39,6 +39,7 @@ final readonly class SearchController
         $query = trim((string) ($request->query['q'] ?? ''));
         $boardParam = (string) ($request->query['board'] ?? '');
         $userParam = trim((string) ($request->query['user'] ?? ''));
+        $usernames = $this->users->listUsernames();
 
         $boardFilter = $boardParam !== '' ? $this->communityHelper->resolveBoard($community, $boardParam) : null;
         $userFilter = $userParam !== '' ? $this->users->findByUsername($userParam) : null;
@@ -97,6 +98,7 @@ final readonly class SearchController
             'currentUser' => $this->auth->currentUser(),
             'canModerate' => $this->permissions->canModerate($this->auth->currentUser(), $community->id),
             'activePath' => $request->path,
+            'usernames' => $usernames,
             'navSections' => $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],

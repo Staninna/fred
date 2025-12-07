@@ -9,6 +9,7 @@
 /** @var string $query */
 /** @var \Fred\Domain\Community\Board|null $boardFilter */
 /** @var \Fred\Domain\Auth\User|null $userFilter */
+/** @var array<int, string> $usernames */
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -40,7 +41,12 @@
                     <tr>
                         <td><label for="user">User</label></td>
                         <td>
-                            <input id="user" name="user" type="text" value="<?= $e($userFilter?->username ?? '') ?>" placeholder="Filter by username (optional)">
+                            <input id="user" name="user" type="text" list="username-options" value="<?= $e($userFilter?->username ?? '') ?>" placeholder="Filter by username (optional)">
+                            <datalist id="username-options">
+                                <?php foreach ($usernames as $username): ?>
+                                    <option value="<?= $e($username) ?>"></option>
+                                <?php endforeach; ?>
+                            </datalist>
                         </td>
                     </tr>
                 </table>

@@ -47,6 +47,7 @@ final readonly class AdminController
 
         $structure = $this->communityHelper->structureForCommunity($community);
         $moderators = $this->communityModerators->listByCommunity($community->id);
+        $usernames = $this->users->listUsernames();
 
         $body = $this->view->render('pages/community/admin/structure.php', [
             'pageTitle' => 'Admin · ' . $community->name,
@@ -54,6 +55,7 @@ final readonly class AdminController
             'categories' => $structure['categories'],
             'boardsByCategory' => $structure['boardsByCategory'],
             'moderators' => $moderators,
+            'usernames' => $usernames,
             'errors' => $errors,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),

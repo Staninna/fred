@@ -4,6 +4,7 @@
 /** @var array<string, string> $old */
 /** @var callable(string, int): string $e */
 /** @var callable(string, array): string $renderPartial */
+/** @var array<int, string> $usernames */
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -17,7 +18,14 @@
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="username">Username</label></td>
-                        <td><input id="username" name="username" type="text" value="<?= $e($old['username'] ?? '') ?>" required></td>
+                        <td>
+                            <input id="username" name="username" type="text" list="ban-username-options" value="<?= $e($old['username'] ?? '') ?>" required>
+                            <datalist id="ban-username-options">
+                                <?php foreach ($usernames as $username): ?>
+                                    <option value="<?= $e($username) ?>"></option>
+                                <?php endforeach; ?>
+                            </datalist>
+                        </td>
                     </tr>
                     <tr>
                         <td><label for="reason">Reason</label></td>

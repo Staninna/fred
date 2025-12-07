@@ -171,6 +171,7 @@ final readonly class ModerationController
         }
 
         $bans = $this->bans->listAll();
+        $usernames = $this->users->listUsernames();
         $body = $this->view->render('pages/moderation/bans.php', [
             'pageTitle' => 'Bans',
             'bans' => $bans,
@@ -180,6 +181,7 @@ final readonly class ModerationController
             'errors' => [],
             'old' => [],
             'navSections' => $this->communityHelper->navForCommunity($community),
+            'usernames' => $usernames,
         ]);
 
         return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
@@ -230,6 +232,7 @@ final readonly class ModerationController
         }
 
         $bans = $this->bans->listAll();
+        $usernames = $this->users->listUsernames();
         $body = $this->view->render('pages/moderation/bans.php', [
             'pageTitle' => 'Bans',
             'bans' => $bans,
@@ -243,6 +246,7 @@ final readonly class ModerationController
                 'expires_at' => $expires,
             ],
             'navSections' => $this->communityHelper->navForCommunity($community),
+            'usernames' => $usernames,
         ]);
 
         return new Response(422, ['Content-Type' => 'text/html; charset=utf-8'], $body);
