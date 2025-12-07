@@ -118,6 +118,8 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
     $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
     $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
+    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired]);
+    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired]);
     $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired]);
     $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
     $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);

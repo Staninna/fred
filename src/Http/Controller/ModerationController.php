@@ -55,6 +55,16 @@ final readonly class ModerationController
         return $this->toggleSticky($request, false);
     }
 
+    public function announceThread(Request $request): Response
+    {
+        return $this->toggleAnnouncement($request, true);
+    }
+
+    public function unannounceThread(Request $request): Response
+    {
+        return $this->toggleAnnouncement($request, false);
+    }
+
     public function deletePost(Request $request): Response
     {
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
@@ -177,6 +187,7 @@ final readonly class ModerationController
             'bans' => $bans,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'activePath' => $request->path,
             'errors' => [],
             'old' => [],
@@ -238,6 +249,7 @@ final readonly class ModerationController
             'bans' => $bans,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'activePath' => $request->path,
             'errors' => $errors,
             'old' => [
@@ -311,6 +323,28 @@ final readonly class ModerationController
         }
 
         $this->threads->updateSticky($threadId, $sticky);
+
+        return Response::redirect('/c/' . $community->slug . '/t/' . $threadId);
+    }
+
+    private function toggleAnnouncement(Request $request, bool $announcement): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
+
+        $threadId = (int) ($request->params['thread'] ?? 0);
+        $thread = $this->threads->findById($threadId);
+        if ($thread === null || $thread->communityId !== $community->id) {
+            return $this->notFound($request);
+        }
+
+        $this->threads->updateAnnouncement($threadId, $announcement);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $threadId);
     }

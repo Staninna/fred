@@ -119,6 +119,16 @@ final class ThreadRepository
         ]);
     }
 
+    public function updateAnnouncement(int $threadId, bool $announcement): void
+    {
+        $statement = $this->pdo->prepare('UPDATE threads SET is_announcement = :announcement, updated_at = :updated_at WHERE id = :id');
+        $statement->execute([
+            'announcement' => $announcement ? 1 : 0,
+            'updated_at' => time(),
+            'id' => $threadId,
+        ]);
+    }
+
     private function hydrate(array $row): Thread
     {
         return new Thread(

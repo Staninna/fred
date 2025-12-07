@@ -14,6 +14,7 @@
 /** @var bool $canDeleteAnyPost */
 /** @var bool $canBanUsers */
 /** @var array<int, Board> $allBoards */
+/** @var bool $canModerate */
 /** @var callable(string, int): string $e */
 
 use Fred\Application\Auth\CurrentUser;
@@ -91,6 +92,17 @@ use Fred\Domain\Forum\Post;
                     <?php else: ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/sticky">
                             <button class="button" type="submit">Sticky</button>
+                        </form>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!empty($canModerate ?? false)): ?>
+                    <?php if ($thread->isAnnouncement): ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unannounce">
+                            <button class="button" type="submit">Unannounce</button>
+                        </form>
+                    <?php else: ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/announce">
+                            <button class="button" type="submit">Mark as announcement</button>
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
