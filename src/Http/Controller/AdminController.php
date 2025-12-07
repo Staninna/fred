@@ -59,6 +59,7 @@ final readonly class AdminController
             'errors' => $errors,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'activePath' => $request->path,
             'navSections' => [
                 [

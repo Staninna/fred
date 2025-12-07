@@ -1,6 +1,7 @@
 <?php
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
+/** @var \Fred\Domain\Community\Community|null $currentCommunity */
 ?>
 
 <!DOCTYPE html>
@@ -20,7 +21,11 @@
             <div class="banner-links">
                 <a href="/">Home</a> |
                 <?php if (isset($currentUser) && $currentUser->isAuthenticated()): ?>
-                    Signed in as <?= $e($currentUser->displayName) ?> |
+                    <?php if (isset($currentCommunity) && $currentCommunity !== null): ?>
+                        <a href="/c/<?= $e($currentCommunity->slug) ?>/u/<?= $e($currentUser->username) ?>">Signed in as <?= $e($currentUser->displayName) ?></a> |
+                    <?php else: ?>
+                        Signed in as <?= $e($currentUser->displayName) ?> |
+                    <?php endif; ?>
                     <form class="inline-form" method="post" action="/logout">
                         <button class="button" type="submit">Sign out</button>
                     </form>
@@ -35,6 +40,8 @@
             <?= $renderPartial('partials/nav.php', [
                 'navSections' => $navSections ?? null,
                 'activePath' => $activePath ?? null,
+                'currentUser' => $currentUser ?? null,
+                'currentCommunity' => $currentCommunity ?? null,
             ]) ?>
         </td>
         <td class="content" valign="top" id="main-content">

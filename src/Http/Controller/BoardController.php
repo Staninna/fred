@@ -57,6 +57,7 @@ final readonly class BoardController
             'threads' => $threads,
             'environment' => $this->config->environment,
             'currentUser' => $currentUser,
+            'currentCommunity' => $community,
             'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
             'canCreateThread' => $this->permissions->canCreateThread($currentUser),
             'activePath' => $request->path,

@@ -20,7 +20,7 @@ final class PostRepository
     {
         $statement = $this->pdo->prepare(
             'SELECT p.id, p.community_id, p.thread_id, p.author_id, p.body_raw, p.body_parsed, p.signature_snapshot, p.created_at, p.updated_at,
-                    u.display_name AS author_name
+                    u.display_name AS author_name, u.username AS author_username
              FROM posts p
              JOIN users u ON u.id = p.author_id
              WHERE p.thread_id = :thread_id
@@ -38,7 +38,7 @@ final class PostRepository
     {
         $statement = $this->pdo->prepare(
             'SELECT p.id, p.community_id, p.thread_id, p.author_id, p.body_raw, p.body_parsed, p.signature_snapshot, p.created_at, p.updated_at,
-                    u.display_name AS author_name
+                    u.display_name AS author_name, u.username AS author_username
              FROM posts p
              JOIN users u ON u.id = p.author_id
              WHERE p.id = :id
@@ -119,6 +119,7 @@ final class PostRepository
             threadId: (int) $row['thread_id'],
             authorId: (int) $row['author_id'],
             authorName: (string) $row['author_name'],
+            authorUsername: (string) $row['author_username'],
             bodyRaw: (string) $row['body_raw'],
             bodyParsed: $row['body_parsed'] !== null ? (string) $row['body_parsed'] : null,
             signatureSnapshot: $row['signature_snapshot'] !== null ? (string) $row['signature_snapshot'] : null,

@@ -125,7 +125,17 @@ final readonly class CommunityHelper
     public function navForCommunity(?Community $community = null): array
     {
         if ($community === null) {
-            return $this->navSections(null, [], [], null);
+            $communities = $this->communities->all();
+
+            return [
+                [
+                    'title' => 'Communities',
+                    'items' => array_map(static fn (Community $c) => [
+                        'label' => $c->name,
+                        'href' => '/c/' . $c->slug,
+                    ], $communities),
+                ],
+            ];
         }
 
         $structure = $this->structureForCommunity($community);

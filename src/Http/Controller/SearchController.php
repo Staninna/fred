@@ -96,6 +96,7 @@ final readonly class SearchController
             'errors' => $errors,
             'environment' => $this->config->environment,
             'currentUser' => $this->auth->currentUser(),
+            'currentCommunity' => $community,
             'canModerate' => $this->permissions->canModerate($this->auth->currentUser(), $community->id),
             'activePath' => $request->path,
             'usernames' => $usernames,

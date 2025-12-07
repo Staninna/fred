@@ -12,6 +12,7 @@ final readonly class Post
         public int $threadId,
         public int $authorId,
         public string $authorName,
+        public string $authorUsername,
         public string $bodyRaw,
         public ?string $bodyParsed,
         public ?string $signatureSnapshot,

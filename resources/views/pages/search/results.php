@@ -10,6 +10,7 @@
 /** @var \Fred\Domain\Community\Board|null $boardFilter */
 /** @var \Fred\Domain\Auth\User|null $userFilter */
 /** @var array<int, string> $usernames */
+/** @var \Fred\Domain\Community\Community $community */
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
