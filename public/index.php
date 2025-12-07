@@ -11,6 +11,7 @@ use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\ModerationController;
+use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -59,6 +60,7 @@ $adminController = $container->get(AdminController::class);
 $moderationController = $container->get(ModerationController::class);
 $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
+$searchController = $container->get(SearchController::class);
 
 $authRequired = static function (Request $request, callable $next) use ($authService): Response {
     if ($authService->currentUser()->isGuest()) {
@@ -118,6 +120,7 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
     $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);
     $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired]);
+    $router->get('/search', [$searchController, 'search']);
 
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);

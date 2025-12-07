@@ -90,6 +90,12 @@ final readonly class CommunityHelper
 
         $boardLinks = [];
         $communitySlug = $current?->slug ?? '';
+        if ($communitySlug !== '') {
+            $boardLinks[] = [
+                'label' => 'Search',
+                'href' => '/c/' . $communitySlug . '/search',
+            ];
+        }
         foreach ($categories as $category) {
             $boardLinks[] = [
                 'label' => $category->name,
