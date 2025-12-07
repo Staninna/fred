@@ -5,25 +5,17 @@ declare(strict_types=1);
 namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\AuthService;
-use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BanRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Tests\TestCase;
 
 final class BanFlowTest extends TestCase
 {
     private \PDO $pdo;
-    private AppConfig $config;
     private UserRepository $users;
     private RoleRepository $roles;
-    private ProfileRepository $profiles;
     private BanRepository $bans;
-    private PermissionRepository $permissions;
-    private CommunityRepository $communities;
 
     protected function setUp(): void
     {
@@ -34,35 +26,18 @@ final class BanFlowTest extends TestCase
         $_SESSION = [];
 
         $this->pdo = $this->makeMigratedPdo();
-        $this->config = new AppConfig(
-            environment: 'testing',
-            baseUrl: 'http://localhost',
-            databasePath: ':memory:',
-            uploadsPath: $this->createTempDir('uploads-'),
-            logsPath: $this->createTempDir('logs-'),
-            basePath: $this->basePath(),
-        );
         $this->users = new UserRepository($this->pdo);
         $this->roles = new RoleRepository($this->pdo);
-        $this->profiles = new ProfileRepository($this->pdo);
         $this->bans = new BanRepository($this->pdo);
-        $this->permissions = new PermissionRepository($this->pdo);
-        $this->communities = new CommunityRepository($this->pdo);
-        $this->communities->create('test', 'Test Community', '', null, time());
         $this->roles->ensureDefaultRoles();
-        $this->permissions->ensureDefaultPermissions();
     }
 
     public function testBannedUserCannotPostAfterBan(): void
     {
         $auth = new AuthService(
-            config: $this->config,
             users: $this->users,
             roles: $this->roles,
-            profiles: $this->profiles,
             bans: $this->bans,
-            permissions: $this->permissions,
-            communities: $this->communities,
         );
 
         $current = $auth->register('banme', 'Ban Me', 'secret');

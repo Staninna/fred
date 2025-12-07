@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\AuthService;
-use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Tests\TestCase;
 
@@ -20,9 +18,7 @@ final class AuthServiceTest extends TestCase
     private RoleRepository $roleRepository;
     private ProfileRepository $profileRepository;
     private BanRepository $banRepository;
-    private PermissionRepository $permissionRepository;
     private CommunityRepository $communityRepository;
-    private AppConfig $appConfig;
     private \PDO $pdo;
     private int $communityId;
 
@@ -41,30 +37,17 @@ final class AuthServiceTest extends TestCase
         $this->roleRepository = new RoleRepository($this->pdo);
         $this->profileRepository = new ProfileRepository($this->pdo);
         $this->banRepository = new BanRepository($this->pdo);
-        $this->permissionRepository = new PermissionRepository($this->pdo);
         $this->communityRepository = new CommunityRepository($this->pdo);
         $community = $this->communityRepository->create('test', 'Test Community', '', null, time());
         $this->communityId = $community->id;
-        $this->appConfig = new AppConfig(
-            environment: 'testing',
-            baseUrl: 'http://localhost',
-            databasePath: ':memory:',
-            uploadsPath: $this->createTempDir('fred-uploads-'),
-            logsPath: $this->createTempDir('fred-logs-'),
-            basePath: $this->basePath(),
-        );
     }
 
     public function testRegisterCreatesUserAndLogsIn(): void
     {
         $auth = new AuthService(
-            config: $this->appConfig,
             users: $this->userRepository,
             roles: $this->roleRepository,
-            profiles: $this->profileRepository,
             bans: $this->banRepository,
-            permissions: $this->permissionRepository,
-            communities: $this->communityRepository,
         );
 
         $current = $auth->register('bob', 'Bobby', 'secret123');
@@ -74,20 +57,18 @@ final class AuthServiceTest extends TestCase
         $this->assertSame('member', $current->role);
         $this->assertNotNull($_SESSION['user_id'] ?? null);
 
-        $profile = (new ProfileRepository($this->pdo))->findByUserAndCommunity($current->id ?? 0, $this->communityId);
-        $this->assertNotNull($profile);
+        $this->assertNull($this->profileRepository->findByUserAndCommunity($current->id ?? 0, $this->communityId));
+
+        $profile = $this->profileRepository->ensureExists($current->id ?? 0, $this->communityId);
+        $this->assertSame($current->id, $profile->userId);
     }
 
     public function testLoginAndLogout(): void
     {
         $auth = new AuthService(
-            config: $this->appConfig,
             users: $this->userRepository,
             roles: $this->roleRepository,
-            profiles: $this->profileRepository,
             bans: $this->banRepository,
-            permissions: $this->permissionRepository,
-            communities: $this->communityRepository,
         );
 
         $auth->register('jane', 'Jane', 'password1');
@@ -103,13 +84,9 @@ final class AuthServiceTest extends TestCase
     public function testLoginFailsWithWrongPassword(): void
     {
         $auth = new AuthService(
-            config: $this->appConfig,
             users: $this->userRepository,
             roles: $this->roleRepository,
-            profiles: $this->profileRepository,
             bans: $this->banRepository,
-            permissions: $this->permissionRepository,
-            communities: $this->communityRepository,
         );
 
         $auth->register('mallory', 'Mallory', 'topsecret');
@@ -123,13 +100,9 @@ final class AuthServiceTest extends TestCase
     public function testBannedUserCannotLogin(): void
     {
         $auth = new AuthService(
-            config: $this->appConfig,
             users: $this->userRepository,
             roles: $this->roleRepository,
-            profiles: $this->profileRepository,
             bans: $this->banRepository,
-            permissions: $this->permissionRepository,
-            communities: $this->communityRepository,
         );
 
         $auth->register('banned', 'Banned User', 'secret');

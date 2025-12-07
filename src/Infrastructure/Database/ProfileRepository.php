@@ -100,17 +100,26 @@ final class ProfileRepository
             return $existing;
         }
 
-        return $this->create(
-            userId: $userId,
-            communityId: $communityId,
-            bio: '',
-            location: '',
-            website: '',
-            signatureRaw: '',
-            signatureParsed: '',
-            avatarPath: '',
-            timestamp: time(),
-        );
+        try {
+            return $this->create(
+                userId: $userId,
+                communityId: $communityId,
+                bio: '',
+                location: '',
+                website: '',
+                signatureRaw: '',
+                signatureParsed: '',
+                avatarPath: '',
+                timestamp: time(),
+            );
+        } catch (\PDOException) {
+            $retry = $this->findByUserAndCommunity($userId, $communityId);
+            if ($retry !== null) {
+                return $retry;
+            }
+
+            throw new \RuntimeException('Failed to ensure profile exists due to database error.');
+        }
     }
 
     public function updateSignature(int $userId, int $communityId, string $raw, string $parsed, int $timestamp): void

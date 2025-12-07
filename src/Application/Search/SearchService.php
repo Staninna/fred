@@ -155,28 +155,19 @@ SQL;
 
     private function formatQuery(string $input): string
     {
-        $terms = preg_split('/\s+/', trim($input)) ?: [];
-        $terms = array_filter($terms, static function ($term) {
-            $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term) ?? '';
-
-            return $clean !== '';
-        });
-
-        if ($terms === []) {
+        $terms = preg_split('/\s+/', trim($input), -1, PREG_SPLIT_NO_EMPTY);
+        if ($terms === false || $terms === []) {
             return '';
         }
 
-        $escaped = array_map(
-            static function (string $term): string {
-                $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term) ?? '';
+        $formatted = [];
+        foreach ($terms as $term) {
+            $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term);
+            if ($clean !== '' && $clean !== null) {
+                $formatted[] = $clean . '*';
+            }
+        }
 
-                return $clean === '' ? '' : $clean . '*';
-            },
-            $terms,
-        );
-
-        $escaped = array_filter($escaped, static fn ($term) => $term !== '');
-
-        return $escaped === [] ? '' : implode(' ', $escaped);
+        return implode(' ', $formatted);
     }
 }

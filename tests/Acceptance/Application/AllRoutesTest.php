@@ -133,13 +133,9 @@ final class AllRoutesTest extends TestCase
         $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
         $uploadService = new \Fred\Application\Content\UploadService($config);
         $authService = new AuthService(
-            $config,
-            $userRepository,
-            $roleRepository,
-            $profileRepository,
-            $banRepository,
-            $permissionRepository,
-            $communityRepository,
+            users: $userRepository,
+            roles: $roleRepository,
+            bans: $banRepository,
         );
         $permissionService = new \Fred\Application\Auth\PermissionService($permissionRepository, $communityModeratorRepository);
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);

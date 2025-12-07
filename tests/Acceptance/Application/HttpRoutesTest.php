@@ -98,13 +98,9 @@ final class HttpRoutesTest extends TestCase
         $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
         $uploadService = new \Fred\Application\Content\UploadService($config);
         $authService = new AuthService(
-            $config,
-            $userRepository,
-            $roleRepository,
-            $profileRepository,
-            new \Fred\Infrastructure\Database\BanRepository($pdo),
-            new \Fred\Infrastructure\Database\PermissionRepository($pdo),
-            $communityRepository,
+            users: $userRepository,
+            roles: $roleRepository,
+            bans: new \Fred\Infrastructure\Database\BanRepository($pdo),
         );
         $permissionService = new \Fred\Application\Auth\PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);

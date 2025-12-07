@@ -207,7 +207,7 @@ final readonly class ThreadController
 
         $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
 
-        $this->posts->create(
+        $post = $this->posts->create(
             communityId: $community->id,
             threadId: $thread->id,
             authorId: $currentUser->id ?? 0,
@@ -218,19 +218,16 @@ final readonly class ThreadController
         );
 
         if ($attachmentPath !== null) {
-            $post = $this->posts->listByThreadId($thread->id)[0] ?? null;
-            if ($post !== null) {
-                $this->attachments->create(
-                    communityId: $community->id,
-                    postId: $post->id,
-                    userId: $currentUser->id ?? 0,
-                    path: $attachmentPath,
-                    originalName: (string) ($attachmentFile['name'] ?? ''),
-                    mimeType: (string) ($attachmentFile['type'] ?? ''),
-                    sizeBytes: (int) ($attachmentFile['size'] ?? 0),
-                    createdAt: $timestamp,
-                );
-            }
+            $this->attachments->create(
+                communityId: $community->id,
+                postId: $post->id,
+                userId: $currentUser->id ?? 0,
+                path: $attachmentPath,
+                originalName: (string) ($attachmentFile['name'] ?? ''),
+                mimeType: (string) ($attachmentFile['type'] ?? ''),
+                sizeBytes: (int) ($attachmentFile['size'] ?? 0),
+                createdAt: $timestamp,
+            );
         }
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);

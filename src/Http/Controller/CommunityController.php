@@ -103,6 +103,7 @@ final readonly class CommunityController
         }
 
         $structure = $this->communityHelper->structureForCommunity($community);
+        $allCommunities = $this->communities->all();
 
         $body = $this->view->render('pages/community/show.php', [
             'pageTitle' => $community->name,
@@ -118,6 +119,7 @@ final readonly class CommunityController
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
+                $allCommunities,
             ),
             'customCss' => trim((string) ($community->customCss ?? '')),
         ]);

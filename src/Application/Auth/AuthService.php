@@ -5,13 +5,9 @@ declare(strict_types=1);
 namespace Fred\Application\Auth;
 
 use Fred\Domain\Auth\User;
-use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 
 use function password_hash;
 use function password_verify;
@@ -26,32 +22,16 @@ final class AuthService
     private ?CurrentUser $cached = null;
 
     public function __construct(
-        private readonly AppConfig $config,
         private readonly UserRepository $users,
         private readonly RoleRepository $roles,
-        private readonly ProfileRepository $profiles,
         private readonly BanRepository $bans,
-        private readonly PermissionRepository $permissions,
-        private readonly CommunityRepository $communities,
     ) {
-        $this->roles->ensureDefaultRoles();
-        $this->permissions->ensureDefaultPermissions();
     }
 
     public function currentUser(): CurrentUser
     {
         if ($this->cached !== null) {
             return $this->cached;
-        }
-
-        if ($this->allowDevImpersonation()) {
-            $devUser = $_GET['dev_user'] ?? null;
-            if (\is_string($devUser) && $devUser !== '') {
-                $user = $this->users->findByUsername($devUser);
-                if ($user !== null && !$this->bans->isBanned($user->id, time())) {
-                    return $this->cached = $this->mapUser($user);
-                }
-            }
         }
 
         $userId = $_SESSION[self::SESSION_KEY] ?? null;
@@ -101,20 +81,6 @@ final class AuthService
             roleId: $role->id,
             createdAt: time(),
         );
-        $communities = $this->communities->all();
-        foreach ($communities as $community) {
-            $this->profiles->create(
-                userId: $user->id,
-                communityId: $community->id,
-                bio: '',
-                location: '',
-                website: '',
-                signatureRaw: '',
-                signatureParsed: '',
-                avatarPath: '',
-                timestamp: time(),
-            );
-        }
 
         return $this->loginUser($user);
     }
@@ -181,10 +147,5 @@ final class AuthService
         $this->cached = $current;
 
         return $current;
-    }
-
-    private function allowDevImpersonation(): bool
-    {
-        return $this->config->environment !== 'production';
     }
 }
