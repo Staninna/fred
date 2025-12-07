@@ -56,13 +56,19 @@ use Fred\Domain\Forum\Post;
                 <?php if (!empty($canMoveThread ?? false)): ?>
                     <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
                         <label for="target_board" class="small">Move to:</label>
-                        <select name="target_board" id="target_board">
-                            <?php foreach ($allBoards as $boardOption): ?>
-                                <option value="<?= $e($boardOption->slug) ?>"<?= $boardOption->id === $board->id ? ' selected' : '' ?>>
-                                    <?= $e($boardOption->name) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <?php
+                        $boardOptions = array_map(
+                            static fn ($boardOption) => ['value' => $boardOption->slug, 'label' => $boardOption->name],
+                            $allBoards
+                        );
+                        echo $renderPartial('partials/select.php', [
+                            'name' => 'target_board',
+                            'id' => 'target_board',
+                            'options' => $boardOptions,
+                            'selected' => (string) $board->slug,
+                            'class' => 'inline-select',
+                        ]);
+                        ?>
                         <button class="button" type="submit">Move</button>
                     </form>
                 <?php endif; ?>

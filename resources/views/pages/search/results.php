@@ -28,14 +28,16 @@
                     <tr>
                         <td><label for="board">Board</label></td>
                         <td>
-                            <select id="board" name="board">
-                                <option value="">All boards</option>
-                                <?php foreach ($boards as $board): ?>
-                                    <option value="<?= $e($board->slug) ?>"<?= ($boardFilter?->id === $board->id) ? ' selected' : '' ?>>
-                                        <?= $e($board->name) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <?php
+                            $boardOptions = array_map(static fn ($board) => ['value' => $board->slug, 'label' => $board->name], $boards);
+                            echo $renderPartial('partials/select.php', [
+                                'name' => 'board',
+                                'id' => 'board',
+                                'placeholder' => 'All boards',
+                                'options' => $boardOptions,
+                                'selected' => $boardFilter?->slug ?? '',
+                            ]);
+                            ?>
                         </td>
                     </tr>
                     <tr>

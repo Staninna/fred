@@ -163,11 +163,19 @@ use Fred\Domain\Community\Community;
                         <tr>
                             <td><label for="board_category_id">Category</label></td>
                             <td>
-                                <select id="board_category_id" name="category_id">
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?= $category->id ?>"><?= $e($category->name) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <?php
+                                $categoryOptions = array_map(
+                                    static fn ($category) => ['value' => (string) $category->id, 'label' => $category->name],
+                                    $categories
+                                );
+                                echo $renderPartial('partials/select.php', [
+                                    'name' => 'category_id',
+                                    'id' => 'board_category_id',
+                                    'options' => $categoryOptions,
+                                    'selected' => $categories[0]->id ?? '',
+                                    'required' => true,
+                                ]);
+                                ?>
                             </td>
                         </tr>
                         <tr>
