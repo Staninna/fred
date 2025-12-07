@@ -28,6 +28,9 @@ use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
 use League\Container\ReflectionContainer;
 
+use function http_build_query;
+use function strtoupper;
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $basePath = dirname(__DIR__);
@@ -167,6 +170,12 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
 
 $request = Request::fromGlobals();
 
+$navResponse = trackNavigation($request);
+if ($navResponse instanceof Response) {
+    $navResponse->send();
+    exit;
+}
+
 try {
     $response = $router->dispatch($request);
 } catch (\Throwable $exception) {
@@ -204,3 +213,58 @@ try {
 }
 
 $response->send();
+
+function trackNavigation(Request $request): ?Response
+{
+    $method = strtoupper($request->method);
+    $history = $_SESSION['nav_history'] ?? [];
+    $index = $_SESSION['nav_index'] ?? (count($history) > 0 ? count($history) - 1 : -1);
+
+    $history = is_array($history) ? $history : [];
+    $index = is_int($index) ? $index : (count($history) > 0 ? count($history) - 1 : -1);
+
+    if ($request->path === '/nav/back') {
+        if ($index > 0) {
+            $index--;
+        }
+        $_SESSION['nav_index'] = $index;
+        $target = $history[$index] ?? '/';
+
+        return Response::redirect($target);
+    }
+
+    if ($request->path === '/nav/forward') {
+        if ($index < count($history) - 1) {
+            $index++;
+        }
+        $_SESSION['nav_index'] = $index;
+        $target = $history[$index] ?? '/';
+
+        return Response::redirect($target);
+    }
+
+    if ($method !== 'GET') {
+        return null;
+    }
+
+    if ($index !== count($history) - 1) {
+        $history = array_slice($history, 0, $index + 1);
+    }
+
+    $fullPath = $request->path;
+    if ($request->query !== []) {
+        $fullPath .= '?' . http_build_query($request->query);
+    }
+
+    if ($history === [] || $history[count($history) - 1] !== $fullPath) {
+        $history[] = $fullPath;
+        if (count($history) > 20) {
+            $history = array_slice($history, -20);
+        }
+    }
+
+    $_SESSION['nav_history'] = $history;
+    $_SESSION['nav_index'] = count($history) - 1;
+
+    return null;
+}

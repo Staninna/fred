@@ -7,12 +7,16 @@
 
 $sections = $navSections ?? [];
 
+$history = $_SESSION['nav_history'] ?? [];
+$index = $_SESSION['nav_index'] ?? (is_countable($history) && $history !== [] ? count($history) - 1 : -1);
+$backHref = is_array($history) && $index > 0 ? '/nav/back' : null;
+$forwardHref = is_array($history) && $index >= 0 && $index < count($history) - 1 ? '/nav/forward' : null;
+
 if (isset($currentUser, $currentCommunity) && $currentUser !== null && $currentCommunity !== null && $currentUser->isAuthenticated()) {
     $sections = array_merge([[
         'title' => 'You',
         'items' => [
             ['label' => 'Profile', 'href' => '/c/' . $currentCommunity->slug . '/u/' . $currentUser->username],
-            ['label' => 'Settings', 'href' => '/c/' . $currentCommunity->slug . '/settings/profile'],
         ],
     ]], $sections);
 }
@@ -54,4 +58,20 @@ if (isset($currentUser, $currentCommunity) && $currentUser !== null && $currentC
             </tr>
         <?php endforeach; ?>
     <?php endif; ?>
+    <tr>
+        <td>
+            <div class="nav-history">
+                <?php if ($backHref !== null): ?>
+                    <a class="button" href="<?= $e($backHref) ?>">&laquo; Back</a>
+                <?php else: ?>
+                    <span class="button disabled">&laquo; Back</span>
+                <?php endif; ?>
+                <?php if ($forwardHref !== null): ?>
+                    <a class="button" href="<?= $e($forwardHref) ?>">Next &raquo;</a>
+                <?php else: ?>
+                    <span class="button disabled">Next &raquo;</span>
+                <?php endif; ?>
+            </div>
+        </td>
+    </tr>
 </table>
