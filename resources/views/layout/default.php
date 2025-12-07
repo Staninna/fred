@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/css/layout.css">
     <?php if (!empty($customCss ?? '')): ?>
         <style id="custom-css">
-            <?= $customCss ?>
+            <?= $e($customCss ?? '', ENT_NOQUOTES) ?>
         </style>
     <?php endif; ?>
     <script src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
