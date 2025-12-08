@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
@@ -46,6 +47,7 @@ final readonly class ThreadController
         private AttachmentRepository $attachments,
         private ReactionRepository $reactions,
         private EmoticonSet $emoticons,
+        private MentionService $mentions,
         private PDO $pdo,
     ) {
     }
@@ -274,6 +276,13 @@ final readonly class ThreadController
                     createdAt: $timestamp,
                 );
             }
+
+            $this->mentions->notifyFromText(
+                communityId: $community->id,
+                postId: $post->id,
+                authorId: $currentUser->id ?? 0,
+                bodyRaw: $bodyText,
+            );
 
             $this->pdo->commit();
         } catch (Throwable $exception) {

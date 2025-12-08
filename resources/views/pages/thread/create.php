@@ -63,6 +63,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                     'bodyValue' => $old['body'] ?? '',
                     'includeAttachment' => true,
                     'messagesDescribedBy' => trim(implode(' ', $messageTargets)),
+                    'mentionEndpoint' => '/c/' . $community->slug . '/mentions/suggest',
                     'renderPartial' => $renderPartial,
                 ]) ?>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">Cancel</a>

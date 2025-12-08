@@ -212,5 +212,153 @@ document.addEventListener('alpine:init', function () {
     window.addEventListener('scroll', hide, { passive: true });
 })();
 </script>
+    <script>
+    (function() {
+        function debounce(fn, wait) {
+            var timer = null;
+            return function () {
+                var args = arguments;
+                if (timer !== null) {
+                    clearTimeout(timer);
+                }
+                timer = setTimeout(function () {
+                    timer = null;
+                    fn.apply(null, args);
+                }, wait);
+            };
+        }
+
+        function buildMenu(textarea) {
+            var menu = document.createElement('div');
+            menu.className = 'mention-suggestions';
+            menu.setAttribute('role', 'listbox');
+            menu.hidden = true;
+            textarea.insertAdjacentElement('afterend', menu);
+            return menu;
+        }
+
+        function setupMention(textarea) {
+            var endpoint = textarea.getAttribute('data-mention-endpoint');
+            if (!endpoint) return;
+
+            var menu = buildMenu(textarea);
+            var activeToken = null;
+
+            function hide() {
+                menu.hidden = true;
+                menu.innerHTML = '';
+            }
+
+            function insertHandle(username) {
+                if (!activeToken) return;
+                var before = textarea.value.slice(0, activeToken.start);
+                var after = textarea.value.slice(activeToken.end);
+                var insertion = '@' + username + ' ';
+                textarea.value = before + insertion + after;
+                var next = (before + insertion).length;
+                textarea.focus();
+                textarea.setSelectionRange(next, next);
+                hide();
+            }
+
+            function render(list) {
+                if (!Array.isArray(list) || list.length === 0) {
+                    hide();
+                    return;
+                }
+
+                menu.innerHTML = '';
+                list.slice(0, 8).forEach(function (entry, index) {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'mention-suggestion';
+                    var label = '@' + entry.username;
+                    if (entry.display_name && entry.display_name !== entry.username) {
+                        label += ' · ' + entry.display_name;
+                    }
+                    btn.textContent = label;
+                    btn.setAttribute('role', 'option');
+                    btn.setAttribute('data-index', String(index));
+                    btn.addEventListener('click', function () {
+                        insertHandle(entry.username);
+                    });
+                    menu.appendChild(btn);
+                });
+
+                menu.hidden = false;
+            }
+
+            var requestSuggestions = debounce(function (query, tokenKey) {
+                fetch(endpoint + '?q=' + encodeURIComponent(query), {
+                    headers: {'Accept': 'application/json'},
+                }).then(function (response) {
+                    if (!response.ok) return [];
+                    return response.json();
+                }).then(function (payload) {
+                    if (!activeToken || activeToken.key !== tokenKey) return;
+                    render(payload || []);
+                }).catch(function () {
+                    hide();
+                });
+            }, 140);
+
+            function detectToken() {
+                var caret = textarea.selectionStart;
+                if (typeof caret !== 'number') {
+                    caret = textarea.value.length;
+                }
+
+                var before = textarea.value.slice(0, caret);
+                var at = before.lastIndexOf('@');
+                if (at === -1) {
+                    return null;
+                }
+
+                var prev = at === 0 ? ' ' : before.charAt(at - 1);
+                if (!/\s|\(|\[|>/.test(prev)) {
+                    return null;
+                }
+
+                var fragment = before.slice(at + 1);
+                if (fragment.length < 2 || !/^[A-Za-z0-9_.-]+$/.test(fragment)) {
+                    return null;
+                }
+
+                return {
+                    start: at,
+                    end: caret,
+                    query: fragment,
+                    key: at + ':' + caret,
+                };
+            }
+
+            textarea.addEventListener('input', function () {
+                var token = detectToken();
+                if (!token) {
+                    activeToken = null;
+                    hide();
+                    return;
+                }
+
+                activeToken = token;
+                requestSuggestions(token.query, token.key);
+            });
+
+            textarea.addEventListener('blur', function () {
+                setTimeout(hide, 150);
+            });
+
+            textarea.addEventListener('keydown', function (evt) {
+                if (evt.key === 'Escape') {
+                    hide();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('textarea[data-mention-endpoint]').forEach(setupMention);
+        });
+    })();
+    </script>
 </body>
 </html>

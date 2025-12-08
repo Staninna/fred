@@ -37,7 +37,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                         <td width="120"><label for="body">Body</label></td>
                         <td>
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
-                            <textarea id="body" name="body" rows="6" required<?= $messageAria ?>><?= $e($post->bodyRaw) ?></textarea>
+                            <textarea id="body" name="body" rows="6" required<?= $messageAria ?> data-mention-endpoint="/c/<?= $e($community->slug) ?>/mentions/suggest"><?= $e($post->bodyRaw) ?></textarea>
                         </td>
                     </tr>
                 </table>

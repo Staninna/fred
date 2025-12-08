@@ -453,6 +453,35 @@ pre {
     background: #eef1f6;
 }
 
+.mention-suggestions {
+    margin-top: 4px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    padding: 4px;
+    max-width: 480px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    display: block;
+}
+
+.mention-suggestions[hidden] {
+    display: none;
+}
+
+.mention-suggestion {
+    display: block;
+    width: 100%;
+    text-align: left;
+    margin: 2px 0;
+    padding: 4px 6px;
+    background: #eef1f6;
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.mention-suggestion:hover {
+    background: #dfe6f2;
+}
+
 @media (max-width: 1100px) {
     .page-frame {
         width: 100%;

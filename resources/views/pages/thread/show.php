@@ -181,6 +181,7 @@ use Fred\Domain\Forum\Post;
                     'bodyValue' => '',
                     'includeAttachment' => true,
                     'page' => $pagination['page'] ?? 1,
+                    'mentionEndpoint' => '/c/' . $community->slug . '/mentions/suggest',
                     'renderPartial' => $renderPartial,
                 ]) ?>
             <?php endif; ?>

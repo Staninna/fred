@@ -4,8 +4,10 @@
 /** @var callable(string, int): string $e */
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 /** @var \Fred\Domain\Community\Community|null $currentCommunity */
+/** @var int|null $mentionUnreadCount */
 
 $sections = $navSections ?? [];
+$mentionUnreadCount = (int) ($mentionUnreadCount ?? 0);
 
 $history = $_SESSION['nav_history'] ?? [];
 $index = $_SESSION['nav_index'] ?? (is_countable($history) && $history !== [] ? count($history) - 1 : -1);
@@ -18,6 +20,7 @@ if (isset($currentUser, $currentCommunity) && $currentUser !== null && $currentC
         'title' => 'You',
         'items' => [
             ['label' => 'Profile', 'href' => '/c/' . $currentCommunity->slug . '/u/' . $currentUser->username],
+            ['label' => $mentionUnreadCount > 0 ? 'Mentions (' . $mentionUnreadCount . ')' : 'Mentions', 'href' => '/c/' . $currentCommunity->slug . '/mentions'],
         ],
     ]], $sections);
 }

@@ -6,6 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -38,6 +39,7 @@ final readonly class ModerationController
         private ReportRepository $reports,
         private AttachmentRepository $attachments,
         private UploadService $uploads,
+        private MentionService $mentions,
     ) {
     }
 
@@ -158,6 +160,13 @@ final readonly class ModerationController
             raw: $bodyRaw,
             parsed: $this->parser->parse($bodyRaw),
             timestamp: time(),
+        );
+
+        $this->mentions->notifyFromText(
+            communityId: $community->id,
+            postId: $postId,
+            authorId: $this->auth->currentUser()->id ?? $post->authorId,
+            bodyRaw: $bodyRaw,
         );
 
         $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';

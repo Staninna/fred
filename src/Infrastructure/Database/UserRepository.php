@@ -142,6 +142,42 @@ SQL;
         return array_map([$this, 'hydrate'], $rows ?: []);
     }
 
+    /**
+     * @param string[] $usernames
+     * @return User[]
+     */
+    public function findByUsernames(array $usernames): array
+    {
+        $normalized = [];
+        foreach ($usernames as $name) {
+            $trimmed = strtolower(trim((string) $name));
+            if ($trimmed !== '') {
+                $normalized[$trimmed] = $trimmed;
+            }
+        }
+
+        if ($normalized === []) {
+            return [];
+        }
+
+        $normalized = array_values($normalized);
+        $placeholders = implode(',', array_fill(0, \count($normalized), '?'));
+
+        $statement = $this->pdo->prepare(
+            "SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,
+                    r.slug AS role_slug, r.name AS role_name
+             FROM users u
+             JOIN roles r ON r.id = u.role_id
+             WHERE lower(u.username) IN ($placeholders)"
+        );
+
+        $statement->execute($normalized);
+
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return array_map([$this, 'hydrate'], $rows);
+    }
+
     private function hydrate(array $row): User
     {
         return new User(

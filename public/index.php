@@ -13,6 +13,7 @@ use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\ReactionController;
+use Fred\Http\Controller\MentionController;
 use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
@@ -86,6 +87,7 @@ $postController = $container->get(PostController::class);
 $adminController = $container->get(AdminController::class);
 $moderationController = $container->get(ModerationController::class);
 $reactionController = $container->get(ReactionController::class);
+$mentionController = $container->get(MentionController::class);
 $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
 $searchController = $container->get(SearchController::class);
@@ -120,7 +122,8 @@ $router->group('/c/{community}', function (Router $router) use (
     $authRequired,
     $moderationController,
     $searchController,
-    $reactionController
+    $reactionController,
+    $mentionController
 ) {
     $router->get('/', [$communityController, 'show']);
     $router->get('/about', [$communityController, 'about']);
@@ -155,6 +158,9 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
     $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired]);
     $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired]);
+    $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired]);
+    $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired]);
+    $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired]);
 
     $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
     $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);

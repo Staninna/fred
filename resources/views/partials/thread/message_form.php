@@ -10,6 +10,7 @@
 /** @var bool $includeAttachment */
 /** @var int $page */
 /** @var string|null $messagesDescribedBy */
+/** @var string|null $mentionEndpoint */
 ?>
 
 <?php
@@ -25,7 +26,8 @@ $messageAria = $messagesDescribedBy === '' ? '' : ' aria-describedby="' . $e($me
             <td width="120"><label for="<?= $e($textareaId) ?>"><?= $e($textareaLabel) ?></label></td>
             <td>
                 <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => $textareaId]) ?>
-                <textarea id="<?= $e($textareaId) ?>" name="<?= $e($textareaName) ?>" rows="4" required<?= $messageAria ?>><?= $e($bodyValue) ?></textarea>
+                <?php $mentionEndpoint = trim((string) ($mentionEndpoint ?? '')); ?>
+                <textarea id="<?= $e($textareaId) ?>" name="<?= $e($textareaName) ?>" rows="4" required<?= $messageAria ?> <?= $mentionEndpoint !== '' ? 'data-mention-endpoint="' . $e($mentionEndpoint) . '"' : '' ?>><?= $e($bodyValue) ?></textarea>
             </td>
         </tr>
         <?php if (!empty($includeAttachment)): ?>

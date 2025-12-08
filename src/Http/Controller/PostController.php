@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -33,6 +34,7 @@ final readonly class PostController
         private PermissionService $permissions,
         private UploadService $uploads,
         private AttachmentRepository $attachments,
+        private MentionService $mentions,
     ) {
     }
 
@@ -105,6 +107,13 @@ final readonly class PostController
             bodyParsed: $bodyParsed,
             signatureSnapshot: $profile?->signatureParsed,
             timestamp: $timestamp,
+        );
+
+        $this->mentions->notifyFromText(
+            communityId: $community->id,
+            postId: $createdPost->id,
+            authorId: $currentUser->id ?? 0,
+            bodyRaw: $bodyText,
         );
 
         if ($attachmentPath !== null) {
