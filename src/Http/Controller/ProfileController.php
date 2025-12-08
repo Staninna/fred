@@ -257,7 +257,6 @@ final readonly class ProfileController
         array $oldProfile = [],
     ): Response {
         $status = ($profileErrors !== [] || $signatureErrors !== [] || $avatarErrors !== []) ? 422 : 200;
-        $currentUser = $this->auth->currentUser();
 
         $ctx = ViewContext::make()
             ->set('pageTitle', $user->displayName)
@@ -268,10 +267,7 @@ final readonly class ProfileController
             ->set('signatureErrors', $signatureErrors)
             ->set('avatarErrors', $avatarErrors)
             ->set('oldProfile', $oldProfile)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
         return Response::view($this->view, 'pages/profile/show.php', $ctx, status: $status);
@@ -281,10 +277,7 @@ final readonly class ProfileController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

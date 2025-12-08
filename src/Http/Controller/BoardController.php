@@ -71,12 +71,9 @@ final readonly class BoardController
                 'perPage' => $perPage,
                 'totalPages' => $totalPages,
             ])
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
             ->set('canCreateThread', $this->permissions->canCreateThread($currentUser))
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],

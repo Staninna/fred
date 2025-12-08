@@ -37,14 +37,9 @@ final readonly class CommunityController
             ->set('communities', $communities)
             ->set('errors', $errors)
             ->set('old', $old)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(null, [], [], $communities))
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('canModerate', $this->permissions->canModerate($currentUser))
-            ->set('canCreateCommunity', $this->permissions->canCreateCommunity($currentUser))
-            ->set('currentCommunity', null)
-            ->set('customCss', '');
+            ->set('canCreateCommunity', $this->permissions->canCreateCommunity($currentUser));
 
         return Response::view(
             $this->view,
@@ -113,11 +108,8 @@ final readonly class CommunityController
             ->set('community', $community)
             ->set('categories', $structure['categories'])
             ->set('boardsByCategory', $structure['boardsByCategory'])
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
@@ -143,10 +135,7 @@ final readonly class CommunityController
             ->set('community', $community)
             ->set('categories', $structure['categories'])
             ->set('boardsByCategory', $structure['boardsByCategory'])
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
@@ -162,10 +151,7 @@ final readonly class CommunityController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

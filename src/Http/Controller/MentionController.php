@@ -77,10 +77,7 @@ final readonly class MentionController
             ])
             ->set('postsPerPage', self::THREAD_POSTS_PER_PAGE)
             ->set('mentionUnreadCount', $unreadCount)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
@@ -177,10 +174,7 @@ final readonly class MentionController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

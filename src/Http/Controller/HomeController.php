@@ -23,15 +23,8 @@ final readonly class HomeController
 
     public function index(Request $request): Response
     {
-        $navSections = $this->communityHelper->navForCommunity();
-
         $ctx = ViewContext::make()
-            ->set('pageTitle', 'Fred Forum Engine')
-            ->set('activePath', $request->path)
-            ->set('navSections', $navSections)
-            ->set('environment', $this->config->environment)
-            ->set('baseUrl', $this->config->baseUrl)
-            ->set('currentUser', $this->auth->currentUser());
+            ->set('pageTitle', 'Fred Forum Engine');
 
         return Response::view($this->view, 'pages/home.php', $ctx);
     }

@@ -129,8 +129,6 @@ final readonly class ThreadController
                 'perPage' => $perPage,
                 'totalPages' => $totalPages,
             ])
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
             ->set('canLockThread', $this->permissions->canLockThread($currentUser, $community->id))
@@ -140,7 +138,6 @@ final readonly class ThreadController
             ->set('canDeleteAnyPost', $this->permissions->canDeleteAnyPost($currentUser, $community->id))
             ->set('canBanUsers', $this->permissions->canBan($currentUser, $community->id))
             ->set('allBoards', $structure['boards'])
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
@@ -322,10 +319,7 @@ final readonly class ThreadController
             ->set('board', $board)
             ->set('errors', $errors)
             ->set('old', $old)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
@@ -359,10 +353,7 @@ final readonly class ThreadController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

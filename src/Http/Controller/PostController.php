@@ -137,10 +137,7 @@ final readonly class PostController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

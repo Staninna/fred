@@ -97,11 +97,8 @@ final readonly class SearchController
             ->set('posts', $posts)
             ->set('boards', $structure['boards'])
             ->set('errors', $errors)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $currentUser)
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
-            ->set('activePath', $request->path)
             ->set('usernames', $usernames)
             ->set('navSections', $this->communityHelper->navSections(
                 $community,
@@ -122,10 +119,7 @@ final readonly class SearchController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 }

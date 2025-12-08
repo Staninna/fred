@@ -62,10 +62,7 @@ final readonly class AdminController
             ->set('moderators', $moderators)
             ->set('usernames', $usernames)
             ->set('errors', $errors)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->adminNav($community, 'structure'))
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -94,10 +91,7 @@ final readonly class AdminController
             ->set('errors', $errors)
             ->set('old', $old)
             ->set('saved', isset($request->query['saved']))
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->adminNav($community, 'settings'))
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -540,10 +534,7 @@ final readonly class AdminController
             ->set('community', $community)
             ->set('reports', $reports)
             ->set('status', $status)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->adminNav($community, 'reports'))
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -594,10 +585,7 @@ final readonly class AdminController
             ->set('users', $users)
             ->set('query', $query)
             ->set('role', $role)
-            ->set('environment', $this->config->environment)
-            ->set('currentUser', $this->auth->currentUser())
             ->set('currentCommunity', $community)
-            ->set('activePath', $request->path)
             ->set('navSections', $this->adminNav($community, 'users'))
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -608,10 +596,7 @@ final readonly class AdminController
     {
         return Response::notFound(
             view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
             request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
         );
     }
 
