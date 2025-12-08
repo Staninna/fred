@@ -160,6 +160,7 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired]);
     $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired]);
     $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired]);
+    $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired]);
     $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired]);
 
     $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);

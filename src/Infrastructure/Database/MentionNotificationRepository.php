@@ -108,6 +108,20 @@ final class MentionNotificationRepository
         ]);
     }
 
+    public function markOneRead(int $mentionId, int $userId, int $communityId): void
+    {
+        $statement = $this->pdo->prepare(
+            'UPDATE mention_notifications SET read_at = :now WHERE id = :id AND mentioned_user_id = :user_id AND community_id = :community_id AND read_at IS NULL'
+        );
+
+        $statement->execute([
+            'now' => time(),
+            'id' => $mentionId,
+            'user_id' => $userId,
+            'community_id' => $communityId,
+        ]);
+    }
+
     private function hydrate(array $row): MentionNotification
     {
         return new MentionNotification(

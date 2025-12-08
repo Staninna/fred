@@ -114,6 +114,28 @@ final readonly class MentionController
         return Response::redirect('/c/' . $community->slug . '/mentions' . $pageSuffix);
     }
 
+    public function markOneRead(Request $request): Response
+    {
+        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
+        if ($community === null) {
+            return $this->notFound($request);
+        }
+
+        $currentUser = $this->auth->currentUser();
+        if ($currentUser->isGuest()) {
+            return Response::redirect('/login');
+        }
+
+        $mentionId = (int) ($request->params['mention'] ?? 0);
+        if ($mentionId > 0) {
+            $this->mentions->markOneRead($mentionId, $currentUser->id ?? 0, $community->id);
+        }
+
+        $pageSuffix = isset($request->body['page']) ? '?page=' . max(1, (int) $request->body['page']) : '';
+
+        return Response::redirect('/c/' . $community->slug . '/mentions' . $pageSuffix);
+    }
+
     public function suggest(Request $request): Response
     {
         $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);

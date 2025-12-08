@@ -65,8 +65,15 @@ use Fred\Domain\Forum\MentionNotification;
                     <div class="small muted">Post #<?= (int) $notification->postId ?> · Page <?= $page ?></div>
                     <div class="small"><?= nl2br($e($excerpt)) ?></div>
                 </td>
-                <td width="100" class="small" style="text-align: right;">
+                <td width="140" class="small" style="text-align: right;">
                     <a class="button" href="<?= $e($threadUrl) ?>">Open</a>
+                    <?php if ($notification->readAt === null): ?>
+                        <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/mentions/<?= $notification->id ?>/read" style="margin-left: 4px;">
+                            <?= $renderPartial('partials/csrf.php') ?>
+                            <input type="hidden" name="page" value="<?= (int) ($pagination['page'] ?? 1) ?>">
+                            <button class="button" type="submit" title="Mark as read">✓</button>
+                        </form>
+                    <?php endif; ?>
                 </td>
             </tr>
         <?php endforeach; ?>
