@@ -16,6 +16,8 @@
 /** @var string $emoticonVersion */
 /** @var array<int, string> $userReactions */
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
+/** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
+/** @var callable(string, array): string $renderPartial */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
@@ -125,6 +127,10 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                                 </form>
                             <?php endforeach; ?>
                         </div>
+                    <?php endif; ?>
+                    <?php $previews = $linkPreviewsByPost[$post->id] ?? []; ?>
+                    <?php if ($previews !== []): ?>
+                        <?= $renderPartial('partials/link_preview.php', ['previews' => $previews, 'e' => $e]) ?>
                     <?php endif; ?>
                     <?php if (!empty($canReact ?? false)): ?>
                         <details class="reaction-picker">

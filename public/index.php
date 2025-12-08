@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\LinkPreviewer;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
@@ -48,6 +49,7 @@ $container->addShared(SqliteSessionHandler::class, static fn () => new SqliteSes
 $container->addShared(FileLogger::class, static fn () => new FileLogger($container->get(AppConfig::class)->logsPath . '/app.log'));
 $container->addShared(NullLogger::class, static fn () => new NullLogger());
 $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
+$container->addShared(LinkPreviewer::class, static fn () => new LinkPreviewer($container->get(AppConfig::class)));
 $container->addShared(ViewRenderer::class, static fn () => new ViewRenderer(
     viewPath: $container->get('basePath') . '/resources/views',
     sharedData: [

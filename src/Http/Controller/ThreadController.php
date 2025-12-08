@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\LinkPreviewer;
 use Fred\Application\Content\UploadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
@@ -39,6 +40,7 @@ final readonly class ThreadController
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
+        private LinkPreviewer $linkPreviewer,
         private ProfileRepository $profiles,
         private UploadService $uploads,
         private AttachmentRepository $attachments,
@@ -86,6 +88,13 @@ final readonly class ThreadController
         $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $reactionsByPost = $this->reactions->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $reactionUsersByPost = $this->reactions->listUsersByPostIds(array_map(static fn ($p) => $p->id, $posts));
+        $linkPreviewsByPost = [];
+        foreach ($posts as $post) {
+            $previews = $this->linkPreviewer->previewsForText($post->bodyRaw ?? '');
+            if ($previews !== []) {
+                $linkPreviewsByPost[$post->id] = $previews;
+            }
+        }
         $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
         $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
         $currentUser = $this->auth->currentUser();
@@ -106,6 +115,7 @@ final readonly class ThreadController
             'attachmentsByPost' => $attachmentsByPost,
             'reactionsByPost' => $reactionsByPost,
             'reactionUsersByPost' => $reactionUsersByPost,
+            'linkPreviewsByPost' => $linkPreviewsByPost,
             'userReactions' => $userReactions,
             'emoticons' => $this->emoticons->all(),
             'emoticonMap' => $this->emoticons->urlsByCode(),

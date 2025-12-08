@@ -142,6 +142,8 @@ use Fred\Domain\Forum\Post;
         'canReact' => ($currentUser ?? null) !== null && !$currentUser->isGuest() && !$thread->isLocked && !$board->isLocked,
         'reactionsByPost' => $reactionsByPost ?? [],
         'reactionUsersByPost' => $reactionUsersByPost ?? [],
+        'linkPreviewsByPost' => $linkPreviewsByPost ?? [],
+        'renderPartial' => $renderPartial,
         'emoticons' => $emoticons ?? [],
         'emoticonMap' => $emoticonMap ?? [],
         'emoticonVersion' => $emoticonVersion ?? '',
