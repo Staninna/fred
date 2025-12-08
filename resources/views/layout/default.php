@@ -131,6 +131,8 @@ document.addEventListener('alpine:init', function () {
     var tooltip = document.createElement('div');
     tooltip.className = 'reaction-tooltip';
     var active = null;
+    var showTimer = null;
+    var moveRaf = null;
 
     function ensureNode() {
         if (!document.body.contains(tooltip)) {
@@ -139,6 +141,14 @@ document.addEventListener('alpine:init', function () {
     }
 
     function hide() {
+        if (showTimer !== null) {
+            clearTimeout(showTimer);
+            showTimer = null;
+        }
+        if (moveRaf !== null) {
+            window.cancelAnimationFrame(moveRaf);
+            moveRaf = null;
+        }
         tooltip.style.opacity = '0';
         active = null;
     }
@@ -167,11 +177,17 @@ document.addEventListener('alpine:init', function () {
         var el = evt.currentTarget;
         var text = el.getAttribute('data-tooltip');
         if (!text) return;
-        ensureNode();
-        tooltip.textContent = text;
-        active = el;
-        tooltip.style.opacity = '1';
-        position(getPoint(evt, el));
+        var point = getPoint(evt, el);
+        if (showTimer !== null) {
+            clearTimeout(showTimer);
+        }
+        showTimer = window.setTimeout(function () {
+            ensureNode();
+            tooltip.textContent = text;
+            active = el;
+            tooltip.style.opacity = '1';
+            position(point);
+        }, 120);
     }
 
     function attach(el) {
@@ -181,15 +197,19 @@ document.addEventListener('alpine:init', function () {
         el.addEventListener('mouseleave', hide);
         el.addEventListener('blur', hide);
         el.addEventListener('mousemove', function (evt) {
-            if (active === el) {
+            if (active !== el) return;
+            if (moveRaf !== null) return;
+            moveRaf = window.requestAnimationFrame(function () {
+                moveRaf = null;
                 position({ x: evt.clientX, y: evt.clientY });
-            }
+            });
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('[data-tooltip]').forEach(attach);
     });
+    window.addEventListener('scroll', hide, { passive: true });
 })();
 </script>
 </body>
