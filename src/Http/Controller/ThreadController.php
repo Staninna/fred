@@ -108,6 +108,7 @@ final readonly class ThreadController
             'reactionUsersByPost' => $reactionUsersByPost,
             'userReactions' => $userReactions,
             'emoticons' => $this->emoticons->all(),
+            'emoticonMap' => $this->emoticons->urlsByCode(),
             'totalPosts' => $totalPosts,
             'pagination' => [
                 'page' => $page,

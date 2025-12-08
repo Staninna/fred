@@ -323,6 +323,11 @@ pre {
     cursor: pointer;
 }
 
+.reaction-chip img,
+.reaction-btn img {
+    image-rendering: crisp-edges;
+}
+
 .reaction-chip.active,
 .reaction-btn.active {
     border-color: var(--link);

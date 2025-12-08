@@ -7,10 +7,14 @@ namespace Fred\Application\Content;
 use Fred\Infrastructure\Config\AppConfig;
 
 use function basename;
-use function glob;
+use function closedir;
+use function is_dir;
 use function is_file;
 use function ltrim;
+use function opendir;
 use function pathinfo;
+use function preg_match;
+use function readdir;
 use function rtrim;
 use function sort;
 use function strtolower;
@@ -24,6 +28,9 @@ final class EmoticonSet
 
     /** @var array<int, array{code: string, filename: string, url: string}> */
     private array $cache = [];
+
+    /** @var array<string, string> */
+    private array $cacheMap = [];
 
     public function __construct(private readonly AppConfig $config)
     {
@@ -52,10 +59,6 @@ final class EmoticonSet
 
         $items = [];
         foreach ($files as $file) {
-            if (!is_file($file)) {
-                continue;
-            }
-
             $filename = basename($file);
             $code = strtolower((string) pathinfo($filename, PATHINFO_FILENAME));
 
@@ -69,6 +72,22 @@ final class EmoticonSet
         self::$globalCache[$cacheKey] = $items;
 
         return $this->cache = $items;
+    }
+
+    /**
+     * @return array<string, string> code => url
+     */
+    public function urlsByCode(): array
+    {
+        if ($this->cacheMap !== []) {
+            return $this->cacheMap;
+        }
+
+        foreach ($this->all() as $item) {
+            $this->cacheMap[$item['code']] = $item['url'];
+        }
+
+        return $this->cacheMap;
     }
 
     public function isAllowed(string $code): bool

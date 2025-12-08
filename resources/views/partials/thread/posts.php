@@ -12,6 +12,7 @@
 /** @var bool $canReact */
 /** @var array<int, array<string, int>> $reactionsByPost */
 /** @var array<int, array{code: string, filename: string, url: string}> $emoticons */
+/** @var array<string, string> $emoticonMap */
 /** @var array<int, string> $userReactions */
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 
@@ -76,7 +77,10 @@ use Fred\Domain\Forum\Attachment;
                     <?php if ($postReactions !== []): ?>
                         <div class="reactions">
                             <?php foreach ($postReactions as $reactionCode => $count): ?>
-                                <?php $reactionUrl = null; foreach ($emoticons as $emo) { if ($emo['code'] === $reactionCode) { $reactionUrl = $emo['url']; break; } } ?>
+                                <?php $reactionUrl = $emoticonMap[$reactionCode] ?? null; ?>
+                                <?php if ($reactionUrl === null): ?>
+                                    <?php $reactionUrl = '/emoticons/' . $e($reactionCode) . '.png'; ?>
+                                <?php endif; ?>
                                 <?php $who = $reactionUsers[$reactionCode] ?? ['names' => [], 'extra' => 0]; ?>
                                 <?php $tooltip = $who['names'] === [] ? '' : implode(', ', $who['names']); ?>
                                 <?php if (($who['extra'] ?? 0) > 0) { $tooltip .= ' +' . (int) $who['extra'] . ' more'; } ?>
@@ -94,11 +98,7 @@ use Fred\Domain\Forum\Attachment;
                                         data-tooltip="<?= $e($tooltip) ?>"
                                         aria-label="<?= $e($tooltip !== '' ? $tooltip : 'Reactions') ?>"
                                     >
-                                        <?php if ($reactionUrl !== null): ?>
-                                            <img src="<?= $e($reactionUrl) ?>" alt="<?= $e($reactionCode) ?>" width="18" height="18">
-                                        <?php else: ?>
-                                            <?= $e($reactionCode) ?>
-                                        <?php endif; ?>
+                                        <img src="<?= $e($reactionUrl) ?>" alt="<?= $e($reactionCode) ?>" width="18" height="18" onerror="this.src='/emoticons/<?= $e($reactionCode) ?>.gif'">
                                         <span class="small">x<?= (int) $count ?></span>
                                     </button>
                                 </form>
