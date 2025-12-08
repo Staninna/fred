@@ -6,9 +6,9 @@ namespace Fred\Http\Middleware;
 
 use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Domain\Community\Community;
-use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Request;
 use Fred\Http\Response;
+use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -18,7 +18,7 @@ final readonly class ResolveThreadMiddleware
     use HandlesNotFound;
 
     public function __construct(
-        private CommunityHelper $communityHelper,
+        private BoardRepository $boards,
         private ThreadRepository $threads,
         private CategoryRepository $categories,
         private ViewRenderer $view,
@@ -38,8 +38,8 @@ final readonly class ResolveThreadMiddleware
             return $this->notFound($request);
         }
 
-        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
-        if ($board === null) {
+        $board = $this->boards->findById($thread->boardId);
+        if ($board === null || $board->communityId !== $community->id) {
             return $this->notFound($request);
         }
 
