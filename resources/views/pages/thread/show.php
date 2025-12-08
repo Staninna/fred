@@ -16,7 +16,7 @@
 /** @var array<int, Board> $allBoards */
 /** @var bool $canModerate */
 /** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 /** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
 /** @var array<int, string[]> $linkPreviewUrlsByPost */
 
