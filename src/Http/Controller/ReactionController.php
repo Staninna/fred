@@ -41,9 +41,12 @@ final readonly class ReactionController
             return $this->notFound($request);
         }
 
-        $postId = (int) $post->id;
-
         $currentUser = $this->auth->currentUser();
+        if ($currentUser->isGuest()) {
+            return Response::redirect('/login');
+        }
+
+        $postId = (int) $post->id;
 
         if ($thread->isLocked || $board->isLocked) {
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
