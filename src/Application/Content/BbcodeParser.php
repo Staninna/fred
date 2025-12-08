@@ -12,15 +12,15 @@ final class BbcodeParser
         $escaped = $this->convertLineQuotes($escaped);
 
         // Inline/simple tags
-        $escaped = $this->replaceTag($escaped, 'b', '<strong>', '</strong>');
-        $escaped = $this->replaceTag($escaped, 'i', '<em>', '</em>');
-        $escaped = $this->replaceTag($escaped, 'u', '<u>', '</u>');
-        $escaped = $this->replaceTag($escaped, 's', '<s>', '</s>');
-        $escaped = $this->replaceTag($escaped, 'quote', '<blockquote>', '</blockquote>');
-        $escaped = $this->replaceTag($escaped, 'spoiler', '<span class="spoiler">', '</span>');
+        $escaped = $this->replaceTag($escaped, 'b', '<strong class="bb-bold">', '</strong>');
+        $escaped = $this->replaceTag($escaped, 'i', '<em class="bb-italic">', '</em>');
+        $escaped = $this->replaceTag($escaped, 'u', '<u class="bb-underline">', '</u>');
+        $escaped = $this->replaceTag($escaped, 's', '<s class="bb-strike">', '</s>');
+        $escaped = $this->replaceTag($escaped, 'quote', '<blockquote class="bb-quote">', '</blockquote>');
+        $escaped = $this->replaceTag($escaped, 'spoiler', '<span class="bb-spoiler">', '</span>');
 
         // Code and lists before URL/img to avoid mangling inside blocks
-        $escaped = $this->replaceTag($escaped, 'code', '<pre><code>', '</code></pre>');
+        $escaped = $this->replaceTag($escaped, 'code', '<pre class="bb-code"><code>', '</code></pre>');
         $escaped = $this->parseLists($escaped);
 
         // Media / links
@@ -61,7 +61,7 @@ final class BbcodeParser
                 return $m[0];
             }
 
-            return '<img src="' . $url . '" alt="image" loading="lazy">';
+            return '<figure class="bb-image"><img src="' . $url . '" alt="image" loading="lazy"></figure>';
         }, $input) ?? $input;
     }
 
