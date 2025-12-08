@@ -92,7 +92,7 @@ final readonly class ProfileController
             return $this->renderProfilePage($request, $community, $user, $profile, [], $errors, []);
         }
 
-        $parsed = $signature === '' ? '' : $this->parser->parse($signature);
+        $parsed = $signature === '' ? '' : $this->parser->parse($signature, $community->slug);
         $this->profiles->updateSignature(
             userId: $currentUser->id ?? 0,
             communityId: $community->id,

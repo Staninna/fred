@@ -48,7 +48,7 @@ final readonly class MentionService
      */
     public function extractHandles(string $bodyRaw): array
     {
-        preg_match_all('/(?<=^|[\\s\\(\\[>]))@([A-Za-z0-9_.-]{3,32})/', $bodyRaw, $matches);
+        preg_match_all('/(?<=^|[\s(\[>])@([A-Za-z0-9_.-]{3,32})/', $bodyRaw, $matches);
 
         $normalized = [];
         foreach ($matches[1] ?? [] as $rawHandle) {

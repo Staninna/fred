@@ -259,7 +259,7 @@ final readonly class ThreadController
                 threadId: $thread->id,
                 authorId: $currentUser->id ?? 0,
                 bodyRaw: $bodyText,
-                bodyParsed: $this->parser->parse($bodyText),
+                bodyParsed: $this->parser->parse($bodyText, $community->slug),
                 signatureSnapshot: $profile?->signatureParsed,
                 timestamp: $timestamp,
             );

@@ -6,7 +6,7 @@ namespace Fred\Application\Content;
 
 final class BbcodeParser
 {
-    public function parse(string $input): string
+    public function parse(string $input, ?string $communitySlug = null): string
     {
         $escaped = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
         $escaped = $this->convertLineQuotes($escaped);
@@ -24,6 +24,11 @@ final class BbcodeParser
         }
 
         $escaped = $this->parseUrlTags($escaped);
+        
+        if ($communitySlug !== null) {
+            $escaped = $this->parseMentions($escaped, $communitySlug);
+        }
+        
         return nl2br($escaped);
     }
 
@@ -44,5 +49,19 @@ final class BbcodeParser
 
             return \sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);
         }, $input) ?? $input;
+    }
+
+    private function parseMentions(string $input, string $communitySlug): string
+    {
+        return preg_replace_callback(
+            '/(?<=^|[\s(&lt;\[])\@([A-Za-z0-9_.-]{3,32})(?=[.,;:!?\s&lt;&gt;\])]|$)/',
+            static function (array $matches) use ($communitySlug): string {
+                $username = $matches[1];
+                $url = '/c/' . htmlspecialchars($communitySlug, ENT_QUOTES, 'UTF-8') 
+                     . '/u/' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8');
+                return '<a href="' . $url . '">@' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . '</a>';
+            },
+            $input
+        ) ?? $input;
     }
 }

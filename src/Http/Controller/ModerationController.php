@@ -158,7 +158,7 @@ final readonly class ModerationController
         $this->posts->updateBody(
             id: $postId,
             raw: $bodyRaw,
-            parsed: $this->parser->parse($bodyRaw),
+            parsed: $this->parser->parse($bodyRaw, $community->slug),
             timestamp: time(),
         );
 
