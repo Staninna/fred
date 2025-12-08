@@ -9,9 +9,11 @@
 
 $messageIdPrefix = 'ban-create';
 $messageTargets = [];
+
 if (!empty($errors ?? [])) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }
@@ -37,15 +39,15 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                         <td>
                             <?php
                             $banUserOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
-                            echo $renderPartial('partials/select.php', [
-                                'name' => 'username',
-                                'id' => 'username',
-                                'placeholder' => 'Select user',
-                                'options' => $banUserOptions,
-                                'selected' => $old['username'] ?? '',
-                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
-                            ]);
-                            ?>
+echo $renderPartial('partials/select.php', [
+    'name' => 'username',
+    'id' => 'username',
+    'placeholder' => 'Select user',
+    'options' => $banUserOptions,
+    'selected' => $old['username'] ?? '',
+    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+]);
+?>
                         </td>
                     </tr>
                     <tr>
@@ -54,13 +56,15 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                     </tr>
                     <?php
                     $expiresValue = '';
-                    if (isset($old['expires_at']) && trim((string) $old['expires_at']) !== '') {
-                        $parsed = strtotime((string) $old['expires_at']);
-                        if ($parsed !== false) {
-                            $expiresValue = date('Y-m-d\TH:i', $parsed);
-                        }
-                    }
-                    ?>
+
+if (isset($old['expires_at']) && trim((string) $old['expires_at']) !== '') {
+    $parsed = strtotime((string) $old['expires_at']);
+
+    if ($parsed !== false) {
+        $expiresValue = date('Y-m-d\TH:i', $parsed);
+    }
+}
+?>
                     <tr>
                         <td><label for="expires_at">Expires at</label></td>
                         <td>

@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database\Migration;
 
+use function array_map;
+use function basename;
+use function date;
+use function glob;
+
 use PDO;
 use RuntimeException;
 use SplFileInfo;
 use Throwable;
 
-use function array_map;
-use function basename;
-use function date;
-use function glob;
 use function usort;
 
 final class MigrationRunner
@@ -73,6 +74,7 @@ SQL);
         $statement = $this->pdo->query('SELECT name FROM ' . self::TABLE);
 
         $applied = [];
+
         foreach ($statement->fetchAll(PDO::FETCH_COLUMN) as $name) {
             $applied[(string) $name] = true;
         }

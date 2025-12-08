@@ -97,6 +97,7 @@ final class BoardRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $board = $this->findById($id);
+
         if ($board === null) {
             throw new \RuntimeException('Failed to create board.');
         }

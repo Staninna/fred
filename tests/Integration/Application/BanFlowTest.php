@@ -20,6 +20,7 @@ final class BanFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }

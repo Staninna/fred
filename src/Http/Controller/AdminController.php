@@ -13,11 +13,11 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
@@ -46,6 +46,7 @@ final readonly class AdminController
     public function structure(Request $request, array $errors = []): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::structure');
         }
@@ -81,6 +82,7 @@ final readonly class AdminController
     public function settings(Request $request, array $errors = [], array $old = []): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::settings');
         }
@@ -110,6 +112,7 @@ final readonly class AdminController
     public function updateSettings(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::updateSettings');
         }
@@ -123,9 +126,11 @@ final readonly class AdminController
         $customCss = trim((string) ($request->body['custom_css'] ?? ''));
 
         $errors = [];
+
         if ($name === '') {
             $errors[] = 'Name is required.';
         }
+
         if (\strlen($customCss) > 8000) {
             $errors[] = 'Community CSS is too long (max 8000 characters).';
         }
@@ -152,6 +157,7 @@ final readonly class AdminController
     public function createCategory(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::createCategory');
         }
@@ -175,6 +181,7 @@ final readonly class AdminController
     public function updateCategory(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::updateCategory');
         }
@@ -185,6 +192,7 @@ final readonly class AdminController
 
         $categoryId = (int) ($request->params['category'] ?? 0);
         $category = $this->categories->findById($categoryId);
+
         if ($category === null || $category->communityId !== $community->id) {
             return $this->notFound($request, 'Category not found or mismatch in AdminController::updateCategory: ' . $categoryId);
         }
@@ -204,6 +212,7 @@ final readonly class AdminController
     public function reorderCategories(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::reorderCategories');
         }
@@ -227,6 +236,7 @@ final readonly class AdminController
     public function deleteCategory(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::deleteCategory');
         }
@@ -237,6 +247,7 @@ final readonly class AdminController
 
         $categoryId = (int) ($request->params['category'] ?? 0);
         $category = $this->categories->findById($categoryId);
+
         if ($category === null || $category->communityId !== $community->id) {
             return $this->notFound($request, 'Category not found or mismatch in AdminController::deleteCategory: ' . $categoryId);
         }
@@ -249,6 +260,7 @@ final readonly class AdminController
     public function reorderBoards(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::reorderBoards');
         }
@@ -281,6 +293,7 @@ final readonly class AdminController
     public function createBoard(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::createBoard');
         }
@@ -291,6 +304,7 @@ final readonly class AdminController
 
         $categoryId = (int) ($request->body['category_id'] ?? 0);
         $category = $this->categories->findById($categoryId);
+
         if ($category === null || $category->communityId !== $community->id) {
             return $this->structure($request, ['Invalid category selected.']);
         }
@@ -302,6 +316,7 @@ final readonly class AdminController
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
         $customCss = trim((string) ($request->body['custom_css'] ?? ''));
+
         if (\strlen($customCss) > 25000) {
             return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
         }
@@ -336,6 +351,7 @@ final readonly class AdminController
     public function updateBoard(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::updateBoard');
         }
@@ -346,6 +362,7 @@ final readonly class AdminController
 
         $boardId = (int) ($request->params['board'] ?? 0);
         $board = $this->boards->findById($boardId);
+
         if ($board === null || $board->communityId !== $community->id) {
             return $this->notFound($request, 'Board not found or mismatch in AdminController::updateBoard: ' . $boardId);
         }
@@ -357,6 +374,7 @@ final readonly class AdminController
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
         $customCss = trim((string) ($request->body['custom_css'] ?? ''));
+
         if (\strlen($customCss) > 25000) {
             return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
         }
@@ -370,6 +388,7 @@ final readonly class AdminController
         }
 
         $existing = $this->boards->findBySlug($community->id, $slug);
+
         if ($existing !== null && $existing->id !== $board->id) {
             return $this->structure($request, ['Board slug is already in use.']);
         }
@@ -391,6 +410,7 @@ final readonly class AdminController
     public function deleteBoard(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::deleteBoard');
         }
@@ -401,6 +421,7 @@ final readonly class AdminController
 
         $boardId = (int) ($request->params['board'] ?? 0);
         $board = $this->boards->findById($boardId);
+
         if ($board === null || $board->communityId !== $community->id) {
             return $this->notFound($request, 'Board not found or mismatch in AdminController::deleteBoard: ' . $boardId);
         }
@@ -413,6 +434,7 @@ final readonly class AdminController
     public function updateCommunityCss(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::updateCommunityCss');
         }
@@ -422,6 +444,7 @@ final readonly class AdminController
         }
 
         $css = trim((string) ($request->body['custom_css'] ?? ''));
+
         if (\strlen($css) > 8000) {
             return $this->structure($request, ['Community CSS is too long (max 8000 characters).']);
         }
@@ -440,11 +463,13 @@ final readonly class AdminController
     public function addModerator(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::addModerator');
         }
 
         $currentUser = $this->auth->currentUser();
+
         if (!$this->permissions->canModerate($currentUser, $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
@@ -455,6 +480,7 @@ final readonly class AdminController
 
         $username = trim((string) ($request->body['username'] ?? ''));
         $errors = [];
+
         if ($username === '') {
             $errors[] = 'Username is required.';
         }
@@ -462,12 +488,14 @@ final readonly class AdminController
         $this->roles->ensureDefaultRoles();
 
         $user = $username !== '' ? $this->users->findByUsername($username) : null;
+
         if ($user === null) {
             $errors[] = 'User not found.';
         }
 
         if ($user !== null && $user->roleSlug === 'guest') {
             $memberRole = $this->roles->findBySlug('member');
+
             if ($memberRole !== null) {
                 $this->users->updateRole($user->id, $memberRole->id);
                 $user = $this->users->findById($user->id) ?? $user;
@@ -476,6 +504,7 @@ final readonly class AdminController
 
         if ($user !== null && $user->roleSlug === 'member') {
             $modRole = $this->roles->findBySlug('moderator');
+
             if ($modRole === null) {
                 $errors[] = 'Moderator role is missing.';
             } else {
@@ -496,11 +525,13 @@ final readonly class AdminController
     public function removeModerator(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::removeModerator');
         }
 
         $currentUser = $this->auth->currentUser();
+
         if (!$this->permissions->canModerate($currentUser, $community->id)) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
@@ -510,6 +541,7 @@ final readonly class AdminController
         }
 
         $userId = (int) ($request->params['user'] ?? 0);
+
         if ($userId > 0) {
             $this->communityModerators->remove($community->id, $userId);
         }
@@ -520,6 +552,7 @@ final readonly class AdminController
     public function reports(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::reports');
         }
@@ -548,6 +581,7 @@ final readonly class AdminController
     public function resolveReport(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::resolveReport');
         }
@@ -558,6 +592,7 @@ final readonly class AdminController
 
         $reportId = (int) ($request->params['report'] ?? 0);
         $report = $this->reports->findById($reportId);
+
         if ($report === null || $report->communityId !== $community->id) {
             return $this->notFound($request, 'Report not found or mismatch in AdminController::resolveReport: ' . $reportId);
         }
@@ -570,6 +605,7 @@ final readonly class AdminController
     public function users(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in AdminController::users');
         }
@@ -611,6 +647,7 @@ final readonly class AdminController
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

@@ -31,6 +31,7 @@ final readonly class Request
         $path = $path === '' ? '/' : $path;
 
         $headers = \function_exists('getallheaders') ? (getallheaders() ?: []) : [];
+
         if ($headers === []) {
             foreach ($_SERVER as $key => $value) {
                 if (str_starts_with($key, 'HTTP_')) {
@@ -41,11 +42,13 @@ final readonly class Request
         }
 
         $normalizedHeaders = [];
+
         foreach ($headers as $key => $value) {
             $normalizedHeaders[strtolower((string) $key)] = $value;
         }
 
         $session = $_SESSION ?? [];
+
         if (!\is_array($session)) {
             $session = [];
         }

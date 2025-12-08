@@ -37,6 +37,7 @@ final class ViewContext implements ArrayAccess
     public function set(string $key, mixed $value): self
     {
         $this->data[$key] = $value;
+
         return $this;
     }
 
@@ -44,6 +45,7 @@ final class ViewContext implements ArrayAccess
     public function merge(array $data): self
     {
         $this->data = array_merge($this->data, $data);
+
         return $this;
     }
 

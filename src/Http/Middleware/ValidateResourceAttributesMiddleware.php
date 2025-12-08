@@ -29,6 +29,7 @@ final readonly class ValidateResourceAttributesMiddleware
         // Check community
         if (isset($request->params['community'])) {
             $community = $request->attribute('community');
+
             if (!$community instanceof Community) {
                 return $this->notFound($request, 'Community attribute missing or invalid');
             }
@@ -37,6 +38,7 @@ final readonly class ValidateResourceAttributesMiddleware
         // Check board
         if (isset($request->params['board'])) {
             $board = $request->attribute('board');
+
             if (!$board instanceof Board) {
                 return $this->notFound($request, 'Board attribute missing or invalid');
             }
@@ -45,6 +47,7 @@ final readonly class ValidateResourceAttributesMiddleware
         // Check thread
         if (isset($request->params['thread'])) {
             $thread = $request->attribute('thread');
+
             if (!$thread instanceof Thread) {
                 return $this->notFound($request, 'Thread attribute missing or invalid');
             }
@@ -53,6 +56,7 @@ final readonly class ValidateResourceAttributesMiddleware
         // Check post
         if (isset($request->params['post'])) {
             $post = $request->attribute('post');
+
             if (!$post instanceof Post) {
                 return $this->notFound($request, 'Post attribute missing or invalid');
             }

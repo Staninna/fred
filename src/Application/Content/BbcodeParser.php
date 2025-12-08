@@ -26,11 +26,11 @@ final class BbcodeParser
         // Media / links
         $escaped = $this->parseImages($escaped);
         $escaped = $this->parseUrlTags($escaped);
-        
+
         if ($communitySlug !== null) {
             $escaped = $this->parseMentions($escaped, $communitySlug);
         }
-        
+
         return nl2br($escaped);
     }
 
@@ -44,11 +44,11 @@ final class BbcodeParser
     private function parseUrlTags(string $input): string
     {
         $pattern = '#\[url](https?://[^\s\[\]]+)\[/url]#i';
-        $input = preg_replace_callback($pattern, fn(array $m) => $this->anchor($m[1], $m[1]), $input) ?? $input;
+        $input = preg_replace_callback($pattern, fn (array $m) => $this->anchor($m[1], $m[1]), $input) ?? $input;
 
         $patternWithLabel = '#\[url=(https?://[^\s\[\]]+)](.*?)\[/url]#i';
 
-        return preg_replace_callback($patternWithLabel, fn(array $m) => $this->anchor($m[1], $m[2]), $input) ?? $input;
+        return preg_replace_callback($patternWithLabel, fn (array $m) => $this->anchor($m[1], $m[2]), $input) ?? $input;
     }
 
     private function parseImages(string $input): string
@@ -57,6 +57,7 @@ final class BbcodeParser
 
         return preg_replace_callback($pattern, function (array $m): string {
             $url = $this->sanitizeUrl($m[1]);
+
             if ($url === null) {
                 return $m[0];
             }
@@ -89,31 +90,34 @@ final class BbcodeParser
             '/(?<=^|[\s(&lt;\[])\@([A-Za-z0-9_.-]{3,32})(?=[.,;:!?\s&lt;&gt;\])]|$)/',
             static function (array $matches) use ($communitySlug): string {
                 $username = $matches[1];
-                $url = '/c/' . htmlspecialchars($communitySlug, ENT_QUOTES, 'UTF-8') 
+                $url = '/c/' . htmlspecialchars($communitySlug, ENT_QUOTES, 'UTF-8')
                      . '/u/' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8');
+
                 return '<a href="' . $url . '">@' . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . '</a>';
             },
             $input
         ) ?? $input;
     }
 
-        private function anchor(string $href, string $label): string
-        {
-            $safe = $this->sanitizeUrl($href);
-            if ($safe === null) {
-                return $label;
-            }
+    private function anchor(string $href, string $label): string
+    {
+        $safe = $this->sanitizeUrl($href);
 
-            return '<a href="' . $safe . '" rel="noopener" target="_blank">' . $label . '</a>';
+        if ($safe === null) {
+            return $label;
         }
 
-        private function sanitizeUrl(string $url): ?string
-        {
-            $trimmed = trim($url);
-            if ($trimmed === '' || !preg_match('#^https?://#i', $trimmed)) {
-                return null;
-            }
+        return '<a href="' . $safe . '" rel="noopener" target="_blank">' . $label . '</a>';
+    }
 
-            return htmlspecialchars($trimmed, ENT_QUOTES, 'UTF-8');
+    private function sanitizeUrl(string $url): ?string
+    {
+        $trimmed = trim($url);
+
+        if ($trimmed === '' || !preg_match('#^https?://#i', $trimmed)) {
+            return null;
         }
+
+        return htmlspecialchars($trimmed, ENT_QUOTES, 'UTF-8');
+    }
 }

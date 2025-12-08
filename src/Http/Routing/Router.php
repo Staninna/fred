@@ -4,23 +4,26 @@ declare(strict_types=1);
 
 namespace Fred\Http\Routing;
 
-use Fred\Http\Request;
-use Fred\Http\Response;
+use const DIRECTORY_SEPARATOR;
 
 use function file_get_contents;
 use function filesize;
+
+use Fred\Http\Request;
+use Fred\Http\Response;
+
 use function is_file;
+use function pathinfo;
+
+use const PATHINFO_EXTENSION;
+
 use function preg_match;
 use function preg_replace_callback;
-use function pathinfo;
 use function realpath;
 use function rtrim;
 use function str_contains;
 use function str_starts_with;
 use function strtolower;
-
-use const DIRECTORY_SEPARATOR;
-use const PATHINFO_EXTENSION;
 
 final class Router
 {
@@ -93,6 +96,7 @@ final class Router
         }
 
         $dynamicMatch = $this->matchDynamic($request);
+
         if ($dynamicMatch !== null) {
             return $this->runMiddleware(
                 $dynamicMatch['request'],
@@ -102,6 +106,7 @@ final class Router
         }
 
         $staticResponse = $this->tryServeStatic($request);
+
         if ($staticResponse instanceof Response) {
             return $staticResponse;
         }
@@ -161,6 +166,7 @@ final class Router
             }
 
             $params = [];
+
             foreach ($route['paramNames'] as $index => $name) {
                 $params[$name] = $matches[$index + 1] ?? null;
             }
@@ -220,6 +226,7 @@ final class Router
     private function gatherGroupMiddleware(array $routeMiddleware): array
     {
         $merged = [];
+
         foreach ($this->groupMiddlewareStack as $stackMiddleware) {
             $merged = array_merge($merged, $stackMiddleware);
         }
@@ -242,6 +249,7 @@ final class Router
         }
 
         $result = $next($request);
+
         if (!$result instanceof Response) {
             throw new \RuntimeException('Middleware pipeline must return a Response.');
         }

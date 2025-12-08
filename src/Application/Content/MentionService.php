@@ -18,16 +18,19 @@ final readonly class MentionService
     public function notifyFromText(int $communityId, int $postId, int $authorId, string $bodyRaw): void
     {
         $handles = $this->extractHandles($bodyRaw);
+
         if ($handles === []) {
             return;
         }
 
         $mentionedUsers = $this->users->findByUsernames($handles);
+
         if ($mentionedUsers === []) {
             return;
         }
 
         $now = time();
+
         foreach ($mentionedUsers as $user) {
             if ($user->id === $authorId) {
                 continue;
@@ -60,8 +63,10 @@ final readonly class MentionService
         preg_match_all('/(?<=^|[\s(\[>])@([A-Za-z0-9_.-]{3,32})/', $bodyRaw, $matches);
 
         $normalized = [];
+
         foreach ($matches[1] ?? [] as $rawHandle) {
             $trimmed = rtrim($rawHandle, '.,;:!');
+
             if ($trimmed === '') {
                 continue;
             }

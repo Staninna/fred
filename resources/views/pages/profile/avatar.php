@@ -10,7 +10,7 @@
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Edit avatar',
     'errors' => $errors,
-    'infoText' => 'Upload an image (png, jpg, gif, webp). Max 500 KB.'
+    'infoText' => 'Upload an image (png, jpg, gif, webp). Max 500 KB.',
 ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>

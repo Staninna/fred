@@ -61,6 +61,7 @@ final class NavigationTracker
         }
 
         $fullPath = $request->path;
+
         if ($request->query !== []) {
             $fullPath .= '?' . http_build_query($request->query);
         }
@@ -69,6 +70,7 @@ final class NavigationTracker
             // already at this position; keep index as-is
         } elseif ($history === [] || $history[\count($history) - 1] !== $fullPath) {
             $history[] = $fullPath;
+
             if (\count($history) > $this->maxEntries) {
                 $history = \array_slice($history, -$this->maxEntries);
             }
@@ -114,6 +116,7 @@ final class NavigationTracker
         }
 
         $max = \count($history) - 1;
+
         if ($index < 0) {
             return 0;
         }

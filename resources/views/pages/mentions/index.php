@@ -12,6 +12,7 @@
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\MentionNotification;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -45,11 +46,13 @@ use Fred\Domain\Forum\MentionNotification;
             <?php
             $page = (int) ceil(($notification->postPosition ?? 1) / ($postsPerPage ?? 25));
             $threadUrl = '/c/' . $community->slug . '/t/' . $notification->threadId;
+
             if ($page > 1) {
                 $threadUrl .= '?page=' . $page;
             }
             $threadUrl .= '#post-' . $notification->postId;
             $excerpt = trim($notification->postBodyRaw);
+
             if (\strlen($excerpt) > 200) {
                 $excerpt = substr($excerpt, 0, 200) . '...';
             }

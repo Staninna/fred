@@ -19,9 +19,11 @@ use Fred\Domain\Community\Community;
 <?php
 $messageIdPrefix = 'community-structure';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }
@@ -142,15 +144,15 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <label for="mod_username">Username</label>
                 <?php
                 $modUserOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
-                echo $renderPartial('partials/select.php', [
-                    'name' => 'username',
-                    'id' => 'mod_username',
-                    'placeholder' => 'Select user',
-                    'options' => $modUserOptions,
-                    'selected' => '',
-                    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
-                ]);
-                ?>
+echo $renderPartial('partials/select.php', [
+    'name' => 'username',
+    'id' => 'mod_username',
+    'placeholder' => 'Select user',
+    'options' => $modUserOptions,
+    'selected' => '',
+    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+]);
+?>
                 <button class="button" type="submit">Assign</button>
                 <div class="small muted">User will be given the Moderator role if they do not already have it.</div>
             </form>
@@ -225,13 +227,13 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <div class="muted">Create a category first to add boards.</div>
             <?php else: ?>
                 <?= $renderPartial('partials/admin/board_form.php', [
-                    'action' => '/c/' . $community->slug . '/admin/boards',
-                    'submitLabel' => 'Add board',
-                    'board' => null,
-                    'categories' => $categories,
-                    'includeCategorySelect' => true,
-                    'deleteAction' => null,
-                ]) ?>
+    'action' => '/c/' . $community->slug . '/admin/boards',
+    'submitLabel' => 'Add board',
+    'board' => null,
+    'categories' => $categories,
+    'includeCategorySelect' => true,
+    'deleteAction' => null,
+]) ?>
             <?php endif; ?>
         </td>
     </tr>
@@ -256,13 +258,13 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <tr>
                     <td colspan="2">
                         <?= $renderPartial('partials/admin/board_form.php', [
-                            'action' => '/c/' . $community->slug . '/admin/boards/' . $board->id,
-                            'submitLabel' => 'Update',
-                            'board' => $board,
-                            'categories' => $categories,
-                            'includeCategorySelect' => false,
-                            'deleteAction' => '/c/' . $community->slug . '/admin/boards/' . $board->id . '/delete',
-                        ]) ?>
+            'action' => '/c/' . $community->slug . '/admin/boards/' . $board->id,
+            'submitLabel' => 'Update',
+            'board' => $board,
+            'categories' => $categories,
+            'includeCategorySelect' => false,
+            'deleteAction' => '/c/' . $community->slug . '/admin/boards/' . $board->id . '/delete',
+        ]) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

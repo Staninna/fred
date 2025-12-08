@@ -102,6 +102,7 @@ final class ThreadRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $thread = $this->findById($id);
+
         if ($thread === null) {
             throw new \RuntimeException('Failed to create thread.');
         }
@@ -123,11 +124,11 @@ final class ThreadRepository
         // Chunk to avoid SQLite's 999 parameter limit (9 params per row, so 110 rows max)
         $chunks = array_chunk($threads, 110);
         $lastId = 0;
-        
+
         foreach ($chunks as $chunk) {
             $placeholders = [];
             $values = [];
-            
+
             foreach ($chunk as $thread) {
                 $placeholders[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
                 $values[] = $thread['communityId'];
@@ -143,10 +144,10 @@ final class ThreadRepository
 
             $sql = 'INSERT INTO threads (community_id, board_id, title, author_id, is_sticky, is_locked, is_announcement, created_at, updated_at) VALUES '
                 . implode(', ', $placeholders);
-            
+
             $statement = $this->pdo->prepare($sql);
             $statement->execute($values);
-            
+
             $lastId = (int) $this->pdo->lastInsertId();
         }
 

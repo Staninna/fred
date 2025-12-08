@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\View;
 
-use RuntimeException;
-
 use function extract;
 use function file_exists;
 use function htmlspecialchars;
@@ -13,6 +11,9 @@ use function ltrim;
 use function ob_get_clean;
 use function ob_start;
 use function rtrim;
+
+use RuntimeException;
+
 use function str_replace;
 
 final class ViewRenderer
@@ -40,6 +41,7 @@ final class ViewRenderer
 
         $renderPartial = function (string $partial, array|ViewContext $partialData = []) use ($basePath): string {
             $pData = $partialData instanceof ViewContext ? $partialData->all() : $partialData;
+
             return $this->renderFile($basePath . '/' . ltrim($partial, '/'), $pData, $basePath);
         };
 
@@ -50,6 +52,7 @@ final class ViewRenderer
         );
 
         $chosenLayout = $layout === null ? $this->defaultLayout : $layout;
+
         if ($chosenLayout === null || $chosenLayout === '') {
             return $content;
         }

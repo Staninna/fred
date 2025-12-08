@@ -4,40 +4,43 @@ declare(strict_types=1);
 
 namespace Fred\Http\Controller;
 
-use Fred\Application\Auth\AuthService;
-use Fred\Application\Auth\PermissionService;
-use Fred\Application\Content\BbcodeParser;
-use Fred\Application\Content\LinkPreviewer;
-use Fred\Application\Content\MentionService;
-use Fred\Application\Content\UploadService;
-use Fred\Application\Content\EmoticonSet;
-use Fred\Domain\Community\Board;
-use Fred\Domain\Community\Category;
-use Fred\Domain\Community\Community;
-use Fred\Http\Navigation\CommunityContext;
-use Fred\Domain\Forum\Post;
-use Fred\Http\Request;
-use Fred\Http\Response;
-use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\BoardRepository;
-use Fred\Infrastructure\Database\CategoryRepository;
-use Fred\Infrastructure\Database\PostRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
-use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\AttachmentRepository;
-use Fred\Infrastructure\Database\ReactionRepository;
-use Fred\Infrastructure\Database\MentionNotificationRepository;
-use Fred\Infrastructure\View\ViewContext;
-use Fred\Infrastructure\View\ViewRenderer;
-use PDO;
-use Throwable;
-
 use function array_filter;
 use function array_map;
 use function array_slice;
 use function explode;
+
+use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
+use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\MentionService;
+use Fred\Application\Content\UploadService;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Post;
+use Fred\Http\Navigation\CommunityContext;
+use Fred\Http\Request;
+use Fred\Http\Response;
+use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
+use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\View\ViewContext;
+use Fred\Infrastructure\View\ViewRenderer;
+
 use function json_encode;
+
+use PDO;
+use Throwable;
+
 use function trim;
 
 final readonly class ThreadController
@@ -82,6 +85,7 @@ final readonly class ThreadController
         $perPage = 25;
         $totalPosts = $this->posts->countByThreadId($thread->id);
         $totalPages = $totalPosts === 0 ? 1 : (int) ceil($totalPosts / $perPage);
+
         if ($page > $totalPages) {
             $page = $totalPages;
         }
@@ -103,8 +107,10 @@ final readonly class ThreadController
 
         $linkPreviewsByPost = [];
         $linkPreviewUrlsByPost = [];
+
         foreach ($posts as $post) {
             $urls = $this->linkPreviewer->extractUrls($post->bodyRaw ?? '', 3);
+
             if ($urls !== []) {
                 $linkPreviewUrlsByPost[$post->id] = $urls;
             }
@@ -182,11 +188,13 @@ final readonly class ThreadController
 
         foreach ($postIds as $postId) {
             $post = $this->posts->findById($postId);
+
             if ($post === null || $post->threadId !== $thread->id) {
                 continue;
             }
 
             $items = $this->linkPreviewer->previewsForText($post->bodyRaw ?? '', 3);
+
             if ($items === []) {
                 continue;
             }
@@ -259,6 +267,7 @@ final readonly class ThreadController
         $attachmentFile = $request->files['attachment'] ?? null;
 
         $errors = [];
+
         if ($title === '') {
             $errors[] = 'Title is required.';
         }
@@ -407,6 +416,7 @@ final readonly class ThreadController
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

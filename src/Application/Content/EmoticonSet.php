@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
+use function basename;
+
 use Fred\Infrastructure\Config\AppConfig;
 
-use function basename;
 use function ltrim;
 use function pathinfo;
+
+use const PATHINFO_FILENAME;
+
 use function rawurlencode;
 use function rtrim;
 use function sort;
 use function strtolower;
 use function trim;
-
-use const PATHINFO_FILENAME;
 
 final class EmoticonSet
 {
@@ -44,6 +46,7 @@ final class EmoticonSet
         }
 
         $cacheKey = rtrim($this->config->basePath, '/') . '|' . $this->config->environment;
+
         if (isset(self::$globalCache[$cacheKey])) {
             return $this->cache = self::$globalCache[$cacheKey];
         }
@@ -56,6 +59,7 @@ final class EmoticonSet
         sort($files);
 
         $items = [];
+
         foreach ($files as $file) {
             $filename = basename($file);
             $code = strtolower((string) pathinfo($filename, PATHINFO_FILENAME));
@@ -91,6 +95,7 @@ final class EmoticonSet
     public function isAllowed(string $code): bool
     {
         $code = strtolower($code);
+
         foreach ($this->all() as $item) {
             if ($item['code'] === $code) {
                 return true;
@@ -103,6 +108,7 @@ final class EmoticonSet
     public function urlFor(string $code): ?string
     {
         $code = strtolower($code);
+
         foreach ($this->all() as $item) {
             if ($item['code'] === $code) {
                 return $item['url'];
@@ -125,6 +131,7 @@ final class EmoticonSet
         }
 
         $env = trim($this->config->environment);
+
         if ($env === '') {
             return $this->versionSuffix = '';
         }

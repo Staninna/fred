@@ -9,9 +9,9 @@ use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\RoleRepository;
 use Tests\TestCase;
 
 final class SearchServiceTest extends TestCase

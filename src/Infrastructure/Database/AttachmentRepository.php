@@ -52,6 +52,7 @@ final class AttachmentRepository
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $grouped = [];
+
         foreach ($rows as $row) {
             $attachment = $this->hydrate($row);
             $grouped[$attachment->postId][] = $attachment;
@@ -88,6 +89,7 @@ final class AttachmentRepository
 
         $id = (int) $this->pdo->lastInsertId();
         $attachment = $this->findById($id);
+
         if ($attachment === null) {
             throw new \RuntimeException('Failed to create attachment.');
         }

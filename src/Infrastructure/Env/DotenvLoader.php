@@ -17,6 +17,7 @@ final class DotenvLoader
         }
 
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
         if ($lines === false) {
             return [];
         }

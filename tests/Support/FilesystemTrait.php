@@ -21,6 +21,7 @@ trait FilesystemTrait
         }
 
         $items = scandir($path);
+
         if ($items === false) {
             return;
         }

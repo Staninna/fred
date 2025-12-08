@@ -15,7 +15,7 @@ use Fred\Domain\Community\Community;
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Edit signature',
     'errors' => $errors,
-    'infoText' => 'Use BBCode to format your signature. Keep it short and friendly.'
+    'infoText' => 'Use BBCode to format your signature. Keep it short and friendly.',
 ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/signature" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>

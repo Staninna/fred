@@ -49,6 +49,7 @@ final readonly class ReportRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $report = $this->findById($id);
+
         if ($report === null) {
             throw new \RuntimeException('Failed to create report.');
         }

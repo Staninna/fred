@@ -38,6 +38,7 @@ final readonly class SearchController
     public function search(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in SearchController::search');
         }
@@ -52,6 +53,7 @@ final readonly class SearchController
         $userFilter = $userParam !== '' ? $this->users->findByUsername($userParam) : null;
 
         $errors = [];
+
         if ($query === '') {
             $errors[] = 'Enter a search query.';
         }
@@ -148,6 +150,7 @@ final readonly class SearchController
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

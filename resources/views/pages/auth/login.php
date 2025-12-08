@@ -7,9 +7,11 @@
 
 $messageIdPrefix = 'login-form';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

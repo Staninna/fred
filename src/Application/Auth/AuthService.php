@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Fred\Application\Auth;
 
 use Fred\Domain\Auth\User;
-use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\BanRepository;
+use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
 
 use function password_hash;
@@ -35,11 +35,13 @@ final class AuthService
         }
 
         $userId = $this->sessionGet(self::SESSION_KEY);
+
         if ($userId === null) {
             return $this->cached = $this->guest();
         }
 
         $user = $this->users->findById((int) $userId);
+
         if ($user === null) {
             unset($_SESSION[self::SESSION_KEY]);
 
@@ -70,6 +72,7 @@ final class AuthService
         }
 
         $role = $this->roles->findBySlug('member');
+
         if ($role === null) {
             throw new \RuntimeException('Member role is missing.');
         }
@@ -89,6 +92,7 @@ final class AuthService
     public function login(string $username, string $password): bool
     {
         $user = $this->users->findByUsername(trim($username));
+
         if ($user === null) {
             return false;
         }
@@ -150,28 +154,28 @@ final class AuthService
         return $current;
     }
 
-        private function sessionGet(string $key): mixed
-        {
-            return $_SESSION[$key] ?? null;
-        }
+    private function sessionGet(string $key): mixed
+    {
+        return $_SESSION[$key] ?? null;
+    }
 
-        private function sessionSet(string $key, mixed $value): void
-        {
-            $_SESSION[$key] = $value;
-        }
+    private function sessionSet(string $key, mixed $value): void
+    {
+        $_SESSION[$key] = $value;
+    }
 
-        private function sessionForget(string $key): void
-        {
-            unset($_SESSION[$key]);
-        }
+    private function sessionForget(string $key): void
+    {
+        unset($_SESSION[$key]);
+    }
 
-        private function regenerateSession(): void
-        {
-            session_regenerate_id(true);
-        }
+    private function regenerateSession(): void
+    {
+        session_regenerate_id(true);
+    }
 
-        private function now(): int
-        {
-            return time();
-        }
+    private function now(): int
+    {
+        return time();
+    }
 }

@@ -8,9 +8,11 @@
 
 $messageIdPrefix = 'signature-settings';
 $messageTargets = [];
+
 if (!empty($signatureErrors ?? [])) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

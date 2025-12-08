@@ -9,9 +9,9 @@ use Fred\Application\Auth\PermissionService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
-use Fred\Http\Navigation\CommunityContext;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
@@ -48,6 +48,7 @@ final readonly class BoardController extends Controller
         $perPage = 20;
         $totalThreads = $this->threads->countByBoardId($board->id);
         $totalPages = $totalThreads === 0 ? 1 : (int) ceil($totalThreads / $perPage);
+
         if ($page > $totalPages) {
             $page = $totalPages;
         }

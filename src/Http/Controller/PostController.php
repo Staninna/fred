@@ -15,8 +15,8 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\AttachmentRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
@@ -68,13 +68,16 @@ final readonly class PostController
         }
 
         $bodyText = trim((string) ($request->body['body'] ?? ''));
+
         if ($bodyText === '') {
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
+
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
         }
 
         $attachmentFile = $request->files['attachment'] ?? null;
         $attachmentPath = null;
+
         if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             try {
                 $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
@@ -121,6 +124,7 @@ final readonly class PostController
         }
 
         $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $createdPost->id);
     }
 

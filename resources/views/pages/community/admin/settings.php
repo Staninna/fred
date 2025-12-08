@@ -14,9 +14,11 @@ $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
 $success = $saved ? 'Settings saved.' : null;
 $messageIdPrefix = 'community-settings';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

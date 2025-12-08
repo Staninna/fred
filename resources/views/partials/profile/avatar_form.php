@@ -8,9 +8,11 @@
 
 $messageIdPrefix = 'avatar-settings';
 $messageTargets = [];
+
 if (!empty($avatarErrors ?? [])) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

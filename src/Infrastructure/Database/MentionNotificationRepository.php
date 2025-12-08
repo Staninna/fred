@@ -50,11 +50,11 @@ final class MentionNotificationRepository
 
         // Chunk to avoid SQLite's 999 parameter limit (5 params per row, so 199 rows max)
         $chunks = array_chunk($mentions, 199);
-        
+
         foreach ($chunks as $chunk) {
             $placeholders = [];
             $values = [];
-            
+
             foreach ($chunk as $mention) {
                 $placeholders[] = '(?, ?, ?, ?, ?, NULL)';
                 $values[] = $mention['communityId'];
@@ -66,7 +66,7 @@ final class MentionNotificationRepository
 
             $sql = 'INSERT OR IGNORE INTO mention_notifications (community_id, post_id, mentioned_user_id, mentioned_by_user_id, created_at, read_at) VALUES '
                 . implode(', ', $placeholders);
-            
+
             $statement = $this->pdo->prepare($sql);
             $statement->execute($values);
         }
@@ -183,6 +183,7 @@ final class MentionNotificationRepository
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $grouped = [];
+
         foreach ($rows as $row) {
             $notification = $this->hydrate($row);
             $grouped[$notification->postId][] = $notification;

@@ -14,9 +14,11 @@ use Fred\Domain\Community\Community;
 
 $messageIdPrefix = 'profile-edit';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

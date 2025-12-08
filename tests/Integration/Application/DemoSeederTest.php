@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Tests\Integration\Application;
 
 use Faker\Factory as FakerFactory;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Seed\DemoSeeder;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\CommunityModeratorRepository;
-use Fred\Infrastructure\Database\ReactionRepository;
-use Fred\Application\Content\EmoticonSet;
-use Fred\Infrastructure\Database\MentionNotificationRepository;
-use Fred\Application\Content\MentionService;
-use Fred\Infrastructure\Config\AppConfig;
 use Tests\TestCase;
 
 final class DemoSeederTest extends TestCase

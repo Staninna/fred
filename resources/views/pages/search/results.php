@@ -15,9 +15,11 @@
 
 $messageIdPrefix = 'search-form';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }
@@ -46,31 +48,31 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                         <td>
                             <?php
                             $boardOptions = array_map(static fn ($board) => ['value' => $board->slug, 'label' => $board->name], $boards);
-                            echo $renderPartial('partials/select.php', [
-                                'name' => 'board',
-                                'id' => 'board',
-                                'placeholder' => 'All boards',
-                                'options' => $boardOptions,
-                                'selected' => $boardFilter?->slug ?? '',
-                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
-                            ]);
-                            ?>
+echo $renderPartial('partials/select.php', [
+    'name' => 'board',
+    'id' => 'board',
+    'placeholder' => 'All boards',
+    'options' => $boardOptions,
+    'selected' => $boardFilter?->slug ?? '',
+    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+]);
+?>
                         </td>
                     </tr>
                     <tr>
                         <td><label for="user">User</label></td>
                         <td>
                             <?php
-                            $userOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
-                            echo $renderPartial('partials/select.php', [
-                                'name' => 'user',
-                                'id' => 'user',
-                                'placeholder' => 'All users',
-                                'options' => $userOptions,
-                                'selected' => $userFilter?->username ?? '',
-                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
-                            ]);
-                            ?>
+$userOptions = array_map(static fn ($username) => ['value' => $username, 'label' => $username], $usernames);
+echo $renderPartial('partials/select.php', [
+    'name' => 'user',
+    'id' => 'user',
+    'placeholder' => 'All users',
+    'options' => $userOptions,
+    'selected' => $userFilter?->username ?? '',
+    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+]);
+?>
                         </td>
                     </tr>
                 </table>

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Application;
 
-use Fred\Application\Auth\PermissionService;
 use Fred\Application\Auth\CurrentUser;
+use Fred\Application\Auth\PermissionService;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
@@ -84,6 +84,7 @@ final class PermissionServiceTest extends TestCase
     private function createUserWithRole(string $roleSlug): \Fred\Domain\Auth\User
     {
         $role = $this->roles->findBySlug($roleSlug);
+
         if ($role === null) {
             throw new \RuntimeException('Role not found: ' . $roleSlug);
         }

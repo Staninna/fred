@@ -129,6 +129,7 @@ final class PostRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $post = $this->findById($id);
+
         if ($post === null) {
             throw new \RuntimeException('Failed to create post.');
         }
@@ -150,11 +151,11 @@ final class PostRepository
         // Chunk to avoid SQLite's 999 parameter limit (8 params per row, so 124 rows max)
         $chunks = array_chunk($posts, 124);
         $lastId = 0;
-        
+
         foreach ($chunks as $chunk) {
             $placeholders = [];
             $values = [];
-            
+
             foreach ($chunk as $post) {
                 $placeholders[] = '(?, ?, ?, ?, ?, ?, ?, ?)';
                 $values[] = $post['communityId'];
@@ -169,10 +170,10 @@ final class PostRepository
 
             $sql = 'INSERT INTO posts (community_id, thread_id, author_id, body_raw, body_parsed, signature_snapshot, created_at, updated_at) VALUES '
                 . implode(', ', $placeholders);
-            
+
             $statement = $this->pdo->prepare($sql);
             $statement->execute($values);
-            
+
             $lastId = (int) $this->pdo->lastInsertId();
         }
 

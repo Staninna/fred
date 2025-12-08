@@ -61,6 +61,7 @@ final readonly class UserRepository
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $users = [];
+
         foreach ($rows as $row) {
             $user = $this->hydrate($row);
             $users[$user->id] = $user;
@@ -109,6 +110,7 @@ final readonly class UserRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $user = $this->findById($id);
+
         if ($user === null) {
             throw new \RuntimeException('Failed to reload created user.');
         }
@@ -149,6 +151,7 @@ WHERE 1=1
 SQL;
 
         $params = [];
+
         if ($query !== '') {
             $sql .= ' AND (u.username LIKE :search OR u.display_name LIKE :search)';
             $params[':search'] = '%' . $query . '%';
@@ -183,8 +186,10 @@ SQL;
     public function findByUsernames(array $usernames): array
     {
         $normalized = [];
+
         foreach ($usernames as $name) {
             $trimmed = strtolower(trim((string) $name));
+
             if ($trimmed !== '') {
                 $normalized[$trimmed] = $trimmed;
             }

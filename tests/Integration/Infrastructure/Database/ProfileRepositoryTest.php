@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Infrastructure\Database;
 
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Tests\TestCase;
 

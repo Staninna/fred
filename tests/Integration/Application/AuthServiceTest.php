@@ -6,10 +6,10 @@ namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Infrastructure\Database\BanRepository;
+use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\CommunityRepository;
 use Tests\TestCase;
 
 final class AuthServiceTest extends TestCase

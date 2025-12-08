@@ -8,9 +8,11 @@
 
 $messageIdPrefix = 'profile-settings';
 $messageTargets = [];
+
 if (!empty($profileErrors ?? [])) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

@@ -28,7 +28,8 @@ use Fred\Domain\Community\Community;
                         'moderator' => 'Moderator',
                         'admin' => 'Admin',
                     ];
-                    foreach ($options as $value => $label): ?>
+
+foreach ($options as $value => $label): ?>
                         <option value="<?= $e($value) ?>" <?= $value === $role ? 'selected' : '' ?>><?= $e($label) ?></option>
                     <?php endforeach; ?>
                 </select>

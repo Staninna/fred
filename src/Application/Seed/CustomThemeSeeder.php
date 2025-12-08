@@ -21,8 +21,10 @@ final readonly class CustomThemeSeeder
     public function seed(): void
     {
         $existing = $this->communities->findBySlug('themed');
+
         if ($existing !== null) {
             $this->log('Themed community already present');
+
             return;
         }
 

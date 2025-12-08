@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Fred\Http\Navigation;
 
+use function array_values;
+use function ctype_digit;
+
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -11,8 +14,6 @@ use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 
-use function array_values;
-use function ctype_digit;
 use function preg_replace;
 use function strtolower;
 use function trim;
@@ -49,6 +50,7 @@ final class CommunityContext
         }
 
         $community = $this->communities->findBySlug($slug);
+
         if ($community !== null) {
             $this->communityCache[$slug] = $community;
         }
@@ -65,6 +67,7 @@ final class CommunityContext
         if ($board === null && ctype_digit($boardSlugOrId)) {
             $boardId = (int) $boardSlugOrId;
             $board = $this->boards->findById($boardId);
+
             if ($board !== null && $board->communityId !== $community->id) {
                 $board = null;
             }
@@ -107,6 +110,7 @@ final class CommunityContext
         $communities ??= $this->allCommunities();
 
         $communityLinks = [];
+
         foreach ($communities as $community) {
             $communityLinks[] = [
                 'label' => $community->name,
@@ -116,6 +120,7 @@ final class CommunityContext
 
         $boardLinks = [];
         $communitySlug = $current?->slug ?? '';
+
         if ($communitySlug !== '') {
             $boardLinks[] = [
                 'label' => 'Search',
@@ -126,6 +131,7 @@ final class CommunityContext
                 'href' => '/c/' . $communitySlug . '/about',
             ];
         }
+
         foreach ($categories as $category) {
             $boardLinks[] = [
                 'label' => $category->name,
@@ -185,6 +191,7 @@ final class CommunityContext
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

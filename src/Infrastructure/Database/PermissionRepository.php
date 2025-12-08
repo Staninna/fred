@@ -28,6 +28,7 @@ final class PermissionRepository
         ];
 
         $statement = $this->pdo->prepare('INSERT OR IGNORE INTO permissions (slug, name) VALUES (:slug, :name)');
+
         foreach ($permissions as $permission) {
             $statement->execute($permission);
         }
@@ -66,6 +67,7 @@ final class PermissionRepository
         foreach ($rolePermissions as $roleSlug => $permissionSlugs) {
             $roleStatement->execute(['slug' => $roleSlug]);
             $roleId = $roleStatement->fetchColumn();
+
             if ($roleId === false) {
                 continue;
             }
@@ -73,6 +75,7 @@ final class PermissionRepository
             foreach ($permissionSlugs as $permissionSlug) {
                 $permissionStatement->execute(['slug' => $permissionSlug]);
                 $permissionId = $permissionStatement->fetchColumn();
+
                 if ($permissionId === false) {
                     continue;
                 }

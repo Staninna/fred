@@ -15,14 +15,14 @@ use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
-use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\ReportRepository;
-use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
@@ -93,6 +93,7 @@ final readonly class ModerationController
         }
 
         $attachments = $this->attachments->listByPostId($post->id);
+
         foreach ($attachments as $attachment) {
             $this->uploads->delete($attachment->path);
         }
@@ -100,6 +101,7 @@ final readonly class ModerationController
         $this->posts->delete($post->id);
 
         $page = isset($request->query['page']) ? '?page=' . (int) $request->query['page'] : '';
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
     }
 
@@ -144,8 +146,10 @@ final readonly class ModerationController
         }
 
         $bodyRaw = trim((string) ($request->body['body'] ?? ''));
+
         if ($bodyRaw === '') {
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
+
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
         }
 
@@ -164,6 +168,7 @@ final readonly class ModerationController
         );
 
         $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $post->id);
     }
 
@@ -182,6 +187,7 @@ final readonly class ModerationController
 
         $targetBoardSlug = (string) ($request->body['target_board'] ?? '');
         $targetBoard = $this->communityContext->resolveBoard($community, $targetBoardSlug);
+
         if ($targetBoard === null) {
             return $this->notFound($request, 'Target board not found: ' . $targetBoardSlug);
         }
@@ -204,8 +210,10 @@ final readonly class ModerationController
         $currentUser = $this->auth->currentUser();
 
         $reason = trim((string) ($request->body['reason'] ?? ''));
+
         if ($reason === '' || \strlen($reason) > 500) {
             $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
+
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?report_error=1' . $page . '#post-' . $post->id);
         }
 
@@ -218,12 +226,14 @@ final readonly class ModerationController
         );
 
         $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?reported=1' . $page . '#post-' . $post->id);
     }
 
     public function listBans(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::listBans');
         }
@@ -254,6 +264,7 @@ final readonly class ModerationController
     public function createBan(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::createBan');
         }
@@ -267,19 +278,23 @@ final readonly class ModerationController
         $expires = trim((string) ($request->body['expires_at'] ?? ''));
 
         $errors = [];
+
         if ($username === '') {
             $errors[] = 'Username is required.';
         }
+
         if ($reason === '') {
             $errors[] = 'Reason is required.';
         }
 
         $expiresAt = null;
+
         if ($expires !== '') {
             $expiresAt = strtotime($expires) ?: null;
         }
 
         $user = $username !== '' ? $this->users->findByUsername($username) : null;
+
         if ($user === null) {
             $errors[] = 'User not found.';
         }
@@ -321,6 +336,7 @@ final readonly class ModerationController
     public function deleteBan(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::deleteBan');
         }
@@ -330,6 +346,7 @@ final readonly class ModerationController
         }
 
         $banId = (int) ($request->params['ban'] ?? 0);
+
         if ($banId > 0) {
             $this->bans->delete($banId);
         }
@@ -417,6 +434,7 @@ final readonly class ModerationController
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

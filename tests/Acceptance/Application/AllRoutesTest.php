@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Tests\Acceptance\Application;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Search\SearchService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
-use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
@@ -19,24 +20,23 @@ use Fred\Http\Middleware\ResolveBoardMiddleware;
 use Fred\Http\Middleware\ResolveCommunityMiddleware;
 use Fred\Http\Middleware\ResolvePostMiddleware;
 use Fred\Http\Middleware\ResolveThreadMiddleware;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
-use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\View\ViewRenderer;
-use Fred\Application\Content\BbcodeParser;
-use Fred\Application\Search\SearchService;
-use Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\TestCase;
 
 final class AllRoutesTest extends TestCase
 {

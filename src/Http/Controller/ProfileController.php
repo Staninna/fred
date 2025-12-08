@@ -37,12 +37,14 @@ final readonly class ProfileController
     public function show(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ProfileController::show');
         }
 
         $username = (string) ($request->params['username'] ?? '');
         $user = $this->users->findByUsername($username);
+
         if ($user === null) {
             return $this->notFound($request, 'User not found: ' . $username);
         }
@@ -55,11 +57,13 @@ final readonly class ProfileController
     public function editSignature(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
+
         if ($user === null) {
             return $this->notFound($request, 'User not found in ProfileController::editSignature');
         }
@@ -70,11 +74,13 @@ final readonly class ProfileController
     public function updateSignature(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
+
         if ($user === null) {
             return $this->notFound($request, 'User not found in ProfileController::updateSignature');
         }
@@ -107,6 +113,7 @@ final readonly class ProfileController
     public function editProfile(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
@@ -118,6 +125,7 @@ final readonly class ProfileController
     public function editAvatar(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
@@ -129,17 +137,20 @@ final readonly class ProfileController
     public function updateAvatar(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
+
         if ($user === null) {
             return $this->notFound($request, 'User not found in ProfileController::updateAvatar');
         }
 
         $profile = $this->profiles->ensureExists($currentUser->id ?? 0, $community->id);
         $file = $request->files['avatar'] ?? null;
+
         if (!\is_array($file) || ($file['error'] ?? null) === UPLOAD_ERR_NO_FILE) {
             return $this->renderProfilePage($request, $community, $user, $profile, [], [], ['Please choose a file.']);
         }
@@ -166,12 +177,14 @@ final readonly class ProfileController
     public function updateProfile(Request $request): Response
     {
         $context = $this->resolveCommunityAndUser($request);
+
         if ($context instanceof Response) {
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
 
         $user = $this->users->findById($currentUser->id ?? 0);
+
         if ($user === null) {
             return $this->notFound($request, 'User not found in ProfileController::updateProfile');
         }
@@ -181,15 +194,19 @@ final readonly class ProfileController
         $website = trim((string) ($request->body['website'] ?? ''));
 
         $errors = [];
+
         if (\strlen($bio) > 1000) {
             $errors[] = 'Bio is too long (max 1000 characters).';
         }
+
         if (\strlen($location) > 120) {
             $errors[] = 'Location is too long (max 120 characters).';
         }
+
         if (\strlen($website) > 200) {
             $errors[] = 'Website URL is too long (max 200 characters).';
         }
+
         if ($website !== '' && !preg_match('#^https?://#i', $website)) {
             $errors[] = 'Website must start with http:// or https://';
         }
@@ -201,6 +218,7 @@ final readonly class ProfileController
         ];
 
         $profile = $this->profiles->findByUserAndCommunity($currentUser->id ?? 0, $community->id);
+
         if ($profile === null) {
             $profile = $this->profiles->create(
                 userId: $currentUser->id ?? 0,
@@ -238,11 +256,13 @@ final readonly class ProfileController
     private function resolveCommunityAndUser(Request $request): array|Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ProfileController::resolveCommunityAndUser');
         }
 
         $currentUser = $this->auth->currentUser();
+
         if ($currentUser->isGuest()) {
             return Response::redirect('/login');
         }

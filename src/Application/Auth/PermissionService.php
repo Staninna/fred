@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Application\Auth;
 
-use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\PermissionRepository;
 
 final class PermissionService
 {
@@ -96,16 +96,19 @@ final class PermissionService
     private function has(CurrentUser $user, string $permission): bool
     {
         $role = $user->role;
+
         if ($role === '') {
             return false;
         }
 
         $key = $role . '|' . $permission;
+
         if (isset($this->rolePermissionCache[$key])) {
             return $this->rolePermissionCache[$key];
         }
 
         $allowed = $this->permissions->roleHasPermission($role, $permission);
+
         if ($allowed) {
             $this->rolePermissionCache[$key] = true;
         }
@@ -133,11 +136,13 @@ final class PermissionService
             }
 
             $key = $user->role . '|' . ($user->id ?? 'null') . '|' . $permission . '|' . $communityId;
+
             if (isset($this->scopedPermissionCache[$key])) {
                 return $this->scopedPermissionCache[$key];
             }
 
             $allowed = $this->communityModerators->isModerator($communityId, $user->id);
+
             if ($allowed) {
                 $this->scopedPermissionCache[$key] = true;
             }

@@ -21,7 +21,7 @@
 /** @var callable(string, array): string $renderPartial */
 
 use Fred\Domain\Forum\Post;
-use Fred\Domain\Forum\Attachment;
+
 ?>
 
 <?php
@@ -29,6 +29,7 @@ $emoticonVersion = $emoticonVersion ?? '';
 $resolvedEmoticons = [];
 $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $emoticonMap, $emoticonVersion): string {
     $normalized = strtolower($code);
+
     if (isset($resolvedEmoticons[$normalized])) {
         return $resolvedEmoticons[$normalized];
     }
@@ -101,7 +102,9 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                                 <?php $reactionUrl = $resolveEmoticonUrl($reactionCode); ?>
                                 <?php $who = $reactionUsers[$reactionCode] ?? ['names' => [], 'extra' => 0]; ?>
                                 <?php $tooltip = $who['names'] === [] ? '' : implode(', ', $who['names']); ?>
-                                <?php if (($who['extra'] ?? 0) > 0) { $tooltip .= ' +' . (int) $who['extra'] . ' more'; } ?>
+                                <?php if (($who['extra'] ?? 0) > 0) {
+                                    $tooltip .= ' +' . (int) $who['extra'] . ' more';
+                                } ?>
                                 <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
                                     <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                                     <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">

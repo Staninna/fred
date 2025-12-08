@@ -25,6 +25,7 @@ final readonly class ResolveCommunityMiddleware
     public function __invoke(Request $request, callable $next): Response
     {
         $community = $this->communityContext->resolveCommunity($request->params['community'] ?? null);
+
         if ($community === null) {
             return $this->notFound($request, 'Community not found: ' . ($request->params['community'] ?? 'null'));
         }

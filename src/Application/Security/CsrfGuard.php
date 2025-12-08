@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Fred\Application\Security;
 
+use function bin2hex;
+
 use Fred\Http\Request;
 
-use function bin2hex;
 use function hash_equals;
 use function random_bytes;
 
@@ -41,11 +42,13 @@ final class CsrfGuard
     private function extractToken(Request $request): ?string
     {
         $fromBody = $request->body['_token'] ?? null;
+
         if (\is_string($fromBody) && $fromBody !== '') {
             return $fromBody;
         }
 
         $fromHeader = $request->header('X-CSRF-TOKEN');
+
         if (\is_string($fromHeader) && $fromHeader !== '') {
             return $fromHeader;
         }

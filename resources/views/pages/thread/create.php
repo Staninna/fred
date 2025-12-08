@@ -12,9 +12,11 @@ use Fred\Domain\Community\Community;
 
 $messageIdPrefix = 'thread-create';
 $messageTargets = [];
+
 if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
+
 if (!empty($success ?? '')) {
     $messageTargets[] = $messageIdPrefix . '-success';
 }

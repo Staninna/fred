@@ -12,8 +12,8 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\PostRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ReactionController
@@ -41,6 +41,7 @@ final readonly class ReactionController
         }
 
         $currentUser = $this->auth->currentUser();
+
         if ($currentUser->isGuest()) {
             return Response::redirect('/login');
         }
@@ -51,6 +52,7 @@ final readonly class ReactionController
 
         if ($thread->isLocked || $board->isLocked) {
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
+
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . '#post-' . $postId);
         }
 

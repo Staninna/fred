@@ -85,6 +85,7 @@ final readonly class Response
     {
         if (headers_sent()) {
             echo $this->body;
+
             return;
         }
 

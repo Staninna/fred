@@ -4,35 +4,40 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
-use Fred\Infrastructure\Config\AppConfig;
-
 use DOMDocument;
 use DOMXPath;
+
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
-use function filter_var;
-use function implode;
-use function is_array;
-use function is_dir;
-use function json_decode;
-use function json_encode;
-use function libxml_clear_errors;
-use function libxml_use_internal_errors;
-use function max;
-use function parse_url;
-use function preg_match_all;
-use function sha1;
-use function strlen;
-use function strtolower;
-use function trim;
 use function filemtime;
 
 use const FILTER_FLAG_NO_PRIV_RANGE;
 use const FILTER_FLAG_NO_RES_RANGE;
 use const FILTER_VALIDATE_IP;
+
+use function filter_var;
+
+use Fred\Infrastructure\Config\AppConfig;
+
+use function is_array;
+use function is_dir;
+use function json_decode;
+use function json_encode;
+
 use const JSON_PRETTY_PRINT;
+
+use function libxml_clear_errors;
+
 use const LIBXML_NONET;
+
+use function libxml_use_internal_errors;
+use function max;
+use function parse_url;
+use function preg_match_all;
+use function sha1;
+use function strtolower;
+use function trim;
 
 final class LinkPreviewer
 {
@@ -43,6 +48,7 @@ final class LinkPreviewer
     public function __construct(private readonly AppConfig $config)
     {
         $this->cacheDir = rtrim($this->config->basePath, '/') . '/storage/link_previews';
+
         if (!is_dir($this->cacheDir)) {
             @mkdir($this->cacheDir, 0775, true);
         }
@@ -56,8 +62,10 @@ final class LinkPreviewer
         $urls = $this->extractUrls($text, $limit);
 
         $previews = [];
+
         foreach ($urls as $url) {
             $preview = $this->previewForUrl($url);
+
             if ($preview !== null) {
                 $previews[] = $preview;
             }
@@ -83,6 +91,7 @@ final class LinkPreviewer
     public function previewForUrl(string $url): ?array
     {
         $url = trim($url);
+
         if ($url === '' || !$this->isSafeUrl($url)) {
             return null;
         }
@@ -93,6 +102,7 @@ final class LinkPreviewer
         if (file_exists($cachePath)) {
             $age = time() - filemtime($cachePath);
             $cached = json_decode((string) file_get_contents($cachePath), true);
+
             if (is_array($cached) && ($cached['failed'] ?? false) === true) {
                 if ($age < $this->failedTtlSeconds) {
                     return null;
@@ -103,8 +113,10 @@ final class LinkPreviewer
         }
 
         $metadata = $this->fetchMetadata($url);
+
         if ($metadata === null) {
             @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url], JSON_PRETTY_PRINT));
+
             return null;
         }
 
@@ -116,16 +128,19 @@ final class LinkPreviewer
     private function isSafeUrl(string $url): bool
     {
         $parts = parse_url($url);
+
         if (!is_array($parts)) {
             return false;
         }
 
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+
         if (!in_array($scheme, ['http', 'https'], true)) {
             return false;
         }
 
         $host = strtolower((string) ($parts['host'] ?? ''));
+
         if ($host === '' || $host === 'localhost') {
             return false;
         }
@@ -150,6 +165,7 @@ final class LinkPreviewer
         ]);
 
         $html = @file_get_contents($url, false, $context);
+
         if ($html === false || trim($html) === '') {
             return null;
         }
@@ -158,6 +174,7 @@ final class LinkPreviewer
         libxml_use_internal_errors(true);
         $loaded = @$doc->loadHTML($html, LIBXML_NONET);
         libxml_clear_errors();
+
         if ($loaded === false) {
             return null;
         }
@@ -172,6 +189,7 @@ final class LinkPreviewer
             : null;
 
         $title = $meta('og:title') ?? $metaName('title') ?? $this->textContent($xpath, '//title');
+
         if ($title === null || $title === '') {
             return null;
         }
@@ -193,6 +211,7 @@ final class LinkPreviewer
     private function textContent(DOMXPath $xpath, string $query): ?string
     {
         $nodes = $xpath->query($query);
+
         if (!$nodes || $nodes->length === 0) {
             return null;
         }

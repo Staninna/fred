@@ -5,19 +5,19 @@ declare(strict_types=1);
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Security\CsrfGuard;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityController;
+use Fred\Http\Controller\MentionController;
+use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
-use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\ReactionController;
-use Fred\Http\Controller\MentionController;
 use Fred\Http\Controller\SearchController;
-use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
-use Fred\Http\Navigation\NavigationTracker;
+use Fred\Http\Controller\UploadController;
 use Fred\Http\Middleware\EnrichViewContextMiddleware;
 use Fred\Http\Middleware\InjectCurrentUserMiddleware;
 use Fred\Http\Middleware\PermissionMiddleware;
@@ -26,10 +26,10 @@ use Fred\Http\Middleware\ResolveBoardMiddleware;
 use Fred\Http\Middleware\ResolveCommunityMiddleware;
 use Fred\Http\Middleware\ResolvePostMiddleware;
 use Fred\Http\Middleware\ResolveThreadMiddleware;
+use Fred\Http\Navigation\NavigationTracker;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
-use Fred\Application\Security\CsrfGuard;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
@@ -221,6 +221,7 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
 $request = Request::fromGlobals();
 
 $csrf = $container->get(CsrfGuard::class);
+
 if ($request->method === 'POST' && !$csrf->isValid($request)) {
     try {
         $view = $container->get(ViewRenderer::class);
@@ -243,6 +244,7 @@ if ($request->method === 'POST' && !$csrf->isValid($request)) {
 }
 
 $navResponse = $navigationTracker->track($request, $_SESSION);
+
 if ($navResponse instanceof Response) {
     $navResponse->send();
     exit;
@@ -260,6 +262,7 @@ try {
         $auth = $container->get(AuthService::class);
 
         $debug = [];
+
         if ($config->environment !== 'production') {
             $debug = [
                 'errorMessage' => $exception->getMessage(),

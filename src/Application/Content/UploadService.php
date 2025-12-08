@@ -4,26 +4,31 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
-use Fred\Infrastructure\Config\AppConfig;
-
 use function basename;
+
+use const FILEINFO_MIME_TYPE;
+
 use function filesize;
 use function finfo_file;
 use function finfo_open;
+
+use Fred\Infrastructure\Config\AppConfig;
+
 use function is_dir;
 use function is_file;
 use function ltrim;
 use function mkdir;
 use function move_uploaded_file;
 use function pathinfo;
+
+use const PATHINFO_EXTENSION;
+
 use function rtrim;
-use function strtolower;
 use function str_starts_with;
+use function strtolower;
 use function uniqid;
 use function unlink;
 
-use const FILEINFO_MIME_TYPE;
-use const PATHINFO_EXTENSION;
 use const UPLOAD_ERR_NO_FILE;
 use const UPLOAD_ERR_OK;
 
@@ -66,25 +71,30 @@ final class UploadService
     private function saveImage(array $file, int $maxSize, string $subdir): string
     {
         $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
         if ($error !== UPLOAD_ERR_OK) {
             throw new \RuntimeException('Upload failed.');
         }
 
         $tmpPath = $file['tmp_name'] ?? '';
+
         if (!is_file($tmpPath ?? '')) {
             throw new \RuntimeException('Temporary upload missing.');
         }
 
         $size = $file['size'] ?? filesize($tmpPath);
+
         if ($size === false || $size <= 0) {
             throw new \RuntimeException('File is empty.');
         }
+
         if ($size > $maxSize) {
             throw new \RuntimeException('File is too large.');
         }
 
         $mime = $this->detectMime($tmpPath, (string) ($file['type'] ?? ''));
         $extension = $this->allowedMimeMap[$mime] ?? null;
+
         if ($extension === null) {
             throw new \RuntimeException('Unsupported file type.');
         }
@@ -93,6 +103,7 @@ final class UploadService
 
         $relativeDir = $subdir . '/' . date('Y') . '/' . date('m');
         $absoluteDir = rtrim($this->config->uploadsPath, '/') . '/' . $relativeDir;
+
         if (!is_dir($absoluteDir)) {
             mkdir($absoluteDir, recursive: true);
         }
@@ -115,6 +126,7 @@ final class UploadService
     public function delete(string $relativePath): void
     {
         $base = rtrim($this->config->uploadsPath, '/');
+
         if (!str_starts_with($base, '/')) {
             $base = rtrim($this->config->basePath, '/') . '/' . ltrim($base, '/');
         }

@@ -64,6 +64,7 @@ final readonly class CommunityRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $community = $this->findBySlug($slug);
+
         if ($community === null) {
             throw new \RuntimeException('Failed to create community.');
         }

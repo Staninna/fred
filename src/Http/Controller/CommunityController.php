@@ -16,7 +16,6 @@ use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
-
 use Fred\Support\Str;
 
 final readonly class CommunityController extends Controller
@@ -73,6 +72,7 @@ final readonly class CommunityController extends Controller
         }
 
         $slug = $slug === '' ? Str::slugify($name) : Str::slugify($slug);
+
         if ($slug === '') {
             $errors[] = 'Slug is required.';
         }
@@ -102,6 +102,7 @@ final readonly class CommunityController extends Controller
     public function show(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in CommunityController::show');
         }
@@ -131,6 +132,7 @@ final readonly class CommunityController extends Controller
     public function about(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in CommunityController::about');
         }

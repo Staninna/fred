@@ -73,14 +73,14 @@ use Fred\Domain\Forum\Post;
                             static fn ($boardOption) => ['value' => $boardOption->slug, 'label' => $boardOption->name],
                             $allBoards
                         );
-                        echo $renderPartial('partials/select.php', [
-                            'name' => 'target_board',
-                            'id' => 'target_board',
-                            'options' => $boardOptions,
-                            'selected' => (string) $board->slug,
-                            'class' => 'inline-select',
-                        ]);
-                        ?>
+                    echo $renderPartial('partials/select.php', [
+                        'name' => 'target_board',
+                        'id' => 'target_board',
+                        'options' => $boardOptions,
+                        'selected' => (string) $board->slug,
+                        'class' => 'inline-select',
+                    ]);
+                    ?>
                         <button class="button" type="submit">Move</button>
                     </form>
                 <?php endif; ?>

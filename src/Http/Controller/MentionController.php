@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Http\Controller;
 
+use function ceil;
+
 use Fred\Application\Auth\AuthService;
 use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
@@ -17,7 +19,6 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
-use function ceil;
 use function json_encode;
 use function max;
 use function trim;
@@ -42,6 +43,7 @@ final readonly class MentionController
     public function inbox(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in MentionController::inbox');
         }
@@ -53,6 +55,7 @@ final readonly class MentionController
 
         $total = $this->mentions->countForUser($currentUser->id ?? 0, $community->id);
         $totalPages = $total === 0 ? 1 : (int) ceil($total / self::INBOX_PER_PAGE);
+
         if ($page > $totalPages) {
             $page = $totalPages;
         }
@@ -94,6 +97,7 @@ final readonly class MentionController
     public function markRead(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in MentionController::markRead');
         }
@@ -110,6 +114,7 @@ final readonly class MentionController
     public function markOneRead(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in MentionController::markOneRead');
         }
@@ -117,6 +122,7 @@ final readonly class MentionController
         $currentUser = $this->auth->currentUser();
 
         $mentionId = (int) ($request->params['mention'] ?? 0);
+
         if ($mentionId > 0) {
             $this->mentions->markOneRead($mentionId, $currentUser->id ?? 0, $community->id);
         }
@@ -129,6 +135,7 @@ final readonly class MentionController
     public function suggest(Request $request): Response
     {
         $community = $request->attribute('community');
+
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in MentionController::suggest');
         }
@@ -136,6 +143,7 @@ final readonly class MentionController
         $currentUser = $this->auth->currentUser();
 
         $term = trim((string) ($request->query['q'] ?? ''));
+
         if ($term === '' || \strlen($term) < 2) {
             return new Response(200, ['Content-Type' => 'application/json; charset=utf-8'], '[]');
         }
@@ -149,6 +157,7 @@ final readonly class MentionController
         }, $results);
 
         $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         if ($encoded === false) {
             $encoded = '[]';
         }
@@ -186,6 +195,7 @@ final readonly class MentionController
     private function groupBoards(array $boards): array
     {
         $grouped = [];
+
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
         }

@@ -27,6 +27,7 @@ final readonly class SearchService
     public function searchThreads(int $communityId, ?int $boardId, ?int $userId, string $query, int $limit = 10, int $offset = 0): array
     {
         $formatted = $this->formatQuery($query);
+
         if ($formatted === '') {
             return [];
         }
@@ -68,6 +69,7 @@ SQL;
         $sql .= ' ORDER BY score ASC, t.created_at DESC LIMIT :limit OFFSET :offset';
 
         $statement = $this->pdo->prepare($sql);
+
         foreach ($params as $key => $value) {
             $paramType = \is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
             $statement->bindValue($key, $value, $paramType);
@@ -97,6 +99,7 @@ SQL;
     public function searchPosts(int $communityId, ?int $boardId, ?int $userId, string $query, int $limit = 10, int $offset = 0): array
     {
         $formatted = $this->formatQuery($query);
+
         if ($formatted === '') {
             return [];
         }
@@ -140,6 +143,7 @@ SQL;
         $sql .= ' ORDER BY score ASC, p.created_at DESC LIMIT :limit OFFSET :offset';
 
         $statement = $this->pdo->prepare($sql);
+
         foreach ($params as $key => $value) {
             $paramType = \is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
             $statement->bindValue($key, $value, $paramType);
@@ -156,13 +160,16 @@ SQL;
     private function formatQuery(string $input): string
     {
         $terms = preg_split('/\s+/', trim($input), -1, PREG_SPLIT_NO_EMPTY);
+
         if ($terms === false || $terms === []) {
             return '';
         }
 
         $formatted = [];
+
         foreach ($terms as $term) {
             $clean = preg_replace('/[^a-zA-Z0-9]+/', '', $term);
+
             if ($clean !== '' && $clean !== null) {
                 $formatted[] = $clean . '*';
             }

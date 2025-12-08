@@ -48,6 +48,7 @@ final class ProfileRepository
 
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
         $profiles = [];
+
         foreach ($rows as $row) {
             $profile = $this->hydrate($row);
             $profiles[$profile->userId] = $profile;
@@ -86,6 +87,7 @@ final class ProfileRepository
         ]);
 
         $profile = $this->findByUserAndCommunity($userId, $communityId);
+
         if ($profile === null) {
             throw new \RuntimeException('Failed to create profile.');
         }
@@ -105,11 +107,11 @@ final class ProfileRepository
 
         // Chunk to avoid SQLite's 999 parameter limit (10 params per row, so 99 rows max)
         $chunks = array_chunk($profiles, 99);
-        
+
         foreach ($chunks as $chunk) {
             $placeholders = [];
             $values = [];
-            
+
             foreach ($chunk as $profile) {
                 $placeholders[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
                 $values[] = $profile['userId'];
@@ -126,7 +128,7 @@ final class ProfileRepository
 
             $sql = 'INSERT OR IGNORE INTO profiles (user_id, community_id, bio, location, website, signature_raw, signature_parsed, avatar_path, created_at, updated_at) VALUES '
                 . implode(', ', $placeholders);
-            
+
             $statement = $this->pdo->prepare($sql);
             $statement->execute($values);
         }
@@ -135,6 +137,7 @@ final class ProfileRepository
     public function ensureExists(int $userId, int $communityId): Profile
     {
         $existing = $this->findByUserAndCommunity($userId, $communityId);
+
         if ($existing !== null) {
             return $existing;
         }
@@ -153,6 +156,7 @@ final class ProfileRepository
             );
         } catch (\PDOException) {
             $retry = $this->findByUserAndCommunity($userId, $communityId);
+
             if ($retry !== null) {
                 return $retry;
             }

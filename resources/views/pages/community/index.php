@@ -50,9 +50,11 @@ use Fred\Domain\Community\Community;
     <?php
     $messageIdPrefix = 'community-create';
     $messageTargets = [];
+
     if (!empty($errors)) {
         $messageTargets[] = $messageIdPrefix . '-errors';
     }
+
     if (!empty($success ?? '')) {
         $messageTargets[] = $messageIdPrefix . '-success';
     }

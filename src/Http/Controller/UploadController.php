@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace Fred\Http\Controller;
 
+use function file_exists;
+use function file_get_contents;
+use function filesize;
+
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 
-use function file_exists;
-use function file_get_contents;
-use function filesize;
 use function pathinfo;
+
+use const PATHINFO_EXTENSION;
+
 use function realpath;
 use function str_starts_with;
 use function strtolower;
-
-use const PATHINFO_EXTENSION;
 
 final readonly class UploadController
 {
@@ -36,6 +38,7 @@ final readonly class UploadController
         }
 
         $base = rtrim($this->config->uploadsPath, '/');
+
         if (!str_starts_with($base, '/')) {
             $base = rtrim($this->config->basePath, '/') . '/' . ltrim($base, '/');
         }

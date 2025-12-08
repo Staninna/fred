@@ -65,6 +65,7 @@ final readonly class CategoryRepository
         $id = (int) $this->pdo->lastInsertId();
 
         $category = $this->findById($id);
+
         if ($category === null) {
             throw new \RuntimeException('Failed to create category.');
         }

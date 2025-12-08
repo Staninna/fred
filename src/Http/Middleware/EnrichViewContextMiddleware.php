@@ -29,7 +29,7 @@ final readonly class EnrichViewContextMiddleware
         $this->view->share('environment', $this->config->environment);
         $this->view->share('baseUrl', $this->config->baseUrl);
         $this->view->share('activePath', $request->path);
-        
+
         // Default values
         $this->view->share('currentCommunity', null);
         $this->view->share('customCss', '');
