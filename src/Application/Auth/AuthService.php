@@ -34,7 +34,7 @@ final class AuthService
             return $this->cached;
         }
 
-        $userId = $_SESSION[self::SESSION_KEY] ?? null;
+        $userId = $this->sessionGet(self::SESSION_KEY);
         if ($userId === null) {
             return $this->cached = $this->guest();
         }
@@ -46,7 +46,7 @@ final class AuthService
             return $this->cached = $this->guest();
         }
 
-        if ($this->bans->isBanned($user->id, time())) {
+        if ($this->bans->isBanned($user->id, $this->now())) {
             $this->logout();
 
             return $this->cached = $this->guest();
@@ -79,7 +79,7 @@ final class AuthService
             displayName: $displayName,
             passwordHash: $passwordHash,
             roleId: $role->id,
-            createdAt: time(),
+            createdAt: $this->now(),
         );
 
         return $this->loginUser($user);
@@ -96,7 +96,7 @@ final class AuthService
             return false;
         }
 
-        if ($this->bans->isBanned($user->id, time())) {
+        if ($this->bans->isBanned($user->id, $this->now())) {
             return false;
         }
 
@@ -107,9 +107,9 @@ final class AuthService
 
     public function logout(): void
     {
-        unset($_SESSION[self::SESSION_KEY]);
+        $this->sessionForget(self::SESSION_KEY);
         $this->cached = null;
-        session_regenerate_id(true);
+        $this->regenerateSession();
     }
 
     private function guest(): CurrentUser
@@ -140,12 +140,37 @@ final class AuthService
 
     private function loginUser(User $user): CurrentUser
     {
-        $_SESSION[self::SESSION_KEY] = $user->id;
-        session_regenerate_id(true);
+        $this->sessionSet(self::SESSION_KEY, $user->id);
+        $this->regenerateSession();
 
         $current = $this->mapUser($user);
         $this->cached = $current;
 
         return $current;
     }
+
+        private function sessionGet(string $key): mixed
+        {
+            return $_SESSION[$key] ?? null;
+        }
+
+        private function sessionSet(string $key, mixed $value): void
+        {
+            $_SESSION[$key] = $value;
+        }
+
+        private function sessionForget(string $key): void
+        {
+            unset($_SESSION[$key]);
+        }
+
+        private function regenerateSession(): void
+        {
+            session_regenerate_id(true);
+        }
+
+        private function now(): int
+        {
+            return time();
+        }
 }
