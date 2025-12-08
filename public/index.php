@@ -18,6 +18,10 @@ use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Navigation\NavigationTracker;
+use Fred\Http\Middleware\EnrichViewContextMiddleware;
+use Fred\Http\Middleware\InjectCurrentUserMiddleware;
+use Fred\Http\Middleware\PermissionMiddleware;
+use Fred\Http\Middleware\ValidateResourceAttributesMiddleware;
 use Fred\Http\Middleware\RequireAuthMiddleware;
 use Fred\Http\Middleware\ResolveBoardMiddleware;
 use Fred\Http\Middleware\ResolveCommunityMiddleware;
@@ -98,10 +102,17 @@ $profileController = $container->get(ProfileController::class);
 $searchController = $container->get(SearchController::class);
 $uploadController = $container->get(UploadController::class);
 $authRequired = $container->get(RequireAuthMiddleware::class);
+$injectCurrentUser = $container->get(InjectCurrentUserMiddleware::class);
+$enrichViewContext = $container->get(EnrichViewContextMiddleware::class);
+$validateResources = $container->get(ValidateResourceAttributesMiddleware::class);
+$permissions = $container->get(PermissionMiddleware::class);
 $communityContext = $container->get(ResolveCommunityMiddleware::class);
 $boardContext = $container->get(ResolveBoardMiddleware::class);
 $threadContext = $container->get(ResolveThreadMiddleware::class);
 $postContext = $container->get(ResolvePostMiddleware::class);
+
+$router->addGlobalMiddleware($injectCurrentUser);
+$router->addGlobalMiddleware($enrichViewContext);
 
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
@@ -127,7 +138,8 @@ $router->group('/c/{community}', function (Router $router) use (
     $mentionController,
     $boardContext,
     $threadContext,
-    $postContext
+    $postContext,
+    $permissions
 ) {
     $router->get('/', [$communityController, 'show']);
     $router->get('/about', [$communityController, 'about']);
@@ -149,17 +161,17 @@ $router->group('/c/{community}', function (Router $router) use (
     }, [$authRequired, $boardContext]);
 
     $router->get('/t/{thread}', [$threadController, 'show'], [$threadContext]);
-    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext]);
-    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext]);
-    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext]);
-    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext]);
-    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext]);
+    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $threadContext, $permissions->check('canReply')]);
+    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
+    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
+    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]); // Assuming announce uses sticky permission or similar?
+    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext, $permissions->check('canMoveThread')]);
+    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
+    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext, $permissions->check('canDeleteAnyPost')]);
+    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
     $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $postContext]);
     $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired, $postContext]);
     $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired]);
@@ -167,9 +179,9 @@ $router->group('/c/{community}', function (Router $router) use (
     $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired]);
     $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired]);
 
-    $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
-    $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired]);
-    $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired]);
+    $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $permissions->check('canBan')]);
+    $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $permissions->check('canBan')]);
+    $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $permissions->check('canBan')]);
     $router->get('/search', [$searchController, 'search']);
 
     $router->group('/admin', function (Router $router) use ($adminController) {
@@ -190,14 +202,13 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->get('/settings', [$adminController, 'settings']);
         $router->post('/settings', [$adminController, 'updateSettings']);
         $router->get('/users', [$adminController, 'users']);
-    }, [$authRequired]);
-}, [$communityContext]);
+    }, [$authRequired, $permissions->check('canModerate')]);
+}, [$communityContext, $validateResources]);
 
 $router->setNotFoundHandler(function (Request $request) use ($container) {
     $view = $container->get(ViewRenderer::class);
     $auth = $container->get(AuthService::class);
     $config = $container->get(AppConfig::class);
-    $communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
 
     $body = $view->render('errors/404.php', [
         'pageTitle' => 'Page not found',
@@ -213,25 +224,12 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
 
 $request = Request::fromGlobals();
 
-// Setup global view data
-$viewRenderer = $container->get(ViewRenderer::class);
-$communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
-
-$viewRenderer->share('currentUser', $authService->currentUser());
-$viewRenderer->share('environment', $config->environment);
-$viewRenderer->share('baseUrl', $config->baseUrl);
-$viewRenderer->share('activePath', $request->path);
-$viewRenderer->share('navSections', $communityHelper->navForCommunity());
-$viewRenderer->share('currentCommunity', null);
-$viewRenderer->share('customCss', '');
-
 $csrf = $container->get(CsrfGuard::class);
 if ($request->method === 'POST' && !$csrf->isValid($request)) {
     try {
         $view = $container->get(ViewRenderer::class);
         $config = $container->get(AppConfig::class);
         $auth = $container->get(AuthService::class);
-        $communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
 
         $body = $view->render('errors/419.php', [
             'pageTitle' => 'CSRF token mismatch',
