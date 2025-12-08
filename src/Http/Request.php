@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Http;
 
+use function function_exists;
+use function is_array;
 use function parse_url;
 use function trim;
 
@@ -30,7 +32,7 @@ final readonly class Request
         $path = (string) parse_url($uri, PHP_URL_PATH);
         $path = $path === '' ? '/' : $path;
 
-        $headers = \function_exists('getallheaders') ? (getallheaders() ?: []) : [];
+        $headers = function_exists('getallheaders') ? (getallheaders() ?: []) : [];
 
         if ($headers === []) {
             foreach ($_SERVER as $key => $value) {
@@ -49,7 +51,7 @@ final readonly class Request
 
         $session = $_SESSION ?? [];
 
-        if (!\is_array($session)) {
+        if (!is_array($session)) {
             $session = [];
         }
 

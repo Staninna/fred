@@ -36,6 +36,7 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function is_array;
 use function json_encode;
 
 use PDO;
@@ -81,7 +82,7 @@ final readonly class ThreadController
         }
 
         $page = (int) ($request->query['page'] ?? 1);
-        $page = $page < 1 ? 1 : $page;
+        $page = max($page, 1);
         $perPage = 25;
         $totalPosts = $this->posts->countByThreadId($thread->id);
         $totalPages = $totalPosts === 0 ? 1 : (int) ceil($totalPosts / $perPage);
@@ -288,7 +289,7 @@ final readonly class ThreadController
         try {
             $this->pdo->beginTransaction();
 
-            if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            if (is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
                 $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
             }
 

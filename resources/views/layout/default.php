@@ -1,8 +1,11 @@
 <?php
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
-/** @var \Fred\Domain\Community\Community|null $currentCommunity */
+/** @var Community|null $currentCommunity */
 /** @var string|null $customCss */
+
+use Fred\Domain\Community\Community;
+
 ?>
 
 <!DOCTYPE html>
@@ -27,7 +30,7 @@
             <div class="banner-links">
                 <a href="/">Home</a> |
                 <?php if (isset($currentUser) && $currentUser->isAuthenticated()): ?>
-                    <?php if (isset($currentCommunity) && $currentCommunity !== null): ?>
+                    <?php if (isset($currentCommunity)): ?>
                         <a href="/c/<?= $e($currentCommunity->slug) ?>/u/<?= $e($currentUser->username) ?>">Signed in as <?= $e($currentUser->displayName) ?></a> |
                     <?php else: ?>
                         Signed in as <?= $e($currentUser->displayName) ?> |
@@ -73,76 +76,78 @@ document.addEventListener('alpine:init', function () {
                 return document.getElementById(this.targetId);
             },
             wrap: function(tag) {
-                var el = this.target;
+                const el = this.target;
                 if (!el) return;
-                var start = el.selectionStart ?? el.value.length;
-                var end = el.selectionEnd ?? el.value.length;
-                var before = el.value.slice(0, start);
-                var selection = el.value.slice(start, end);
-                var after = el.value.slice(end);
-                var open = '[' + tag + ']';
-                var close = '[/' + tag + ']';
+                const start = el.selectionStart ?? el.value.length;
+                const end = el.selectionEnd ?? el.value.length;
+                const before = el.value.slice(0, start);
+                const selection = el.value.slice(start, end);
+                const after = el.value.slice(end);
+                const open = '[' + tag + ']';
+                const close = '[/' + tag + ']';
                 if (selection === '') {
                     el.value = before + open + close + after;
-                    var cursor = before.length + open.length;
+                    const cursor = before.length + open.length;
                     el.focus();
                     el.setSelectionRange(cursor, cursor);
                     return;
                 }
 
                 el.value = before + open + selection + close + after;
-                var cursor = start + open.length + selection.length + close.length;
+                const cursor = start + open.length + selection.length + close.length;
                 el.focus();
                 el.setSelectionRange(cursor, cursor);
             },
             insertLink: function() {
-                var url = prompt('Enter URL (include http/https):', 'http://');
+                const url = prompt('Enter URL (include http/https):', 'http://');
                 if (!url) return;
-                var el = this.target;
+                const el = this.target;
                 if (!el) return;
-                var start = el.selectionStart ?? el.value.length;
-                var end = el.selectionEnd ?? el.value.length;
-                var before = el.value.slice(0, start);
-                var selection = el.value.slice(start, end);
-                var after = el.value.slice(end);
-                var label = selection !== '' ? selection : url;
-                var snippet = '[url=' + url + ']' + label + '[/url]';
+                const start = el.selectionStart ?? el.value.length;
+                const end = el.selectionEnd ?? el.value.length;
+                const before = el.value.slice(0, start);
+                const selection = el.value.slice(start, end);
+                const after = el.value.slice(end);
+                const label = selection !== '' ? selection : url;
+                const snippet = '[url=' + url + ']' + label + '[/url]';
                 el.value = before + snippet + after;
-                var cursor = selection === ''
+                const cursor = selection === ''
                     ? before.length + ('[url=' + url + ']').length
                     : before.length + snippet.length;
                 el.focus();
                 el.setSelectionRange(cursor, cursor);
             },
             insertImage: function() {
-                var url = prompt('Image URL (http/https):', 'http://');
+                const url = prompt('Image URL (http/https):', 'http://');
                 if (!url) return;
-                var el = this.target;
+                const el = this.target;
                 if (!el) return;
-                var start = el.selectionStart ?? el.value.length;
-                var end = el.selectionEnd ?? el.value.length;
-                var before = el.value.slice(0, start);
-                var after = el.value.slice(end);
-                var snippet = '[img]' + url + '[/img]';
+                const start = el.selectionStart ?? el.value.length;
+                const end = el.selectionEnd ?? el.value.length;
+                const before = el.value.slice(0, start);
+                const after = el.value.slice(end);
+                const snippet = '[img]' + url + '[/img]';
                 el.value = before + snippet + after;
-                var cursor = before.length + snippet.length;
+                const cursor = before.length + snippet.length;
                 el.focus();
                 el.setSelectionRange(cursor, cursor);
             },
             insertList: function() {
-                var el = this.target;
+                const el = this.target;
                 if (!el) return;
-                var start = el.selectionStart ?? el.value.length;
-                var end = el.selectionEnd ?? el.value.length;
-                var before = el.value.slice(0, start);
-                var selection = el.value.slice(start, end);
-                var after = el.value.slice(end);
-                var items = selection ? selection.split(/\n+/) : ['item 1', 'item 2'];
-                var body = items.map(function (line) { return '[*]' + line; }).join('\n');
-                var snippet = '[list]\n' + body + '\n[/list]';
+                const start = el.selectionStart ?? el.value.length;
+                const end = el.selectionEnd ?? el.value.length;
+                const before = el.value.slice(0, start);
+                const selection = el.value.slice(start, end);
+                const after = el.value.slice(end);
+                const items = selection ? selection.split(/\n+/) : ['item 1', 'item 2'];
+                const body = items.map(function (line) {
+                    return '[*]' + line;
+                }).join('\n');
+                const snippet = '[list]\n' + body + '\n[/list]';
                 el.value = before + snippet + after;
-                var selectStart = before.length + '[list]\n'.length;
-                var selectEnd = selectStart + body.length;
+                const selectStart = before.length + '[list]\n'.length;
+                const selectEnd = selectStart + body.length;
                 el.focus();
                 el.setSelectionRange(selectStart, selectEnd);
             }
@@ -152,20 +157,20 @@ document.addEventListener('alpine:init', function () {
 </script>
 <script>
 (function() {
-    var key = 'fred-scroll:' + location.pathname;
-    var hasHash = location.hash && location.hash.length > 1;
+    const key = 'fred-scroll:' + location.pathname;
+    const hasHash = location.hash && location.hash.length > 1;
     if (!hasHash) {
-        var saved = sessionStorage.getItem(key);
+        const saved = sessionStorage.getItem(key);
         if (saved !== null) {
-            var pos = parseInt(saved, 10);
+            const pos = parseInt(saved, 10);
             if (!isNaN(pos)) {
                 window.scrollTo(0, pos);
             }
         }
     }
 
-    var lastWrite = 0;
-    var pending = false;
+    let lastWrite = 0;
+    let pending = false;
 
     function saveScroll() {
         pending = false;
@@ -174,7 +179,7 @@ document.addEventListener('alpine:init', function () {
     }
 
     function onScroll() {
-        var now = performance.now();
+        const now = performance.now();
         if (now - lastWrite < 150) {
             return;
         }
@@ -190,11 +195,11 @@ document.addEventListener('alpine:init', function () {
 </script>
 <script>
 (function() {
-    var tooltip = document.createElement('div');
+    const tooltip = document.createElement('div');
     tooltip.className = 'reaction-tooltip';
-    var active = null;
-    var showTimer = null;
-    var moveRaf = null;
+    let active = null;
+    let showTimer = null;
+    let moveRaf = null;
 
     function ensureNode() {
         if (!document.body.contains(tooltip)) {
@@ -219,16 +224,16 @@ document.addEventListener('alpine:init', function () {
         if (evt && typeof evt.clientX === 'number' && typeof evt.clientY === 'number') {
             return { x: evt.clientX, y: evt.clientY };
         }
-        var rect = el.getBoundingClientRect();
+        const rect = el.getBoundingClientRect();
         return { x: rect.left + (rect.width / 2), y: rect.top };
     }
 
     function position(point) {
         ensureNode();
-        var padding = 8;
-        var rect = tooltip.getBoundingClientRect();
-        var left = Math.min(point.x + 12, window.innerWidth - rect.width - padding);
-        var top = Math.min(point.y + 14, window.innerHeight - rect.height - padding);
+        const padding = 8;
+        const rect = tooltip.getBoundingClientRect();
+        let left = Math.min(point.x + 12, window.innerWidth - rect.width - padding);
+        let top = Math.min(point.y + 14, window.innerHeight - rect.height - padding);
         if (left < padding) left = padding;
         if (top < padding) top = padding;
         tooltip.style.left = left + 'px';
@@ -236,10 +241,10 @@ document.addEventListener('alpine:init', function () {
     }
 
     function show(evt) {
-        var el = evt.currentTarget;
-        var text = el.getAttribute('data-tooltip');
+        const el = evt.currentTarget;
+        const text = el.getAttribute('data-tooltip');
         if (!text) return;
-        var point = getPoint(evt, el);
+        const point = getPoint(evt, el);
         if (showTimer !== null) {
             clearTimeout(showTimer);
         }
@@ -277,9 +282,9 @@ document.addEventListener('alpine:init', function () {
     <script>
     (function() {
         function debounce(fn, wait) {
-            var timer = null;
+            let timer = null;
             return function () {
-                var args = arguments;
+                const args = arguments;
                 if (timer !== null) {
                     clearTimeout(timer);
                 }
@@ -291,7 +296,7 @@ document.addEventListener('alpine:init', function () {
         }
 
         function buildMenu(textarea) {
-            var menu = document.createElement('div');
+            const menu = document.createElement('div');
             menu.className = 'mention-suggestions';
             menu.setAttribute('role', 'listbox');
             menu.hidden = true;
@@ -300,11 +305,11 @@ document.addEventListener('alpine:init', function () {
         }
 
         function setupMention(textarea) {
-            var endpoint = textarea.getAttribute('data-mention-endpoint');
+            const endpoint = textarea.getAttribute('data-mention-endpoint');
             if (!endpoint) return;
 
-            var menu = buildMenu(textarea);
-            var activeToken = null;
+            const menu = buildMenu(textarea);
+            let activeToken = null;
 
             function hide() {
                 menu.hidden = true;
@@ -313,11 +318,11 @@ document.addEventListener('alpine:init', function () {
 
             function insertHandle(username) {
                 if (!activeToken) return;
-                var before = textarea.value.slice(0, activeToken.start);
-                var after = textarea.value.slice(activeToken.end);
-                var insertion = '@' + username + ' ';
+                const before = textarea.value.slice(0, activeToken.start);
+                const after = textarea.value.slice(activeToken.end);
+                const insertion = '@' + username + ' ';
                 textarea.value = before + insertion + after;
-                var next = (before + insertion).length;
+                const next = (before + insertion).length;
                 textarea.focus();
                 textarea.setSelectionRange(next, next);
                 hide();
@@ -331,10 +336,10 @@ document.addEventListener('alpine:init', function () {
 
                 menu.innerHTML = '';
                 list.slice(0, 8).forEach(function (entry, index) {
-                    var btn = document.createElement('button');
+                    const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'mention-suggestion';
-                    var label = '@' + entry.username;
+                    let label = '@' + entry.username;
                     if (entry.display_name && entry.display_name !== entry.username) {
                         label += ' · ' + entry.display_name;
                     }
@@ -350,7 +355,7 @@ document.addEventListener('alpine:init', function () {
                 menu.hidden = false;
             }
 
-            var requestSuggestions = debounce(function (query, tokenKey) {
+            const requestSuggestions = debounce(function (query, tokenKey) {
                 fetch(endpoint + '?q=' + encodeURIComponent(query), {
                     headers: {'Accept': 'application/json'},
                 }).then(function (response) {
@@ -365,23 +370,23 @@ document.addEventListener('alpine:init', function () {
             }, 140);
 
             function detectToken() {
-                var caret = textarea.selectionStart;
+                let caret = textarea.selectionStart;
                 if (typeof caret !== 'number') {
                     caret = textarea.value.length;
                 }
 
-                var before = textarea.value.slice(0, caret);
-                var at = before.lastIndexOf('@');
+                const before = textarea.value.slice(0, caret);
+                const at = before.lastIndexOf('@');
                 if (at === -1) {
                     return null;
                 }
 
-                var prev = at === 0 ? ' ' : before.charAt(at - 1);
+                const prev = at === 0 ? ' ' : before.charAt(at - 1);
                 if (!/\s|\(|\[|>/.test(prev)) {
                     return null;
                 }
 
-                var fragment = before.slice(at + 1);
+                const fragment = before.slice(at + 1);
                 if (fragment.length < 2 || !/^[A-Za-z0-9_.-]+$/.test(fragment)) {
                     return null;
                 }
@@ -395,7 +400,7 @@ document.addEventListener('alpine:init', function () {
             }
 
             textarea.addEventListener('input', function () {
-                var token = detectToken();
+                const token = detectToken();
                 if (!token) {
                     activeToken = null;
                     hide();

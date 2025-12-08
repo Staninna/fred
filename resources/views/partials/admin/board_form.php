@@ -2,10 +2,13 @@
 /** @var callable(string, ?int=): string $e */
 /** @var string $action */
 /** @var string $submitLabel */
-/** @var \Fred\Domain\Community\Board|null $board */
-/** @var array<int, \Fred\Domain\Community\Category> $categories */
+/** @var Board|null $board */
+/** @var array<int, Category> $categories */
 /** @var bool $includeCategorySelect */
 /** @var string|null $deleteAction */
+
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
 
 $name = $board?->name ?? '';
 $slug = $board?->slug ?? '';

@@ -6,10 +6,11 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Forum\Post;
 use PDO;
+use RuntimeException;
 
-final class PostRepository
+final readonly class PostRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -131,7 +132,7 @@ final class PostRepository
         $post = $this->findById($id);
 
         if ($post === null) {
-            throw new \RuntimeException('Failed to create post.');
+            throw new RuntimeException('Failed to create post.');
         }
 
         return $post;

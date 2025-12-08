@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\View;
 
+use function array_key_exists;
+
 use ArrayAccess;
 
 /**
@@ -51,7 +53,7 @@ final class ViewContext implements ArrayAccess
 
     public function has(string $key): bool
     {
-        return \array_key_exists($key, $this->data);
+        return array_key_exists($key, $this->data);
     }
 
     public function get(string $key, mixed $default = null): mixed

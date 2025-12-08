@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Search\SearchService;
+use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
@@ -146,7 +147,7 @@ final readonly class SearchController
         ];
     }
 
-    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
     private function groupBoards(array $boards): array
     {
         $grouped = [];

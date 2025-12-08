@@ -10,7 +10,7 @@ return new class () implements Migration {
         return '20240607_create_boards_table';
     }
 
-    public function up(\PDO $pdo): void
+    public function up(PDO $pdo): void
     {
         $pdo->exec(<<<'SQL'
 CREATE TABLE IF NOT EXISTS boards (

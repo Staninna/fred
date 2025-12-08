@@ -15,12 +15,13 @@
 /** @var bool $canBanUsers */
 /** @var array<int, Board> $allBoards */
 /** @var bool $canModerate */
-/** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
+/** @var array<int, Profile> $profilesByUserId */
 /** @var callable $e */
 /** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
 /** @var array<int, string[]> $linkPreviewUrlsByPost */
 
 use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;

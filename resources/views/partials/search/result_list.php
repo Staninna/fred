@@ -2,8 +2,11 @@
 /** @var array<int, array<string, mixed>> $items */
 /** @var string $emptyMessage */
 /** @var string $type */
-/** @var \Fred\Domain\Community\Community $community */
+/** @var Community $community */
 /** @var callable(string, ?int=): string $e */
+
+use Fred\Domain\Community\Community;
+
 ?>
 
 <?php if ($items === []): ?>

@@ -12,7 +12,6 @@ use Tests\TestCase;
 
 final class BanFlowTest extends TestCase
 {
-    private \PDO $pdo;
     private UserRepository $users;
     private RoleRepository $roles;
     private BanRepository $bans;
@@ -26,10 +25,10 @@ final class BanFlowTest extends TestCase
         }
         $_SESSION = [];
 
-        $this->pdo = $this->makeMigratedPdo();
-        $this->users = new UserRepository($this->pdo);
-        $this->roles = new RoleRepository($this->pdo);
-        $this->bans = new BanRepository($this->pdo);
+        $pdo = $this->makeMigratedPdo();
+        $this->users = new UserRepository($pdo);
+        $this->roles = new RoleRepository($pdo);
+        $this->bans = new BanRepository($pdo);
         $this->roles->ensureDefaultRoles();
     }
 

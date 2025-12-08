@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace Tests\Acceptance\Application;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\MentionService;
+use Fred\Application\Content\UploadService;
 use Fred\Application\Search\SearchService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
@@ -24,17 +29,23 @@ use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
+use PDO;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -145,15 +156,15 @@ final class AllRoutesTest extends TestCase
         $profileRepository = new ProfileRepository($pdo);
         $permissionRepository = new PermissionRepository($pdo);
         $communityModeratorRepository = new CommunityModeratorRepository($pdo);
-        $banRepository = new \Fred\Infrastructure\Database\BanRepository($pdo);
-        $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
-        $uploadService = new \Fred\Application\Content\UploadService($config);
+        $banRepository = new BanRepository($pdo);
+        $attachmentRepository = new AttachmentRepository($pdo);
+        $uploadService = new UploadService($config);
         $authService = new AuthService(
             users: $userRepository,
             roles: $roleRepository,
             bans: $banRepository,
         );
-        $permissionService = new \Fred\Application\Auth\PermissionService($permissionRepository, $communityModeratorRepository);
+        $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
 
@@ -166,7 +177,7 @@ final class AllRoutesTest extends TestCase
 
         $authController = new AuthController($view, $config, $authService);
         $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
-        $reportRepository = new \Fred\Infrastructure\Database\ReportRepository($pdo);
+        $reportRepository = new ReportRepository($pdo);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
         $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
         $threadController = new ThreadController(
@@ -180,19 +191,19 @@ final class AllRoutesTest extends TestCase
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
-            new \Fred\Application\Content\LinkPreviewer($config),
+            new LinkPreviewer($config),
             $userRepository,
             $profileRepository,
             $uploadService,
             $attachmentRepository,
-            new \Fred\Infrastructure\Database\ReactionRepository($pdo),
-            new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo),
-            new \Fred\Application\Content\EmoticonSet($config),
-            new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
+            new ReactionRepository($pdo),
+            new MentionNotificationRepository($pdo),
+            new EmoticonSet($config),
+            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
             $pdo
         );
-        $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
-        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
+        $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo)));
+        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new MentionService($userRepository, new MentionNotificationRepository($pdo)));
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
         $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
 
@@ -279,7 +290,7 @@ final class AllRoutesTest extends TestCase
     }
 
     private function seedForumData(
-        \PDO $pdo,
+        PDO $pdo,
         CommunityRepository $communities,
         CategoryRepository $categories,
         BoardRepository $boards,
@@ -287,7 +298,7 @@ final class AllRoutesTest extends TestCase
         RoleRepository $roles,
         ThreadRepository $threads,
         PostRepository $posts,
-        \Fred\Infrastructure\Database\BanRepository $bans,
+        BanRepository $bans,
         CommunityModeratorRepository $communityModerators
     ): array {
         $roles->ensureDefaultRoles();
@@ -347,7 +358,7 @@ final class AllRoutesTest extends TestCase
             timestamp: time()
         );
         $statement = $pdo->query('SELECT * FROM bans ORDER BY id DESC LIMIT 1');
-        $ban = (object) $statement->fetch(\PDO::FETCH_ASSOC);
+        $ban = (object) $statement->fetch(PDO::FETCH_ASSOC);
 
         return [
             'community_slug' => $community->slug,

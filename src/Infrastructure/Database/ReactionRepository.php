@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use function count;
+
 use PDO;
 use PDOException;
 
-final class ReactionRepository
+final readonly class ReactionRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -23,7 +25,7 @@ final class ReactionRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
         $statement = $this->pdo->prepare(
             "SELECT post_id, emoticon, count FROM post_reactions WHERE post_id IN ($placeholders)"
         );
@@ -99,7 +101,7 @@ final class ReactionRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
         $params = $postIds;
         $params[] = $userId;
 
@@ -128,7 +130,7 @@ final class ReactionRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
         $stmt = $this->pdo->prepare(
             "SELECT pru.post_id, pru.emoticon, u.display_name
              FROM post_reaction_users pru
@@ -149,7 +151,7 @@ final class ReactionRepository
 
             $entry = $grouped[$postId][$emoticon] ?? ['names' => [], 'extra' => 0];
 
-            if (\count($entry['names']) < $perReactionLimit) {
+            if (count($entry['names']) < $perReactionLimit) {
                 $entry['names'][] = $name;
             } else {
                 $entry['extra']++;

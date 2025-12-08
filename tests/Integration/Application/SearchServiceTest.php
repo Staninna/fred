@@ -16,7 +16,6 @@ use Tests\TestCase;
 
 final class SearchServiceTest extends TestCase
 {
-    private \PDO $pdo;
     private CommunityRepository $communities;
     private CategoryRepository $categories;
     private BoardRepository $boards;
@@ -29,16 +28,16 @@ final class SearchServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->pdo = $this->makeMigratedPdo();
-        $this->communities = new CommunityRepository($this->pdo);
-        $this->categories = new CategoryRepository($this->pdo);
-        $this->boards = new BoardRepository($this->pdo);
-        $this->threads = new ThreadRepository($this->pdo);
-        $this->posts = new PostRepository($this->pdo);
-        $this->users = new UserRepository($this->pdo);
-        $this->roles = new RoleRepository($this->pdo);
+        $pdo = $this->makeMigratedPdo();
+        $this->communities = new CommunityRepository($pdo);
+        $this->categories = new CategoryRepository($pdo);
+        $this->boards = new BoardRepository($pdo);
+        $this->threads = new ThreadRepository($pdo);
+        $this->posts = new PostRepository($pdo);
+        $this->users = new UserRepository($pdo);
+        $this->roles = new RoleRepository($pdo);
         $this->roles->ensureDefaultRoles();
-        $this->search = new SearchService($this->pdo);
+        $this->search = new SearchService($pdo);
     }
 
     private function seed(): array

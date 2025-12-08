@@ -1,10 +1,15 @@
 <?php
-/** @var \Fred\Domain\Auth\Profile|null $profile */
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var Profile|null $profile */
+/** @var Community $community */
+/** @var CurrentUser|null $currentUser */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Auth\Profile;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <?= $renderPartial('partials/form_section_header.php', [

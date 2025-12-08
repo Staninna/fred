@@ -6,6 +6,7 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Moderation\Report;
 use PDO;
+use RuntimeException;
 
 final readonly class ReportRepository
 {
@@ -51,7 +52,7 @@ final readonly class ReportRepository
         $report = $this->findById($id);
 
         if ($report === null) {
-            throw new \RuntimeException('Failed to create report.');
+            throw new RuntimeException('Failed to create report.');
         }
 
         return $report;

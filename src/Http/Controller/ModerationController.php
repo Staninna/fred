@@ -6,8 +6,10 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
+use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\Post as ForumPost;
 use Fred\Domain\Forum\Thread;
@@ -26,6 +28,8 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function strlen;
+
 final readonly class ModerationController
 {
     public function __construct(
@@ -36,7 +40,7 @@ final readonly class ModerationController
         private CommunityContext $communityContext,
         private ThreadRepository $threads,
         private PostRepository $posts,
-        private \Fred\Application\Content\BbcodeParser $parser,
+        private BbcodeParser $parser,
         private UserRepository $users,
         private BanRepository $bans,
         private BoardRepository $boards,
@@ -211,7 +215,7 @@ final readonly class ModerationController
 
         $reason = trim((string) ($request->body['reason'] ?? ''));
 
-        if ($reason === '' || \strlen($reason) > 500) {
+        if ($reason === '' || strlen($reason) > 500) {
             $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
 
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?report_error=1' . $page . '#post-' . $post->id);
@@ -430,7 +434,7 @@ final readonly class ModerationController
         ];
     }
 
-    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
     private function groupBoards(array $boards): array
     {
         $grouped = [];

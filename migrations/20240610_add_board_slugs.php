@@ -10,7 +10,7 @@ return new class () implements Migration {
         return '20240610_add_board_slugs';
     }
 
-    public function up(\PDO $pdo): void
+    public function up(PDO $pdo): void
     {
         if ($this->columnExists($pdo, 'boards', 'slug')) {
             return;
@@ -23,10 +23,10 @@ return new class () implements Migration {
         $pdo->exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_boards_community_slug ON boards (community_id, slug)');
     }
 
-    private function columnExists(\PDO $pdo, string $table, string $column): bool
+    private function columnExists(PDO $pdo, string $table, string $column): bool
     {
         $statement = $pdo->prepare('PRAGMA table_info(' . $table . ')');
-        $rows = $statement?->execute() ? $statement->fetchAll(\PDO::FETCH_ASSOC) : [];
+        $rows = $statement->execute() ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
 
         foreach ($rows as $row) {
             if (($row['name'] ?? null) === $column) {
@@ -37,7 +37,7 @@ return new class () implements Migration {
         return false;
     }
 
-    private function backfillSlugs(\PDO $pdo): void
+    private function backfillSlugs(PDO $pdo): void
     {
         $statement = $pdo->query('SELECT id, community_id, name FROM boards ORDER BY id ASC');
         $rows = $statement?->fetchAll(PDO::FETCH_ASSOC) ?? [];
@@ -74,8 +74,7 @@ return new class () implements Migration {
     {
         $slug = strtolower(trim($value));
         $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug) ?? '';
-        $slug = trim($slug, '-');
 
-        return $slug;
+        return trim($slug, '-');
     }
 };

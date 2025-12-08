@@ -1,17 +1,21 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var array<int, \Fred\Domain\Community\Board> $boards */
+/** @var Community $community */
+/** @var array<int, Board> $boards */
 /** @var array<int, array<string, mixed>> $threads */
 /** @var array<int, array<string, mixed>> $posts */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
 /** @var string $query */
-/** @var \Fred\Domain\Community\Board|null $boardFilter */
-/** @var \Fred\Domain\Auth\User|null $userFilter */
+/** @var Board|null $boardFilter */
+/** @var User|null $userFilter */
 /** @var array<int, string> $usernames */
-/** @var \Fred\Domain\Community\Community $community */
+/** @var Community $community */
 /** @var string|null $success */
+
+use Fred\Domain\Auth\User;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Community;
 
 $messageIdPrefix = 'search-form';
 $messageTargets = [];

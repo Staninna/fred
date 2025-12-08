@@ -44,7 +44,7 @@ final readonly class BoardController extends Controller
         $category = $request->attribute('category');
 
         $page = (int) ($request->query['page'] ?? 1);
-        $page = $page < 1 ? 1 : $page;
+        $page = max($page, 1);
         $perPage = 20;
         $totalThreads = $this->threads->countByBoardId($board->id);
         $totalPages = $totalThreads === 0 ? 1 : (int) ceil($totalThreads / $perPage);

@@ -1,6 +1,9 @@
 <?php
-/** @var \Fred\Domain\Auth\Profile|null $profile */
+/** @var Profile|null $profile */
 /** @var callable(string, ?int=): string $e */
+
+use Fred\Domain\Auth\Profile;
+
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>

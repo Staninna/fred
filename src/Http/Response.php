@@ -11,6 +11,7 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 use function header;
 use function http_response_code;
+use function is_array;
 
 final readonly class Response
 {
@@ -92,7 +93,7 @@ final readonly class Response
         http_response_code($this->status);
 
         foreach ($this->headers as $name => $value) {
-            $formattedValue = \is_array($value) ? implode(', ', $value) : $value;
+            $formattedValue = is_array($value) ? implode(', ', $value) : $value;
             header($name . ': ' . $formattedValue, replace: true);
         }
 

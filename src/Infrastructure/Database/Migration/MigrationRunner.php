@@ -12,6 +12,9 @@ use function glob;
 use PDO;
 use RuntimeException;
 use SplFileInfo;
+
+use function sprintf;
+
 use Throwable;
 
 use function usort;
@@ -107,7 +110,7 @@ SQL);
 
         $fileName = basename($file->getPathname());
 
-        throw new RuntimeException(\sprintf('Migration file %s must return a Migration instance.', $fileName));
+        throw new RuntimeException(sprintf('Migration file %s must return a Migration instance.', $fileName));
     }
 
     private function markApplied(string $name): void

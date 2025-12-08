@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use function ceil;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
@@ -21,6 +22,7 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 use function json_encode;
 use function max;
+use function strlen;
 use function trim;
 
 final readonly class MentionController
@@ -51,7 +53,7 @@ final readonly class MentionController
         $currentUser = $this->auth->currentUser();
 
         $page = (int) ($request->query['page'] ?? 1);
-        $page = $page < 1 ? 1 : $page;
+        $page = max($page, 1);
 
         $total = $this->mentions->countForUser($currentUser->id ?? 0, $community->id);
         $totalPages = $total === 0 ? 1 : (int) ceil($total / self::INBOX_PER_PAGE);
@@ -144,7 +146,7 @@ final readonly class MentionController
 
         $term = trim((string) ($request->query['q'] ?? ''));
 
-        if ($term === '' || \strlen($term) < 2) {
+        if ($term === '' || strlen($term) < 2) {
             return new Response(200, ['Content-Type' => 'application/json; charset=utf-8'], '[]');
         }
 
@@ -191,7 +193,7 @@ final readonly class MentionController
         ];
     }
 
-    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
     private function groupBoards(array $boards): array
     {
         $grouped = [];

@@ -22,7 +22,7 @@ use Fred\Domain\Forum\MentionNotification;
     <tr>
         <td>
             <div class="info-line">
-                Unread: <?= (int) $unreadCount ?> · Total: <?= (int) $totalCount ?>
+                Unread: <?= $unreadCount ?> · Total: <?= $totalCount ?>
             </div>
             <?php if ($unreadCount > 0): ?>
                 <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/mentions/read">
@@ -53,7 +53,7 @@ use Fred\Domain\Forum\MentionNotification;
             $threadUrl .= '#post-' . $notification->postId;
             $excerpt = trim($notification->postBodyRaw);
 
-            if (\strlen($excerpt) > 200) {
+            if (strlen($excerpt) > 200) {
                 $excerpt = substr($excerpt, 0, 200) . '...';
             }
             ?>

@@ -6,7 +6,11 @@
     "require": {
         "php": "^8.3",
         "ext-pdo": "*",
-        "league/container": "^5.1"
+        "league/container": "^5.1",
+        "ext-dom": "*",
+        "ext-curl": "*",
+        "ext-libxml": "*",
+      "ext-fileinfo": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

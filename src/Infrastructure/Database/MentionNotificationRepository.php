@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use function count;
+
 use Fred\Domain\Forum\MentionNotification;
 use PDO;
 
-final class MentionNotificationRepository
+final readonly class MentionNotificationRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -166,7 +168,7 @@ final class MentionNotificationRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
+        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
         $statement = $this->pdo->prepare(
             "SELECT mn.id, mn.community_id, c.slug AS community_slug, mn.post_id, mn.mentioned_user_id, mn.mentioned_by_user_id,
                     mn.created_at, mn.read_at, p.thread_id, p.body_raw, t.title AS thread_title,

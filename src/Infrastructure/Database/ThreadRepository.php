@@ -6,10 +6,11 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Forum\Thread;
 use PDO;
+use RuntimeException;
 
-final class ThreadRepository
+final readonly class ThreadRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -104,7 +105,7 @@ final class ThreadRepository
         $thread = $this->findById($id);
 
         if ($thread === null) {
-            throw new \RuntimeException('Failed to create thread.');
+            throw new RuntimeException('Failed to create thread.');
         }
 
         return $thread;

@@ -19,6 +19,11 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function is_array;
+use function strlen;
+
+use Throwable;
+
 use function trim;
 
 final readonly class ProfileController
@@ -88,7 +93,7 @@ final readonly class ProfileController
         $signature = trim((string) ($request->body['signature'] ?? ''));
         $errors = [];
 
-        if (\strlen($signature) > 2000) {
+        if (strlen($signature) > 2000) {
             $errors[] = 'Signature is too long.';
         }
 
@@ -151,13 +156,13 @@ final readonly class ProfileController
         $profile = $this->profiles->ensureExists($currentUser->id ?? 0, $community->id);
         $file = $request->files['avatar'] ?? null;
 
-        if (!\is_array($file) || ($file['error'] ?? null) === UPLOAD_ERR_NO_FILE) {
+        if (!is_array($file) || ($file['error'] ?? null) === UPLOAD_ERR_NO_FILE) {
             return $this->renderProfilePage($request, $community, $user, $profile, [], [], ['Please choose a file.']);
         }
 
         try {
             $path = $this->uploads->saveAvatar($file);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return $this->renderProfilePage($request, $community, $user, $profile, [], [], [$exception->getMessage()]);
         }
 
@@ -195,15 +200,15 @@ final readonly class ProfileController
 
         $errors = [];
 
-        if (\strlen($bio) > 1000) {
+        if (strlen($bio) > 1000) {
             $errors[] = 'Bio is too long (max 1000 characters).';
         }
 
-        if (\strlen($location) > 120) {
+        if (strlen($location) > 120) {
             $errors[] = 'Location is too long (max 120 characters).';
         }
 
-        if (\strlen($website) > 200) {
+        if (strlen($website) > 200) {
             $errors[] = 'Website URL is too long (max 200 characters).';
         }
 
@@ -292,7 +297,7 @@ final readonly class ProfileController
             ->set('avatarErrors', $avatarErrors)
             ->set('oldProfile', $oldProfile)
             ->set('currentCommunity', $community)
-            ->set('customCss', trim((string) ($community->customCss ?? '')));
+            ->set('customCss', trim($community->customCss ?? ''));
 
         return Response::view($this->view, 'pages/profile/show.php', $ctx, status: $status);
     }

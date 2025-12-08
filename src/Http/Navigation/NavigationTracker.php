@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace Fred\Http\Navigation;
 
+use function array_slice;
+use function count;
+
 use Fred\Http\Request;
 use Fred\Http\Response;
 
 use function http_build_query;
+use function is_array;
+use function is_int;
 use function preg_match;
 use function str_starts_with;
 use function strtoupper;
 
 final class NavigationTracker
 {
-    public function __construct(private int $maxEntries = 20)
+    public function __construct(private readonly int $maxEntries = 20)
     {
     }
 
@@ -37,7 +42,7 @@ final class NavigationTracker
         }
 
         if ($request->path === '/nav/forward') {
-            if ($index < \count($history) - 1) {
+            if ($index < count($history) - 1) {
                 $index++;
             }
 
@@ -55,9 +60,9 @@ final class NavigationTracker
         $skipSlice = (bool) ($session['nav_skip_slice'] ?? false);
         $session['nav_skip_slice'] = false;
 
-        if (!$skipSlice && $index !== \count($history) - 1) {
-            $history = \array_slice($history, 0, $index + 1);
-            $index = \count($history) - 1;
+        if (!$skipSlice && $index !== count($history) - 1) {
+            $history = array_slice($history, 0, $index + 1);
+            $index = count($history) - 1;
         }
 
         $fullPath = $request->path;
@@ -68,13 +73,13 @@ final class NavigationTracker
 
         if ($index >= 0 && isset($history[$index]) && $history[$index] === $fullPath) {
             // already at this position; keep index as-is
-        } elseif ($history === [] || $history[\count($history) - 1] !== $fullPath) {
+        } elseif ($history === [] || $history[count($history) - 1] !== $fullPath) {
             $history[] = $fullPath;
 
-            if (\count($history) > $this->maxEntries) {
-                $history = \array_slice($history, -$this->maxEntries);
+            if (count($history) > $this->maxEntries) {
+                $history = array_slice($history, -$this->maxEntries);
             }
-            $index = \count($history) - 1;
+            $index = count($history) - 1;
         }
 
         $session['nav_history'] = $history;
@@ -102,20 +107,20 @@ final class NavigationTracker
 
     private function sanitizeHistory(mixed $history): array
     {
-        return \is_array($history) ? $history : [];
+        return is_array($history) ? $history : [];
     }
 
     private function sanitizeIndex(mixed $index, array $history): int
     {
-        if (!\is_int($index)) {
-            return $history !== [] ? \count($history) - 1 : -1;
+        if (!is_int($index)) {
+            return $history !== [] ? count($history) - 1 : -1;
         }
 
         if ($history === []) {
             return -1;
         }
 
-        $max = \count($history) - 1;
+        $max = count($history) - 1;
 
         if ($index < 0) {
             return 0;

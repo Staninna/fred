@@ -29,6 +29,7 @@ use Fred\Http\Middleware\ResolveBoardMiddleware;
 use Fred\Http\Middleware\ResolveCommunityMiddleware;
 use Fred\Http\Middleware\ResolvePostMiddleware;
 use Fred\Http\Middleware\ResolveThreadMiddleware;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -49,6 +50,7 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewRenderer;
+use ReflectionClass;
 use Tests\TestCase;
 
 final class ApplicationFlowTest extends TestCase
@@ -304,7 +306,7 @@ final class ApplicationFlowTest extends TestCase
 
         $previewUrl = 'https://example.com/article';
         $previewCachePath = $this->basePath('storage/link_previews/' . sha1($previewUrl) . '.json');
-        @mkdir((string) dirname($previewCachePath), 0775, true);
+        @mkdir(dirname($previewCachePath), 0775, true);
         $previewWritten = file_put_contents(
             $previewCachePath,
             (string) json_encode([
@@ -562,7 +564,7 @@ final class ApplicationFlowTest extends TestCase
             bans: $banRepository,
         );
         $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
-        $communityContext = new \Fred\Http\Navigation\CommunityContext($communityRepository, $categoryRepository, $boardRepository);
+        $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
         $csrfGuard = new CsrfGuard();
         $csrfToken = $csrfGuard->token();
@@ -863,7 +865,7 @@ final class ApplicationFlowTest extends TestCase
     private function dispatchWithRefreshedAuth(array $app, Request $request): Response
     {
         $auth = $app['auth'];
-        $reflection = new \ReflectionClass($auth);
+        $reflection = new ReflectionClass($auth);
         $cachedProperty = $reflection->getProperty('cached');
         $cachedProperty->setAccessible(true);
         $cachedProperty->setValue($auth, null);

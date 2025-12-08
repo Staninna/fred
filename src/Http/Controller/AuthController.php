@@ -11,6 +11,10 @@ use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function strlen;
+
+use Throwable;
+
 final readonly class AuthController
 {
     public function __construct(
@@ -84,13 +88,13 @@ final readonly class AuthController
 
         if ($username === '') {
             $errors[] = 'Username is required.';
-        } elseif (\strlen($username) < 3) {
+        } elseif (strlen($username) < 3) {
             $errors[] = 'Username must be at least 3 characters.';
         }
 
         if ($password === '') {
             $errors[] = 'Password is required.';
-        } elseif (\strlen($password) < 6) {
+        } elseif (strlen($password) < 6) {
             $errors[] = 'Password must be at least 6 characters.';
         }
 
@@ -109,7 +113,7 @@ final readonly class AuthController
 
         try {
             $this->auth->register($username, $displayName, $password);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return $this->renderRegister(
                 $request,
                 [$exception->getMessage()],

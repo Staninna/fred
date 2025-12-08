@@ -5,7 +5,12 @@ declare(strict_types=1);
 namespace Tests\Acceptance\Application;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\MentionService;
+use Fred\Application\Content\UploadService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
@@ -22,13 +27,18 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
@@ -132,15 +142,15 @@ final class HttpRoutesTest extends TestCase
         $threadRepository = new ThreadRepository($pdo);
         $postRepository = new PostRepository($pdo);
         $profileRepository = new ProfileRepository($pdo);
-        $attachmentRepository = new \Fred\Infrastructure\Database\AttachmentRepository($pdo);
-        $reportRepository = new \Fred\Infrastructure\Database\ReportRepository($pdo);
-        $uploadService = new \Fred\Application\Content\UploadService($config);
+        $attachmentRepository = new AttachmentRepository($pdo);
+        $reportRepository = new ReportRepository($pdo);
+        $uploadService = new UploadService($config);
         $authService = new AuthService(
             users: $userRepository,
             roles: $roleRepository,
-            bans: new \Fred\Infrastructure\Database\BanRepository($pdo),
+            bans: new BanRepository($pdo),
         );
-        $permissionService = new \Fred\Application\Auth\PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
+        $permissionService = new PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
@@ -168,7 +178,7 @@ final class HttpRoutesTest extends TestCase
             $categoryRepository,
             $boardRepository,
             $communityRepository,
-            new \Fred\Infrastructure\Database\CommunityModeratorRepository($pdo), // Missing
+            new CommunityModeratorRepository($pdo), // Missing
             $userRepository, // Missing
             $roleRepository, // Missing
             $reportRepository,
@@ -194,15 +204,15 @@ final class HttpRoutesTest extends TestCase
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
-            new \Fred\Application\Content\LinkPreviewer($config),
+            new LinkPreviewer($config),
             $userRepository,
             $profileRepository,
             $uploadService,
             $attachmentRepository,
-            new \Fred\Infrastructure\Database\ReactionRepository($pdo),
-            new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo),
-            new \Fred\Application\Content\EmoticonSet($config),
-            new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
+            new ReactionRepository($pdo),
+            new MentionNotificationRepository($pdo),
+            new EmoticonSet($config),
+            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
             $pdo
         );
         $postController = new PostController(
@@ -216,7 +226,7 @@ final class HttpRoutesTest extends TestCase
             $permissionService,
             $uploadService,
             $attachmentRepository,
-            new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
+            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
         );
         $moderationController = new ModerationController(
             $view,
@@ -226,15 +236,15 @@ final class HttpRoutesTest extends TestCase
             $communityContext,
             $threadRepository,
             $postRepository,
-            new \Fred\Application\Content\BbcodeParser(), // Missing
+            new BbcodeParser(), // Missing
             $userRepository, // Missing
-            new \Fred\Infrastructure\Database\BanRepository($pdo), // Missing
+            new BanRepository($pdo), // Missing
             $boardRepository, // Missing
             $categoryRepository, // Missing
             $reportRepository,
             $attachmentRepository,
             $uploadService,
-            new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
+            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
         );
 
         $router->get('/', [$communityController, 'index']);

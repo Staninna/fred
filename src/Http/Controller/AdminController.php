@@ -6,6 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
@@ -22,6 +23,7 @@ use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function preg_replace;
+use function strlen;
 use function strtolower;
 use function trim;
 
@@ -131,7 +133,7 @@ final readonly class AdminController
             $errors[] = 'Name is required.';
         }
 
-        if (\strlen($customCss) > 8000) {
+        if (strlen($customCss) > 8000) {
             $errors[] = 'Community CSS is too long (max 8000 characters).';
         }
 
@@ -317,7 +319,7 @@ final readonly class AdminController
         $isLocked = isset($request->body['is_locked']);
         $customCss = trim((string) ($request->body['custom_css'] ?? ''));
 
-        if (\strlen($customCss) > 25000) {
+        if (strlen($customCss) > 25000) {
             return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
         }
 
@@ -375,7 +377,7 @@ final readonly class AdminController
         $isLocked = isset($request->body['is_locked']);
         $customCss = trim((string) ($request->body['custom_css'] ?? ''));
 
-        if (\strlen($customCss) > 25000) {
+        if (strlen($customCss) > 25000) {
             return $this->structure($request, ['Board CSS is too long (max 25000 characters).']);
         }
 
@@ -445,7 +447,7 @@ final readonly class AdminController
 
         $css = trim((string) ($request->body['custom_css'] ?? ''));
 
-        if (\strlen($css) > 8000) {
+        if (strlen($css) > 8000) {
             return $this->structure($request, ['Community CSS is too long (max 8000 characters).']);
         }
 
@@ -643,7 +645,7 @@ final readonly class AdminController
         ];
     }
 
-    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
     private function groupBoards(array $boards): array
     {
         $grouped = [];
@@ -678,7 +680,7 @@ final readonly class AdminController
         );
     }
 
-    private function adminNav(\Fred\Domain\Community\Community $community, string $active): array
+    private function adminNav(Community $community, string $active): array
     {
         $links = [
             ['key' => 'structure', 'label' => 'Structure', 'href' => '/c/' . $community->slug . '/admin/structure'],

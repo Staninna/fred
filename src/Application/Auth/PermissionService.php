@@ -7,16 +7,18 @@ namespace Fred\Application\Auth;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 
+use function in_array;
+
 final class PermissionService
 {
-    private const PERMISSION_THREAD_CREATE = 'thread.create';
-    private const PERMISSION_POST_CREATE = 'post.create';
-    private const PERMISSION_THREAD_LOCK = 'thread.lock';
-    private const PERMISSION_THREAD_STICKY = 'thread.sticky';
-    private const PERMISSION_THREAD_MOVE = 'thread.move';
-    private const PERMISSION_POST_EDIT_ANY = 'post.edit_any';
-    private const PERMISSION_POST_DELETE_ANY = 'post.delete_any';
-    private const PERMISSION_USER_BAN = 'user.ban';
+    private const string PERMISSION_THREAD_CREATE = 'thread.create';
+    private const string PERMISSION_POST_CREATE = 'post.create';
+    private const string PERMISSION_THREAD_LOCK = 'thread.lock';
+    private const string PERMISSION_THREAD_STICKY = 'thread.sticky';
+    private const string PERMISSION_THREAD_MOVE = 'thread.move';
+    private const string PERMISSION_POST_EDIT_ANY = 'post.edit_any';
+    private const string PERMISSION_POST_DELETE_ANY = 'post.delete_any';
+    private const string PERMISSION_USER_BAN = 'user.ban';
 
     /** @var array<string, bool> Cache of role-wide permission checks (role|perm => bool) */
     private array $rolePermissionCache = [];
@@ -127,7 +129,7 @@ final class PermissionService
         }
 
         if ($user->role === 'moderator') {
-            if (\in_array($permission, [self::PERMISSION_THREAD_CREATE, self::PERMISSION_POST_CREATE], true)) {
+            if (in_array($permission, [self::PERMISSION_THREAD_CREATE, self::PERMISSION_POST_CREATE], true)) {
                 return true;
             }
 
@@ -135,7 +137,7 @@ final class PermissionService
                 return false;
             }
 
-            $key = $user->role . '|' . ($user->id ?? 'null') . '|' . $permission . '|' . $communityId;
+            $key = $user->role . '|' . ($user->id) . '|' . $permission . '|' . $communityId;
 
             if (isset($this->scopedPermissionCache[$key])) {
                 return $this->scopedPermissionCache[$key];

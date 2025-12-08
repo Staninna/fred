@@ -6,6 +6,8 @@ namespace Fred\Infrastructure\Logging;
 
 use Psr\Log\AbstractLogger;
 
+use function sprintf;
+
 final class FileLogger extends AbstractLogger
 {
     public function __construct(private readonly string $path)
@@ -14,11 +16,11 @@ final class FileLogger extends AbstractLogger
 
     public function log($level, $message, array $context = []): void
     {
-        $line = \sprintf(
+        $line = sprintf(
             "[%s] %s: %s %s\n",
             date(DATE_ATOM),
             strtoupper((string) $level),
-            (string) $message,
+            $message,
             $context === [] ? '' : json_encode($context),
         );
 

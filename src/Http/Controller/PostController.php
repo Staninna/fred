@@ -20,6 +20,10 @@ use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function is_array;
+
+use Throwable;
+
 use function trim;
 
 final readonly class PostController
@@ -78,10 +82,10 @@ final readonly class PostController
         $attachmentFile = $request->files['attachment'] ?? null;
         $attachmentPath = null;
 
-        if (\is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        if (is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             try {
                 $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 return new Response(
                     status: 422,
                     headers: ['Content-Type' => 'text/plain; charset=utf-8'],

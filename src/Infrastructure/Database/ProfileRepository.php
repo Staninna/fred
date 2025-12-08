@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use function count;
+
 use Fred\Domain\Auth\Profile;
 use PDO;
+use PDOException;
+use RuntimeException;
 
-final class ProfileRepository
+final readonly class ProfileRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -38,7 +42,7 @@ final class ProfileRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, \count($userIds), '?'));
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
         $statement = $this->pdo->prepare(
             "SELECT id, user_id, community_id, bio, location, website, signature_raw, signature_parsed, avatar_path, created_at, updated_at
              FROM profiles
@@ -89,7 +93,7 @@ final class ProfileRepository
         $profile = $this->findByUserAndCommunity($userId, $communityId);
 
         if ($profile === null) {
-            throw new \RuntimeException('Failed to create profile.');
+            throw new RuntimeException('Failed to create profile.');
         }
 
         return $profile;
@@ -154,14 +158,14 @@ final class ProfileRepository
                 avatarPath: '',
                 timestamp: time(),
             );
-        } catch (\PDOException) {
+        } catch (PDOException) {
             $retry = $this->findByUserAndCommunity($userId, $communityId);
 
             if ($retry !== null) {
                 return $retry;
             }
 
-            throw new \RuntimeException('Failed to ensure profile exists due to database error.');
+            throw new RuntimeException('Failed to ensure profile exists due to database error.');
         }
     }
 

@@ -2,12 +2,15 @@
 /** @var array<int, array{title: string, items: array<int, array{label: string, href: string}>}>|null $navSections */
 /** @var string|null $activePath */
 /** @var callable(string, ?int=): string $e */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
-/** @var \Fred\Domain\Community\Community|null $currentCommunity */
+/** @var CurrentUser|null $currentUser */
+/** @var Community|null $currentCommunity */
 /** @var int|null $mentionUnreadCount */
 
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Community\Community;
+
 $sections = $navSections ?? [];
-$mentionUnreadCount = (int) ($mentionUnreadCount ?? 0);
+$mentionUnreadCount = $mentionUnreadCount ?? 0;
 
 $history = $_SESSION['nav_history'] ?? [];
 $index = $_SESSION['nav_index'] ?? (is_countable($history) && $history !== [] ? count($history) - 1 : -1);
@@ -15,7 +18,7 @@ $backHref = is_array($history) && $index > 0 ? '/nav/back' : null;
 $forwardHref = is_array($history) && $index >= 0 && $index < count($history) - 1 ? '/nav/forward' : null;
 $hasHistoryControls = $backHref !== null || $forwardHref !== null;
 
-if (isset($currentUser, $currentCommunity) && $currentUser !== null && $currentCommunity !== null && $currentUser->isAuthenticated()) {
+if (isset($currentUser, $currentCommunity) && $currentUser->isAuthenticated()) {
     $sections = array_merge([[
         'title' => 'You',
         'items' => [

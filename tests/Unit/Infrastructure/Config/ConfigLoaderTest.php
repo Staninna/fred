@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Infrastructure\Config;
 
+use function dirname;
+
 use Fred\Infrastructure\Config\ConfigLoader;
 use Tests\TestCase;
 
@@ -30,7 +32,7 @@ final class ConfigLoaderTest extends TestCase
         $this->assertSame($env['LOGS_PATH'], $config->logsPath);
         $this->assertSame(rtrim($basePath, '/'), $config->basePath);
 
-        $this->assertDirectoryExists(\dirname($config->databasePath));
+        $this->assertDirectoryExists(dirname($config->databasePath));
         $this->assertDirectoryExists($config->uploadsPath);
         $this->assertDirectoryExists($config->logsPath);
 

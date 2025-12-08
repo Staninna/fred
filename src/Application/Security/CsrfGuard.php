@@ -9,6 +9,7 @@ use function bin2hex;
 use Fred\Http\Request;
 
 use function hash_equals;
+use function is_string;
 use function random_bytes;
 
 final class CsrfGuard
@@ -19,7 +20,7 @@ final class CsrfGuard
     {
         $stored = $_SESSION[self::SESSION_KEY] ?? null;
 
-        if (!\is_string($stored) || $stored === '') {
+        if (!is_string($stored) || $stored === '') {
             $stored = bin2hex(random_bytes(32));
             $_SESSION[self::SESSION_KEY] = $stored;
         }
@@ -32,7 +33,7 @@ final class CsrfGuard
         $provided = $this->extractToken($request);
         $expected = $_SESSION[self::SESSION_KEY] ?? null;
 
-        if (!\is_string($provided) || !\is_string($expected)) {
+        if (!is_string($provided) || !is_string($expected)) {
             return false;
         }
 
@@ -43,13 +44,13 @@ final class CsrfGuard
     {
         $fromBody = $request->body['_token'] ?? null;
 
-        if (\is_string($fromBody) && $fromBody !== '') {
+        if (is_string($fromBody) && $fromBody !== '') {
             return $fromBody;
         }
 
         $fromHeader = $request->header('X-CSRF-TOKEN');
 
-        if (\is_string($fromHeader) && $fromHeader !== '') {
+        if (is_string($fromHeader) && $fromHeader !== '') {
             return $fromHeader;
         }
 

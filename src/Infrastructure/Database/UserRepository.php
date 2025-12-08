@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use function count;
+
 use Fred\Domain\Auth\User;
 use PDO;
+use RuntimeException;
 
 final readonly class UserRepository
 {
@@ -48,7 +51,7 @@ final readonly class UserRepository
         // Normalize to sequential integers to match positional placeholders.
         $ids = array_values(array_unique(array_map('intval', $ids)));
 
-        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $statement = $this->pdo->prepare(
             "SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,
                     r.slug AS role_slug, r.name AS role_name
@@ -112,7 +115,7 @@ final readonly class UserRepository
         $user = $this->findById($id);
 
         if ($user === null) {
-            throw new \RuntimeException('Failed to reload created user.');
+            throw new RuntimeException('Failed to reload created user.');
         }
 
         return $user;
@@ -188,7 +191,7 @@ SQL;
         $normalized = [];
 
         foreach ($usernames as $name) {
-            $trimmed = strtolower(trim((string) $name));
+            $trimmed = strtolower(trim($name));
 
             if ($trimmed !== '') {
                 $normalized[$trimmed] = $trimmed;
@@ -200,7 +203,7 @@ SQL;
         }
 
         $normalized = array_values($normalized);
-        $placeholders = implode(',', array_fill(0, \count($normalized), '?'));
+        $placeholders = implode(',', array_fill(0, count($normalized), '?'));
 
         $statement = $this->pdo->prepare(
             "SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,

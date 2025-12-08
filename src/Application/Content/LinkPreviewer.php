@@ -4,22 +4,36 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
+use function array_slice;
+
 use DOMDocument;
 use DOMXPath;
-use Fred\Infrastructure\Config\AppConfig;
 
-use function array_slice;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function filemtime;
+
+use const FILTER_FLAG_NO_PRIV_RANGE;
+use const FILTER_FLAG_NO_RES_RANGE;
+use const FILTER_VALIDATE_IP;
+
 use function filter_var;
+
+use Fred\Infrastructure\Config\AppConfig;
+
 use function in_array;
 use function is_array;
 use function is_dir;
 use function json_decode;
 use function json_encode;
+
+use const JSON_PRETTY_PRINT;
+
 use function libxml_clear_errors;
+
+use const LIBXML_NONET;
+
 use function libxml_use_internal_errors;
 use function max;
 use function parse_url;
@@ -27,12 +41,6 @@ use function preg_match_all;
 use function sha1;
 use function strtolower;
 use function trim;
-
-use const FILTER_FLAG_NO_PRIV_RANGE;
-use const FILTER_FLAG_NO_RES_RANGE;
-use const FILTER_VALIDATE_IP;
-use const JSON_PRETTY_PRINT;
-use const LIBXML_NONET;
 
 final class LinkPreviewer
 {
@@ -382,4 +390,3 @@ final class LinkPreviewer
         return ['status' => 'miss', 'path' => $cachePath];
     }
 }
-

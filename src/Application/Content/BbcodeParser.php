@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
+use function sprintf;
+
 final class BbcodeParser
 {
     public function parse(string $input, ?string $communitySlug = null): string
@@ -36,7 +38,7 @@ final class BbcodeParser
 
     private function replaceTag(string $input, string $tag, string $open, string $close): string
     {
-        $pattern = \sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
+        $pattern = sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
 
         return preg_replace($pattern, $open . '$1' . $close, $input) ?? $input;
     }
@@ -70,9 +72,8 @@ final class BbcodeParser
     {
         $input = preg_replace('#\[list]\s*#i', '<ul>', $input) ?? $input;
         $input = preg_replace('#\[/list]#i', '</ul>', $input) ?? $input;
-        $input = preg_replace('#\[\*]\s*([^\n\r\[]+)#', '<li>$1</li>', $input) ?? $input;
 
-        return $input;
+        return preg_replace('#\[\*]\s*([^\n\r\[]+)#', '<li>$1</li>', $input) ?? $input;
     }
 
     private function convertLineQuotes(string $input): string
@@ -80,7 +81,7 @@ final class BbcodeParser
         return preg_replace_callback('/&gt;&gt;(\d+)/', static function (array $matches): string {
             $id = $matches[1];
 
-            return \sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);
+            return sprintf('<a class="quote-link" href="#post-%s">&gt;&gt;%s</a>', $id, $id);
         }, $input) ?? $input;
     }
 

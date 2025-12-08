@@ -10,7 +10,7 @@ return new class () implements Migration {
         return '20240605_update_communities_table';
     }
 
-    public function up(\PDO $pdo): void
+    public function up(PDO $pdo): void
     {
         $pdo->exec('ALTER TABLE communities ADD COLUMN custom_css TEXT NULL');
         $pdo->exec('ALTER TABLE communities ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0');

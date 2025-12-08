@@ -6,6 +6,7 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Community\Community;
 use PDO;
+use RuntimeException;
 
 final readonly class CommunityRepository
 {
@@ -66,7 +67,7 @@ final readonly class CommunityRepository
         $community = $this->findBySlug($slug);
 
         if ($community === null) {
-            throw new \RuntimeException('Failed to create community.');
+            throw new RuntimeException('Failed to create community.');
         }
 
         return $community;

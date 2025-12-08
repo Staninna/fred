@@ -57,8 +57,8 @@ echo $renderPartial('partials/select.php', [
                     <?php
                     $expiresValue = '';
 
-if (isset($old['expires_at']) && trim((string) $old['expires_at']) !== '') {
-    $parsed = strtotime((string) $old['expires_at']);
+if (isset($old['expires_at']) && trim($old['expires_at']) !== '') {
+    $parsed = strtotime($old['expires_at']);
 
     if ($parsed !== false) {
         $expiresValue = date('Y-m-d\TH:i', $parsed);

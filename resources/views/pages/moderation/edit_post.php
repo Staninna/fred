@@ -1,11 +1,15 @@
 <?php
-/** @var \Fred\Domain\Forum\Post $post */
-/** @var \Fred\Domain\Community\Community $community */
+/** @var Post $post */
+/** @var Community $community */
 /** @var array<int, string> $errors */
-/** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
+/** @var CurrentUser|null $currentUser */
 /** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var string|null $success */
+
+use Fred\Application\Auth\CurrentUser;
+use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Post;
 
 $messageIdPrefix = 'moderation-edit-post';
 $messageTargets = [];
@@ -33,7 +37,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
             ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/p/<?= $post->id ?>/edit" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
-                <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="body">Body</label></td>

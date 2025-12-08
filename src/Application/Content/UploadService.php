@@ -16,6 +16,7 @@ use Fred\Infrastructure\Config\AppConfig;
 
 use function is_dir;
 use function is_file;
+use function is_string;
 use function ltrim;
 use function mkdir;
 use function move_uploaded_file;
@@ -24,6 +25,10 @@ use function pathinfo;
 use const PATHINFO_EXTENSION;
 
 use function rtrim;
+
+use RuntimeException;
+
+use function sprintf;
 use function str_starts_with;
 use function strtolower;
 use function uniqid;
@@ -73,30 +78,30 @@ final class UploadService
         $error = $file['error'] ?? UPLOAD_ERR_NO_FILE;
 
         if ($error !== UPLOAD_ERR_OK) {
-            throw new \RuntimeException('Upload failed.');
+            throw new RuntimeException('Upload failed.');
         }
 
         $tmpPath = $file['tmp_name'] ?? '';
 
         if (!is_file($tmpPath ?? '')) {
-            throw new \RuntimeException('Temporary upload missing.');
+            throw new RuntimeException('Temporary upload missing.');
         }
 
         $size = $file['size'] ?? filesize($tmpPath);
 
         if ($size === false || $size <= 0) {
-            throw new \RuntimeException('File is empty.');
+            throw new RuntimeException('File is empty.');
         }
 
         if ($size > $maxSize) {
-            throw new \RuntimeException('File is too large.');
+            throw new RuntimeException('File is too large.');
         }
 
         $mime = $this->detectMime($tmpPath, (string) ($file['type'] ?? ''));
         $extension = $this->allowedMimeMap[$mime] ?? null;
 
         if ($extension === null) {
-            throw new \RuntimeException('Unsupported file type.');
+            throw new RuntimeException('Unsupported file type.');
         }
 
         $original = $this->cleanFilename((string) ($file['name'] ?? 'upload.' . $extension));
@@ -113,7 +118,7 @@ final class UploadService
         $absolutePath = $absoluteDir . '/' . $targetName;
 
         if (!move_uploaded_file($tmpPath, $absolutePath)) {
-            throw new \RuntimeException('Failed to store upload.');
+            throw new RuntimeException('Failed to store upload.');
         }
 
         if (!chmod($absolutePath, 0644) && is_file($absolutePath)) {
@@ -144,7 +149,7 @@ final class UploadService
         $mime = $finfo !== false ? finfo_file($finfo, $path) : null;
         $fallback = strtolower($fallbackType);
 
-        return \is_string($mime) && $mime !== '' ? $mime : $fallback;
+        return is_string($mime) && $mime !== '' ? $mime : $fallback;
     }
 
     private function cleanFilename(string $name): string
@@ -158,6 +163,6 @@ final class UploadService
         $safeStem = $stem === '' ? 'upload' : $stem;
         $safeExt = $extension !== '' ? '.' . $extension : '';
 
-        return \sprintf('%s%s', $safeStem, $safeExt);
+        return sprintf('%s%s', $safeStem, $safeExt);
     }
 }

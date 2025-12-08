@@ -3,28 +3,29 @@
 
 declare(strict_types=1);
 
+use Faker\Factory as FakerFactory;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\MentionService;
+use Fred\Application\Seed\CustomThemeSeeder;
 use Fred\Application\Seed\DemoSeeder;
+use Fred\Application\Seed\ProgressTracker;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
+use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\ConnectionFactory;
-use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\PostRepository;
+use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
-use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
-use Fred\Application\Seed\CustomThemeSeeder;
-use Fred\Application\Seed\ProgressTracker;
-use Fred\Infrastructure\Database\ReactionRepository;
-use Fred\Application\Content\EmoticonSet;
-use Fred\Application\Content\MentionService;
-use Faker\Factory as FakerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
+
 if (file_exists($autoload)) {
     require $autoload;
 }
@@ -56,10 +57,10 @@ $seeder = new DemoSeeder(
     posts: new PostRepository($pdo),
     profiles: new ProfileRepository($pdo),
     communityModerators: new CommunityModeratorRepository($pdo),
+    reactions: new ReactionRepository($pdo),
     mentions: new MentionService(new UserRepository($pdo), new MentionNotificationRepository($pdo)),
     faker: $faker,
     config: $config,
-    reactions: new ReactionRepository($pdo),
     boardCount: max(1, $boardCount),
     threadsPerBoard: max(1, $threadsPerBoard),
     postsPerThread: max(1, $postsPerThread),

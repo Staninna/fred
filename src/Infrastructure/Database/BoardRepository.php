@@ -6,10 +6,11 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Community\Board;
 use PDO;
+use RuntimeException;
 
-final class BoardRepository
+final readonly class BoardRepository
 {
-    public function __construct(private readonly PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
     }
 
@@ -99,7 +100,7 @@ final class BoardRepository
         $board = $this->findById($id);
 
         if ($board === null) {
-            throw new \RuntimeException('Failed to create board.');
+            throw new RuntimeException('Failed to create board.');
         }
 
         return $board;

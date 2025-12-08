@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use function in_array;
+
 use PDO;
 
 final class PermissionRepository
@@ -94,7 +96,7 @@ final class PermissionRepository
     {
         $permissions = $this->permissionsForRole($roleSlug);
 
-        return \in_array($permissionSlug, $permissions, true);
+        return in_array($permissionSlug, $permissions, true);
     }
 
     /**

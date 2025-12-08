@@ -18,8 +18,6 @@ final class AuthServiceTest extends TestCase
     private RoleRepository $roleRepository;
     private ProfileRepository $profileRepository;
     private BanRepository $banRepository;
-    private CommunityRepository $communityRepository;
-    private \PDO $pdo;
     private int $communityId;
 
     protected function setUp(): void
@@ -32,13 +30,13 @@ final class AuthServiceTest extends TestCase
 
         $_SESSION = [];
 
-        $this->pdo = $this->makeMigratedPdo();
-        $this->userRepository = new UserRepository($this->pdo);
-        $this->roleRepository = new RoleRepository($this->pdo);
-        $this->profileRepository = new ProfileRepository($this->pdo);
-        $this->banRepository = new BanRepository($this->pdo);
-        $this->communityRepository = new CommunityRepository($this->pdo);
-        $community = $this->communityRepository->create('test', 'Test Community', '', null, time());
+        $pdo = $this->makeMigratedPdo();
+        $this->userRepository = new UserRepository($pdo);
+        $this->roleRepository = new RoleRepository($pdo);
+        $this->profileRepository = new ProfileRepository($pdo);
+        $this->banRepository = new BanRepository($pdo);
+        $communityRepository = new CommunityRepository($pdo);
+        $community = $communityRepository->create('test', 'Test Community', '', null, time());
         $this->communityId = $community->id;
     }
 

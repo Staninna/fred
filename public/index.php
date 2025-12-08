@@ -231,7 +231,7 @@ if ($request->method === 'POST' && !$csrf->isValid($request)) {
         $body = $view->render('errors/419.php', [
             'pageTitle' => 'CSRF token mismatch',
         ]);
-    } catch (\Throwable) {
+    } catch (Throwable) {
         $body = '<h1>CSRF token mismatch</h1>';
     }
 
@@ -252,7 +252,7 @@ if ($navResponse instanceof Response) {
 
 try {
     $response = $router->dispatch($request);
-} catch (\Throwable $exception) {
+} catch (Throwable $exception) {
     $logger = $container->get(FileLogger::class);
     $logger->error($exception->getMessage(), ['exception' => $exception]);
 
@@ -274,7 +274,7 @@ try {
             'pageTitle' => 'Server error',
             ...$debug,
         ]);
-    } catch (\Throwable) {
+    } catch (Throwable) {
         $body = '<h1>Server Error</h1>';
     }
 

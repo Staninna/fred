@@ -1,10 +1,13 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var \Fred\Domain\Auth\Profile|null $profile */
+/** @var Community $community */
+/** @var Profile|null $profile */
 /** @var array<int, string> $signatureErrors */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
 /** @var string|null $success */
+
+use Fred\Domain\Auth\Profile;
+use Fred\Domain\Community\Community;
 
 $messageIdPrefix = 'signature-settings';
 $messageTargets = [];

@@ -12,7 +12,7 @@ final class ProgressTracker
     /**
      * @param callable(string):void|null $writer
      */
-    public function __construct(private mixed $writer = null)
+    public function __construct(private readonly mixed $writer = null)
     {
     }
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Env;
 
+use function strlen;
+
 final class DotenvLoader
 {
     /**
@@ -53,7 +55,7 @@ final class DotenvLoader
             return $value;
         }
 
-        if (\strlen($value) >= 2) {
+        if (strlen($value) >= 2) {
             $hasDoubleQuotes = str_starts_with($value, '"') && str_ends_with($value, '"');
             $hasSingleQuotes = str_starts_with($value, "'") && str_ends_with($value, "'");
 

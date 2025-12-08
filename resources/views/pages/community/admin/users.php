@@ -1,11 +1,12 @@
 <?php
 /** @var Community $community */
-/** @var array<int, \Fred\Domain\Auth\User> $users */
+/** @var array<int, User> $users */
 /** @var string $query */
 /** @var string $role */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
 
+use Fred\Domain\Auth\User;
 use Fred\Domain\Community\Community;
 
 ?>

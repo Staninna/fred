@@ -4,8 +4,8 @@
 /** @var bool $canEditAnyPost */
 /** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */
-/** @var array<int, array<int, \Fred\Domain\Forum\Attachment>> $attachmentsByPost */
-/** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
+/** @var array<int, array<int, Attachment>> $attachmentsByPost */
+/** @var array<int, Profile> $profilesByUserId */
 /** @var bool $canReport */
 /** @var int|null $currentUserId */
 /** @var int $page */
@@ -20,6 +20,8 @@
 /** @var array<int, string[]> $linkPreviewUrlsByPost */
 /** @var callable(string, array): string $renderPartial */
 
+use Fred\Domain\Auth\Profile;
+use Fred\Domain\Forum\Attachment;
 use Fred\Domain\Forum\Post;
 
 ?>
@@ -71,17 +73,17 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                     <?php if (!empty($canDeleteAnyPost ?? false)): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                            <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                            <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
                             <button class="button" type="submit">Delete</button>
                         </form>
                     <?php endif; ?>
                     <?php if (!empty($canEditAnyPost ?? false)): ?>
-                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit?page=<?= (int) ($page ?? 1) ?>">Edit</a>
+                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit?page=<?= $page ?? 1 ?>">Edit</a>
                     <?php endif; ?>
                     <?php if (!empty($canReport ?? false) && ($currentUserId ?? null) !== $post->authorId): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/report">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                            <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                            <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
                             <label class="small" for="report_reason_<?= $post->id ?>">Report reason</label>
                             <input id="report_reason_<?= $post->id ?>" name="reason" type="text" maxlength="200" required placeholder="Spam, abuse...">
                             <button class="button" type="submit">Report</button>
@@ -107,7 +109,7 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                                 } ?>
                                 <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
                                     <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                                    <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                                    <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
                                     <?php if ($userReaction !== null && $userReaction === $reactionCode): ?>
                                         <input type="hidden" name="remove" value="1">
                                     <?php endif; ?>
@@ -145,7 +147,7 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                             <summary class="small">Add reaction</summary>
                             <form class="reaction-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
                                 <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                                <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                                <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
                                 <div class="reaction-grid">
                                     <?php foreach ($emoticons as $emoticon): ?>
                                         <button class="reaction-btn<?= ($userReaction === $emoticon['code']) ? ' active' : '' ?>" type="submit" name="emoticon" value="<?= $e($emoticon['code']) ?>">

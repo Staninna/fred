@@ -1,11 +1,12 @@
 <?php
 /** @var Community $community */
-/** @var array<int, array{report:\Fred\Domain\Moderation\Report, reporter_username:string, post_author_username:string, thread_id:int, thread_title:string}> $reports */
+/** @var array<int, array{report:Report, reporter_username:string, post_author_username:string, thread_id:int, thread_title:string}> $reports */
 /** @var string $status */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, ?int=): string $e */
 
 use Fred\Domain\Community\Community;
+use Fred\Domain\Moderation\Report;
 
 ?>
 

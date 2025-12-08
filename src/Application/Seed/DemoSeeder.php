@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Application\Seed;
 
+use function count;
+
 use Faker\Generator;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\EmoticonSet;
@@ -20,7 +22,10 @@ use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use PDO;
 use Random\RandomException;
+use RuntimeException;
+use Throwable;
 
 final readonly class DemoSeeder
 {
@@ -50,6 +55,7 @@ final readonly class DemoSeeder
 
     /**
      * @throws RandomException
+     * @throws Throwable
      */
     public function seed(): array
     {
@@ -68,16 +74,16 @@ final readonly class DemoSeeder
             $adminRole = $this->roles->findBySlug('admin');
 
             if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
-                throw new \RuntimeException('Core roles are missing.');
+                throw new RuntimeException('Core roles are missing.');
             }
             $this->log('Core roles ensured');
 
             $users = $this->seedUsers($memberRole->id, $moderatorRole->id, $adminRole->id, $now);
-            $this->log('Users ready: ' . \count($users));
+            $this->log('Users ready: ' . count($users));
 
             $communities = $this->seedCommunities($now);
             $boardIds = [];
-            $this->log('Communities ready: ' . \count($communities));
+            $this->log('Communities ready: ' . count($communities));
 
             $this->ensureProfilesPerCommunityBatch($users, $communities, $now);
             $this->log('Profiles ensured across communities');
@@ -96,13 +102,13 @@ final readonly class DemoSeeder
                 'user_ids' => array_map(static fn ($u) => $u->id, $users),
                 'board_ids' => $boardIds,
             ];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->pdo()->rollBack();
             throw $e;
         }
     }
 
-    private function pdo(): \PDO
+    private function pdo(): PDO
     {
         return $this->posts->pdo();
     }
@@ -163,7 +169,7 @@ final readonly class DemoSeeder
     private function assignModerators(int $communityId, array $users, int $timestamp, int $moderatorRoleId): void
     {
         foreach ($users as $user) {
-            if (\in_array($user->username, ['mod'], true)) {
+            if ($user->username === 'mod') {
                 $this->communityModerators->assign($communityId, $user->id, $timestamp);
             }
         }
@@ -262,7 +268,7 @@ final readonly class DemoSeeder
             $boards[] = $board;
         }
 
-        while (\count($boards) < $this->boardCount) {
+        while (count($boards) < $this->boardCount) {
             $slug = $this->slugify($this->faker->unique()->word());
             $existing = $this->boards->findBySlug($communityId, $slug);
 
@@ -276,7 +282,7 @@ final readonly class DemoSeeder
                 slug: $slug,
                 name: $this->faker->words(2, true),
                 description: $this->faker->sentence(8),
-                position: \count($boards) + 1,
+                position: count($boards) + 1,
                 isLocked: false,
                 customCss: null,
                 timestamp: $timestamp - random_int(0, 5_000),
@@ -292,7 +298,7 @@ final readonly class DemoSeeder
     private function seedThreadsAndPosts(int $communityId, string $communitySlug, int $boardId, string $boardSlug, array $users, int $timestamp): void
     {
         $existingThreads = $this->threads->listByBoardId($boardId);
-        $toCreate = max(0, $this->threadsPerBoard - \count($existingThreads));
+        $toCreate = max(0, $this->threadsPerBoard - count($existingThreads));
 
         if ($toCreate === 0) {
             return;
@@ -353,16 +359,16 @@ final readonly class DemoSeeder
 
         // Batch insert all posts (returns last inserted ID), derive the full range
         $lastPostId = $this->posts->batchInsert($postsData);
-        $firstPostId = $lastPostId - (\count($postsData) - 1);
+        $firstPostId = $lastPostId - (count($postsData) - 1);
         $actualPostIds = range($firstPostId, $lastPostId);
 
-        $this->log('Inserted ' . \count($postsData) . ' posts, IDs from ' . $firstPostId . ' to ' . $lastPostId);
+        $this->log('Inserted ' . count($postsData) . ' posts, IDs from ' . $firstPostId . ' to ' . $lastPostId);
 
         // Now build mentions and reactions with actual post IDs
         $mentionsData = [];
         $reactionsData = [];
 
-        for ($idx = 0; $idx < \count($postMetadata); $idx++) {
+        for ($idx = 0; $idx < count($postMetadata); $idx++) {
             $postId = $actualPostIds[$idx];
             $meta = $postMetadata[$idx];
 
@@ -391,7 +397,7 @@ final readonly class DemoSeeder
 
                     for ($i = 0; $i < $targetCount; $i++) {
                         $code = $codes[array_rand($codes)];
-                        $user = $userPool[$i % \count($userPool)];
+                        $user = $userPool[$i % count($userPool)];
                         $reactionsData[] = [
                             'communityId' => $communityId,
                             'postId' => $postId,
@@ -406,12 +412,12 @@ final readonly class DemoSeeder
 
         // Batch insert mentions and reactions
         if ($mentionsData !== []) {
-            $this->log('Batch inserting ' . \count($mentionsData) . ' mentions');
+            $this->log('Batch inserting ' . count($mentionsData) . ' mentions');
             $this->mentions->batchInsertNotifications($mentionsData);
         }
 
         if ($reactionsData !== []) {
-            $this->log('Batch inserting ' . \count($reactionsData) . ' reactions (post IDs from ' . min(array_column($reactionsData, 'postId')) . ' to ' . max(array_column($reactionsData, 'postId')) . ')');
+            $this->log('Batch inserting ' . count($reactionsData) . ' reactions (post IDs from ' . min(array_column($reactionsData, 'postId')) . ' to ' . max(array_column($reactionsData, 'postId')) . ')');
             $this->reactions->batchInsertReactions($reactionsData);
         }
 

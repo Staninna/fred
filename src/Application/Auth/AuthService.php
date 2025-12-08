@@ -8,9 +8,13 @@ use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use InvalidArgumentException;
 
 use function password_hash;
 use function password_verify;
+
+use RuntimeException;
+
 use function session_regenerate_id;
 use function time;
 use function trim;
@@ -64,17 +68,17 @@ final class AuthService
         $displayName = trim($displayName) === '' ? $username : trim($displayName);
 
         if ($username === '') {
-            throw new \InvalidArgumentException('Username is required.');
+            throw new InvalidArgumentException('Username is required.');
         }
 
         if ($this->users->findByUsername($username) !== null) {
-            throw new \RuntimeException('Username is already taken.');
+            throw new RuntimeException('Username is already taken.');
         }
 
         $role = $this->roles->findBySlug('member');
 
         if ($role === null) {
-            throw new \RuntimeException('Member role is missing.');
+            throw new RuntimeException('Member role is missing.');
         }
 
         $passwordHash = password_hash($password, PASSWORD_BCRYPT);

@@ -6,6 +6,7 @@ namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Community\Category;
 use PDO;
+use RuntimeException;
 
 final readonly class CategoryRepository
 {
@@ -67,7 +68,7 @@ final readonly class CategoryRepository
         $category = $this->findById($id);
 
         if ($category === null) {
-            throw new \RuntimeException('Failed to create category.');
+            throw new RuntimeException('Failed to create category.');
         }
 
         return $category;

@@ -12,6 +12,8 @@ use function filesize;
 use Fred\Http\Request;
 use Fred\Http\Response;
 
+use function in_array;
+use function is_array;
 use function is_file;
 use function pathinfo;
 
@@ -21,6 +23,9 @@ use function preg_match;
 use function preg_replace_callback;
 use function realpath;
 use function rtrim;
+
+use RuntimeException;
+
 use function str_contains;
 use function str_starts_with;
 use function strtolower;
@@ -87,7 +92,7 @@ final class Router
     {
         $staticRoute = $this->staticRoutes[$request->method][$request->path] ?? null;
 
-        if (\is_array($staticRoute)) {
+        if (is_array($staticRoute)) {
             return $this->runMiddleware(
                 $request,
                 $staticRoute['handler'],
@@ -251,7 +256,7 @@ final class Router
         $result = $next($request);
 
         if (!$result instanceof Response) {
-            throw new \RuntimeException('Middleware pipeline must return a Response.');
+            throw new RuntimeException('Middleware pipeline must return a Response.');
         }
 
         return $result;
@@ -263,7 +268,7 @@ final class Router
             return null;
         }
 
-        if (!\in_array($request->method, ['GET', 'HEAD'], true)) {
+        if (!in_array($request->method, ['GET', 'HEAD'], true)) {
             return null;
         }
 

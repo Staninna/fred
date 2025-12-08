@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Application\Search;
 
+use function is_int;
+
 use PDO;
 
 final readonly class SearchService
@@ -71,7 +73,7 @@ SQL;
         $statement = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
-            $paramType = \is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
             $statement->bindValue($key, $value, $paramType);
         }
 
@@ -145,7 +147,7 @@ SQL;
         $statement = $this->pdo->prepare($sql);
 
         foreach ($params as $key => $value) {
-            $paramType = \is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+            $paramType = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
             $statement->bindValue($key, $value, $paramType);
         }
 

@@ -1,8 +1,13 @@
 <?php
-/** @var \Fred\Domain\Community\Community $community */
-/** @var array<int, \Fred\Domain\Community\Category> $categories */
-/** @var array<int, array<int, \Fred\Domain\Community\Board>> $boardsByCategory */
+/** @var Community $community */
+/** @var array<int, Category> $categories */
+/** @var array<int, array<int, Board>> $boardsByCategory */
 /** @var callable(string, ?int=): string $e */
+
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
+
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

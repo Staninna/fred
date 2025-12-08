@@ -6,16 +6,17 @@ namespace Tests\Integration\Application;
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Application\Auth\PermissionService;
+use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use RuntimeException;
 use Tests\TestCase;
 
 final class PermissionServiceTest extends TestCase
 {
-    private \PDO $pdo;
     private RoleRepository $roles;
     private PermissionRepository $permissions;
     private CommunityModeratorRepository $communityModerators;
@@ -25,12 +26,12 @@ final class PermissionServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->pdo = $this->makeMigratedPdo();
-        $this->roles = new RoleRepository($this->pdo);
-        $this->permissions = new PermissionRepository($this->pdo);
-        $this->communityModerators = new CommunityModeratorRepository($this->pdo);
-        $this->users = new UserRepository($this->pdo);
-        $this->communities = new CommunityRepository($this->pdo);
+        $pdo = $this->makeMigratedPdo();
+        $this->roles = new RoleRepository($pdo);
+        $this->permissions = new PermissionRepository($pdo);
+        $this->communityModerators = new CommunityModeratorRepository($pdo);
+        $this->users = new UserRepository($pdo);
+        $this->communities = new CommunityRepository($pdo);
         $this->roles->ensureDefaultRoles();
         $this->permissions->ensureDefaultPermissions();
     }
@@ -81,12 +82,12 @@ final class PermissionServiceTest extends TestCase
         $this->assertFalse($service->canBan($member, 1));
     }
 
-    private function createUserWithRole(string $roleSlug): \Fred\Domain\Auth\User
+    private function createUserWithRole(string $roleSlug): User
     {
         $role = $this->roles->findBySlug($roleSlug);
 
         if ($role === null) {
-            throw new \RuntimeException('Role not found: ' . $roleSlug);
+            throw new RuntimeException('Role not found: ' . $roleSlug);
         }
 
         return $this->users->create(
