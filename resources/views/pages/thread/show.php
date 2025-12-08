@@ -177,14 +177,14 @@ use Fred\Domain\Forum\Post;
 
         const url = '/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/previews?posts=' + postIds.join(',');
         const controller = new AbortController();
-            const slowTimer = setTimeout(() => {
-                containers.forEach((el) => {
-                    if (el.dataset.loaded === '1') {
-                        return;
-                    }
-                    const notice = el.querySelector('[data-preview-notice]');
-                    if (notice) {
-                        notice.textContent = 'Fetching link preview...';
+        const slowTimer = setTimeout(() => {
+            containers.forEach((el) => {
+                if (el.dataset.loaded === '1') {
+                    return;
+                }
+                const notice = el.querySelector('[data-preview-notice]');
+                if (notice) {
+                    notice.textContent = 'Fetching link preview...';
                 }
             });
         }, 4000);
