@@ -38,7 +38,7 @@ final class ProfileRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $placeholders = implode(',', array_fill(0, \count($userIds), '?'));
         $statement = $this->pdo->prepare(
             "SELECT id, user_id, community_id, bio, location, website, signature_raw, signature_parsed, avatar_path, created_at, updated_at
              FROM profiles

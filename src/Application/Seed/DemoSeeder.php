@@ -334,7 +334,7 @@ final readonly class DemoSeeder
 
         for ($i = 0; $i < $targetCount; $i++) {
             $code = $codes[array_rand($codes)];
-            $user = $userPool[$i % count($userPool)];
+            $user = $userPool[$i % \count($userPool)];
 
             $this->reactions->setUserReaction($communityId, $postId, $user->id, $code);
         }

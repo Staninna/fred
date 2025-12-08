@@ -7,14 +7,8 @@ namespace Fred\Application\Content;
 use Fred\Infrastructure\Config\AppConfig;
 
 use function basename;
-use function closedir;
-use function is_dir;
-use function is_file;
 use function ltrim;
-use function opendir;
 use function pathinfo;
-use function preg_match;
-use function readdir;
 use function rtrim;
 use function sort;
 use function strtolower;

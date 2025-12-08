@@ -41,7 +41,7 @@ final class AttachmentRepository
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, count($postIds), '?'));
+        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
         $statement = $this->pdo->prepare(
             "SELECT id, community_id, post_id, user_id, path, original_name, mime_type, size_bytes, created_at
              FROM attachments

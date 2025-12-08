@@ -16,9 +16,7 @@ use function ltrim;
 use function mkdir;
 use function move_uploaded_file;
 use function pathinfo;
-use function preg_match;
 use function rtrim;
-use function sprintf;
 use function strtolower;
 use function str_starts_with;
 use function uniqid;
@@ -26,7 +24,6 @@ use function unlink;
 
 use const FILEINFO_MIME_TYPE;
 use const PATHINFO_EXTENSION;
-use const UPLOAD_ERR_INI_SIZE;
 use const UPLOAD_ERR_NO_FILE;
 use const UPLOAD_ERR_OK;
 
@@ -149,6 +146,6 @@ final class UploadService
         $safeStem = $stem === '' ? 'upload' : $stem;
         $safeExt = $extension !== '' ? '.' . $extension : '';
 
-        return sprintf('%s%s', $safeStem, $safeExt);
+        return \sprintf('%s%s', $safeStem, $safeExt);
     }
 }
