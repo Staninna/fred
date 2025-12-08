@@ -9,6 +9,7 @@ use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
@@ -20,6 +21,7 @@ final readonly class ResolveBoardMiddleware
         private CommunityContext $communityContext,
         private CategoryRepository $categories,
         private ViewRenderer $view,
+        private AppConfig $config,
     ) {
     }
 
@@ -27,18 +29,18 @@ final readonly class ResolveBoardMiddleware
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ResolveBoardMiddleware');
         }
 
         $boardSlug = (string) ($request->params['board'] ?? '');
         $board = $this->communityContext->resolveBoard($community, $boardSlug);
         if ($board === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Board not found: ' . $boardSlug);
         }
 
         $category = $this->categories->findById($board->categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Category mismatch for board: ' . $board->name);
         }
 
         return $next(
@@ -51,5 +53,10 @@ final readonly class ResolveBoardMiddleware
     protected function view(): ViewRenderer
     {
         return $this->view;
+    }
+
+    protected function config(): ?AppConfig
+    {
+        return $this->config;
     }
 }

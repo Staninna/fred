@@ -160,11 +160,14 @@ final readonly class MentionController
         );
     }
 
-    private function notFound(Request $request): Response
+    private function notFound(Request $request, ?string $context = null): Response
     {
         return Response::notFound(
             view: $this->view,
+            config: $this->config,
+            auth: $this->auth,
             request: $request,
+            context: $context,
         );
     }
 

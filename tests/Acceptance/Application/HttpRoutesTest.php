@@ -144,10 +144,10 @@ final class HttpRoutesTest extends TestCase
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
-        $communityContextMiddleware = new ResolveCommunityMiddleware($communityContext, $view);
-        $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view);
-        $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view);
-        $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view);
+        $communityContextMiddleware = new ResolveCommunityMiddleware($communityContext, $view, $config);
+        $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view, $config);
+        $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view, $config);
+        $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view, $config);
         $authController = new AuthController($view, $config, $authService);
         $communityController = new CommunityController(
             $view,

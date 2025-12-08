@@ -8,6 +8,7 @@ use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
+use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ResolveCommunityMiddleware
@@ -17,6 +18,7 @@ final readonly class ResolveCommunityMiddleware
     public function __construct(
         private CommunityContext $communityContext,
         private ViewRenderer $view,
+        private AppConfig $config,
     ) {
     }
 
@@ -24,7 +26,7 @@ final readonly class ResolveCommunityMiddleware
     {
         $community = $this->communityContext->resolveCommunity($request->params['community'] ?? null);
         if ($community === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community not found: ' . ($request->params['community'] ?? 'null'));
         }
 
         $this->view->share('currentCommunity', $community);
@@ -36,5 +38,10 @@ final readonly class ResolveCommunityMiddleware
     protected function view(): ViewRenderer
     {
         return $this->view;
+    }
+
+    protected function config(): ?AppConfig
+    {
+        return $this->config;
     }
 }

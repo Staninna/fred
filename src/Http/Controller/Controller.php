@@ -21,13 +21,14 @@ abstract readonly class Controller
     ) {
     }
 
-    protected function notFound(Request $request): Response
+    protected function notFound(Request $request, ?string $context = null): Response
     {
         return Response::notFound(
             view: $this->view,
             config: $this->config,
             auth: $this->auth,
             request: $request,
+            context: $context,
         );
     }
 }

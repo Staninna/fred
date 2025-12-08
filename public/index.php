@@ -21,7 +21,6 @@ use Fred\Http\Navigation\NavigationTracker;
 use Fred\Http\Middleware\EnrichViewContextMiddleware;
 use Fred\Http\Middleware\InjectCurrentUserMiddleware;
 use Fred\Http\Middleware\PermissionMiddleware;
-use Fred\Http\Middleware\ValidateResourceAttributesMiddleware;
 use Fred\Http\Middleware\RequireAuthMiddleware;
 use Fred\Http\Middleware\ResolveBoardMiddleware;
 use Fred\Http\Middleware\ResolveCommunityMiddleware;
@@ -104,7 +103,6 @@ $uploadController = $container->get(UploadController::class);
 $authRequired = $container->get(RequireAuthMiddleware::class);
 $injectCurrentUser = $container->get(InjectCurrentUserMiddleware::class);
 $enrichViewContext = $container->get(EnrichViewContextMiddleware::class);
-$validateResources = $container->get(ValidateResourceAttributesMiddleware::class);
 $permissions = $container->get(PermissionMiddleware::class);
 $communityContext = $container->get(ResolveCommunityMiddleware::class);
 $boardContext = $container->get(ResolveBoardMiddleware::class);
@@ -203,22 +201,19 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/settings', [$adminController, 'updateSettings']);
         $router->get('/users', [$adminController, 'users']);
     }, [$authRequired, $permissions->check('canModerate')]);
-}, [$communityContext, $validateResources]);
+}, [$communityContext]);
 
 $router->setNotFoundHandler(function (Request $request) use ($container) {
     $view = $container->get(ViewRenderer::class);
-    $auth = $container->get(AuthService::class);
     $config = $container->get(AppConfig::class);
+    $auth = $container->get(AuthService::class);
 
-    $body = $view->render('errors/404.php', [
-        'pageTitle' => 'Page not found',
-        'path' => $request->path,
-    ]);
-
-    return new Response(
-        status: 404,
-        headers: ['Content-Type' => 'text/html; charset=utf-8'],
-        body: $body,
+    return Response::notFound(
+        view: $view,
+        config: $config,
+        auth: $auth,
+        request: $request,
+        context: "Route not found for path: {$request->path}"
     );
 });
 

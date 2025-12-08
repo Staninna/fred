@@ -41,11 +41,15 @@ final readonly class Response
         ?Request $request = null,
         ?array $navSections = null,
         string $body = '<h1>Not Found</h1>',
+        ?string $context = null,
     ): self {
         if ($view !== null) {
+            $debugContext = ($config?->environment === 'local' && $context !== null) ? $context : null;
+
             $body = $view->render('errors/404.php', [
                 'pageTitle' => 'Page not found',
                 'path' => $request?->path ?? '',
+                'debugContext' => $debugContext,
             ]);
         }
 
