@@ -41,6 +41,8 @@ final readonly class ReactionController
             return $this->notFound($request);
         }
 
+        $postId = (int) $post->id;
+
         $currentUser = $this->auth->currentUser();
 
         if ($thread->isLocked || $board->isLocked) {
