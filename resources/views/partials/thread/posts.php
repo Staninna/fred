@@ -9,6 +9,11 @@
 /** @var bool $canReport */
 /** @var int|null $currentUserId */
 /** @var int $page */
+/** @var bool $canReact */
+/** @var array<int, array<string, int>> $reactionsByPost */
+/** @var array<int, array{code: string, filename: string, url: string}> $emoticons */
+/** @var array<int, string> $userReactions */
+/** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
@@ -65,6 +70,57 @@ use Fred\Domain\Forum\Attachment;
                             <img src="/uploads/<?= $e($attachment->path) ?>" alt="<?= $e($attachment->originalName) ?>" style="max-width: 360px; display: block; margin-top: 4px;">
                         </div>
                     <?php endforeach; ?>
+                    <?php $postReactions = $reactionsByPost[$post->id] ?? []; ?>
+                    <?php $userReaction = $userReactions[$post->id] ?? null; ?>
+                    <?php $reactionUsers = $reactionUsersByPost[$post->id] ?? []; ?>
+                    <?php if ($postReactions !== []): ?>
+                        <div class="reactions">
+                            <?php foreach ($postReactions as $reactionCode => $count): ?>
+                                <?php $reactionUrl = null; foreach ($emoticons as $emo) { if ($emo['code'] === $reactionCode) { $reactionUrl = $emo['url']; break; } } ?>
+                                <?php $who = $reactionUsers[$reactionCode] ?? ['names' => [], 'extra' => 0]; ?>
+                                <?php $tooltip = $who['names'] === [] ? '' : implode(', ', $who['names']); ?>
+                                <?php if (($who['extra'] ?? 0) > 0) { $tooltip .= ' +' . (int) $who['extra'] . ' more'; } ?>
+                                <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
+                                    <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
+                                    <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                                    <?php if ($userReaction !== null && $userReaction === $reactionCode): ?>
+                                        <input type="hidden" name="remove" value="1">
+                                    <?php endif; ?>
+                                    <button
+                                        class="reaction-chip<?= $userReaction === $reactionCode ? ' active' : '' ?>"
+                                        type="submit"
+                                        name="emoticon"
+                                        value="<?= $e($reactionCode) ?>"
+                                        data-tooltip="<?= $e($tooltip) ?>"
+                                        aria-label="<?= $e($tooltip !== '' ? $tooltip : 'Reactions') ?>"
+                                    >
+                                        <?php if ($reactionUrl !== null): ?>
+                                            <img src="<?= $e($reactionUrl) ?>" alt="<?= $e($reactionCode) ?>" width="18" height="18">
+                                        <?php else: ?>
+                                            <?= $e($reactionCode) ?>
+                                        <?php endif; ?>
+                                        <span class="small">x<?= (int) $count ?></span>
+                                    </button>
+                                </form>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (!empty($canReact ?? false)): ?>
+                        <details class="reaction-picker">
+                            <summary class="small">Add reaction</summary>
+                            <form class="reaction-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
+                                <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
+                                <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
+                                <div class="reaction-grid">
+                                    <?php foreach ($emoticons as $emoticon): ?>
+                                        <button class="reaction-btn<?= ($userReaction === $emoticon['code']) ? ' active' : '' ?>" type="submit" name="emoticon" value="<?= $e($emoticon['code']) ?>">
+                                            <img src="<?= $e($emoticon['url']) ?>" alt="<?= $e($emoticon['code']) ?>" width="22" height="22">
+                                        </button>
+                                    <?php endforeach; ?>
+                                </div>
+                            </form>
+                        </details>
+                    <?php endif; ?>
                     <?php if ($post->signatureSnapshot !== null && trim($post->signatureSnapshot) !== ''): ?>
                         <hr>
                         <div class="small">

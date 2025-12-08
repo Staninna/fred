@@ -126,5 +126,71 @@ document.addEventListener('alpine:init', function () {
     });
 })();
 </script>
+<script>
+(function() {
+    var tooltip = document.createElement('div');
+    tooltip.className = 'reaction-tooltip';
+    var active = null;
+
+    function ensureNode() {
+        if (!document.body.contains(tooltip)) {
+            document.body.appendChild(tooltip);
+        }
+    }
+
+    function hide() {
+        tooltip.style.opacity = '0';
+        active = null;
+    }
+
+    function getPoint(evt, el) {
+        if (evt && typeof evt.clientX === 'number' && typeof evt.clientY === 'number') {
+            return { x: evt.clientX, y: evt.clientY };
+        }
+        var rect = el.getBoundingClientRect();
+        return { x: rect.left + (rect.width / 2), y: rect.top };
+    }
+
+    function position(point) {
+        ensureNode();
+        var padding = 8;
+        var rect = tooltip.getBoundingClientRect();
+        var left = Math.min(point.x + 12, window.innerWidth - rect.width - padding);
+        var top = Math.min(point.y + 14, window.innerHeight - rect.height - padding);
+        if (left < padding) left = padding;
+        if (top < padding) top = padding;
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+    }
+
+    function show(evt) {
+        var el = evt.currentTarget;
+        var text = el.getAttribute('data-tooltip');
+        if (!text) return;
+        ensureNode();
+        tooltip.textContent = text;
+        active = el;
+        tooltip.style.opacity = '1';
+        position(getPoint(evt, el));
+    }
+
+    function attach(el) {
+        if (!el) return;
+        el.addEventListener('mouseenter', show);
+        el.addEventListener('focus', show);
+        el.addEventListener('mouseleave', hide);
+        el.addEventListener('blur', hide);
+        el.addEventListener('mousemove', function (evt) {
+            if (active === el) {
+                position({ x: evt.clientX, y: evt.clientY });
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-tooltip]').forEach(attach);
+    });
+})();
+</script>
 </body>
 </html>

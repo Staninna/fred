@@ -15,6 +15,9 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Infrastructure\Config\AppConfig;
 use Tests\TestCase;
 
 final class DemoSeederTest extends TestCase
@@ -24,6 +27,15 @@ final class DemoSeederTest extends TestCase
         $pdo = $this->makeMigratedPdo();
         $faker = FakerFactory::create();
         $faker->seed(999);
+        $config = new AppConfig(
+            environment: 'test',
+            baseUrl: 'http://localhost',
+            databasePath: ':memory:',
+            uploadsPath: $this->basePath('storage/uploads'),
+            logsPath: $this->basePath('storage/logs'),
+            basePath: $this->basePath(),
+        );
+        $emoticons = new EmoticonSet($config);
 
         $seeder = new DemoSeeder(
             roles: new RoleRepository($pdo),
@@ -35,11 +47,14 @@ final class DemoSeederTest extends TestCase
             posts: new PostRepository($pdo),
             profiles: new ProfileRepository($pdo),
             communityModerators: new CommunityModeratorRepository($pdo),
+            reactions: new ReactionRepository($pdo),
             faker: $faker,
+            config: $config,
             boardCount: 4,
             threadsPerBoard: 3,
             postsPerThread: 4,
             userCount: 5,
+            emoticons: $emoticons,
         );
 
         $first = $seeder->seed();

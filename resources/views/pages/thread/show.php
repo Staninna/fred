@@ -137,6 +137,13 @@ use Fred\Domain\Forum\Post;
         'canReport' => !($currentUser?->isGuest() ?? true),
         'currentUserId' => $currentUser?->id,
         'page' => $pagination['page'] ?? 1,
+        'board' => $board,
+        'thread' => $thread,
+        'canReact' => ($currentUser ?? null) !== null && !$currentUser->isGuest() && !$thread->isLocked && !$board->isLocked,
+        'reactionsByPost' => $reactionsByPost ?? [],
+        'reactionUsersByPost' => $reactionUsersByPost ?? [],
+        'emoticons' => $emoticons ?? [],
+        'userReactions' => $userReactions ?? [],
     ]) ?>
 </div>
 

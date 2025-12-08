@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\UploadService;
+use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\Post;
@@ -19,6 +20,7 @@ use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 use PDO;
 use Throwable;
@@ -40,6 +42,8 @@ final readonly class ThreadController
         private ProfileRepository $profiles,
         private UploadService $uploads,
         private AttachmentRepository $attachments,
+        private ReactionRepository $reactions,
+        private EmoticonSet $emoticons,
         private PDO $pdo,
     ) {
     }
@@ -80,9 +84,14 @@ final readonly class ThreadController
         $structure = $this->communityHelper->structureForCommunity($community);
         $posts = $this->posts->listByThreadIdPaginated($thread->id, $perPage, $offset);
         $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
+        $reactionsByPost = $this->reactions->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
+        $reactionUsersByPost = $this->reactions->listUsersByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
         $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
         $currentUser = $this->auth->currentUser();
+        $userReactions = !$currentUser->isGuest()
+            ? $this->reactions->listUserReactions(array_map(static fn ($p) => $p->id, $posts), $currentUser->id ?? 0)
+            : [];
         $reportNotice = isset($request->query['reported']) ? 'Thank you. A moderator will review this post.' : null;
         $reportError = isset($request->query['report_error']) ? 'Report could not be submitted. Reason is required.' : null;
 
@@ -95,6 +104,10 @@ final readonly class ThreadController
             'posts' => $posts,
             'profilesByUserId' => $profilesByUser,
             'attachmentsByPost' => $attachmentsByPost,
+            'reactionsByPost' => $reactionsByPost,
+            'reactionUsersByPost' => $reactionUsersByPost,
+            'userReactions' => $userReactions,
+            'emoticons' => $this->emoticons->all(),
             'totalPosts' => $totalPosts,
             'pagination' => [
                 'page' => $page,

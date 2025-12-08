@@ -16,6 +16,9 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Infrastructure\Config\AppConfig;
 use Random\RandomException;
 
 final readonly class DemoSeeder
@@ -30,13 +33,16 @@ final readonly class DemoSeeder
         private PostRepository $posts,
         private ProfileRepository $profiles,
         private CommunityModeratorRepository $communityModerators,
+        private ReactionRepository $reactions,
         private Generator $faker,
+        private AppConfig $config,
         private int $boardCount = 4,
         private int $threadsPerBoard = 3,
         private int $postsPerThread = 5,
         private int $userCount = 6,
         private ?BbcodeParser $parser = null,
         private ?ProgressTracker $progress = null,
+        private ?EmoticonSet $emoticons = null,
     ) {
     }
 
@@ -284,7 +290,7 @@ final readonly class DemoSeeder
             for ($p = 0; $p < $this->postsPerThread; $p++) {
                 $postAuthor = $users[array_rand($users)];
                 $body = $this->postBody($boardSlug, $i, $p);
-                $this->posts->create(
+                $post = $this->posts->create(
                     communityId: $communityId,
                     threadId: $thread->id,
                     authorId: $postAuthor->id,
@@ -293,6 +299,8 @@ final readonly class DemoSeeder
                     signatureSnapshot: null,
                     timestamp: $timestamp - random_int(0, 20_000),
                 );
+
+                $this->seedReactionsForPost($communityId, $post->id, $users);
             }
         }
 
@@ -302,6 +310,69 @@ final readonly class DemoSeeder
     private function parser(): BbcodeParser
     {
         return $this->parser ?? new BbcodeParser();
+    }
+
+    private function seedReactionsForPost(int $communityId, int $postId, array $users): void
+    {
+        $existing = $this->reactions->listByPostIds([$postId]);
+        if (($existing[$postId] ?? []) !== []) {
+            return; // keep idempotent
+        }
+
+        $codes = $this->emoticons()?->codes() ?? [];
+        if ($codes === []) {
+            return;
+        }
+
+        $targetCount = $this->weightedReactionCount();
+        if ($targetCount === 0) {
+            return;
+        }
+
+        $userPool = $users;
+        shuffle($userPool);
+
+        for ($i = 0; $i < $targetCount; $i++) {
+            $code = $codes[array_rand($codes)];
+            $user = $userPool[$i % count($userPool)];
+
+            $this->reactions->setUserReaction($communityId, $postId, $user->id, $code);
+        }
+    }
+
+    private function weightedReactionCount(): int
+    {
+        // 0 most common, 10 rare
+        $weights = [
+            0 => 30,
+            1 => 20,
+            2 => 15,
+            3 => 10,
+            4 => 7,
+            5 => 6,
+            6 => 5,
+            7 => 3,
+            8 => 2,
+            9 => 1,
+            10 => 1,
+        ];
+
+        $total = array_sum($weights);
+        $pick = random_int(1, $total);
+        $running = 0;
+        foreach ($weights as $value => $weight) {
+            $running += $weight;
+            if ($pick <= $running) {
+                return $value;
+            }
+        }
+
+        return 0;
+    }
+
+    private function emoticons(): EmoticonSet
+    {
+        return $this->emoticons ?? new EmoticonSet($this->config);
     }
 
     private function threadTitle(string $boardSlug, int $index): string
