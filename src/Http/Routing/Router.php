@@ -263,13 +263,14 @@ final class Router
         }
 
         $mimeType = $this->guessMimeType($resolvedPath);
-        $body = $request->method === 'HEAD' ? '' : (string) file_get_contents($resolvedPath);
+        $isHead = $request->method === 'HEAD';
+        $body = $isHead ? '' : (string) file_get_contents($resolvedPath);
 
         return new Response(
             status: 200,
             headers: [
                 'Content-Type' => $mimeType,
-                'Content-Length' => (string) filesize($resolvedPath),
+                'Content-Length' => $isHead ? '0' : (string) filesize($resolvedPath),
             ],
             body: $body,
         );
