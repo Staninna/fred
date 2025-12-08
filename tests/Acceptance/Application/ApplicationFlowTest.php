@@ -587,7 +587,28 @@ final class ApplicationFlowTest extends TestCase
         $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
         $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
-        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $threadRepository, $postRepository, new BbcodeParser(), $linkPreviewer, $profileRepository, $uploadService, $attachmentRepository, $reactionRepository, $emoticonSet, $mentionService, $pdo);
+        $threadController = new ThreadController(
+            $view,
+            $config,
+            $authService,
+            $permissionService,
+            $communityContext,
+            $categoryRepository,
+            $boardRepository,
+            $threadRepository,
+            $postRepository,
+            new BbcodeParser(),
+            $linkPreviewer,
+            $userRepository,
+            $profileRepository,
+            $uploadService,
+            $attachmentRepository,
+            $reactionRepository,
+            $mentionNotificationRepository,
+            $emoticonSet,
+            $mentionService,
+            $pdo
+        );
         $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, $mentionService);
         $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, $mentionService);
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);

@@ -195,13 +195,15 @@ final class HttpRoutesTest extends TestCase
             $postRepository,
             new BbcodeParser(),
             new \Fred\Application\Content\LinkPreviewer($config),
+            $userRepository,
             $profileRepository,
             $uploadService,
             $attachmentRepository,
             new \Fred\Infrastructure\Database\ReactionRepository($pdo),
+            new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo),
             new \Fred\Application\Content\EmoticonSet($config),
             new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
-            $pdo,
+            $pdo
         );
         $postController = new PostController(
             $authService,

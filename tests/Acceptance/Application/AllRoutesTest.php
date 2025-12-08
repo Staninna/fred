@@ -169,7 +169,28 @@ final class AllRoutesTest extends TestCase
         $reportRepository = new \Fred\Infrastructure\Database\ReportRepository($pdo);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
         $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
-        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $threadRepository, $postRepository, new BbcodeParser(), new \Fred\Application\Content\LinkPreviewer($config), $profileRepository, $uploadService, $attachmentRepository, new \Fred\Infrastructure\Database\ReactionRepository($pdo), new \Fred\Application\Content\EmoticonSet($config), new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)), $pdo);
+        $threadController = new ThreadController(
+            $view,
+            $config,
+            $authService,
+            $permissionService,
+            $communityContext,
+            $categoryRepository,
+            $boardRepository,
+            $threadRepository,
+            $postRepository,
+            new BbcodeParser(),
+            new \Fred\Application\Content\LinkPreviewer($config),
+            $userRepository,
+            $profileRepository,
+            $uploadService,
+            $attachmentRepository,
+            new \Fred\Infrastructure\Database\ReactionRepository($pdo),
+            new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo),
+            new \Fred\Application\Content\EmoticonSet($config),
+            new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)),
+            $pdo
+        );
         $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
         $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
