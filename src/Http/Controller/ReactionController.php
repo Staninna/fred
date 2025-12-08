@@ -37,7 +37,7 @@ final readonly class ReactionController
         $board = $request->attribute('board');
 
         if (!$community instanceof Community || $post === null || $thread === null || !$board instanceof Board) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ReactionController::add');
         }
 
         $currentUser = $this->auth->currentUser();

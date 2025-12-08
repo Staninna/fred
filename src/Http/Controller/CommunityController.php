@@ -103,7 +103,7 @@ final readonly class CommunityController extends Controller
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in CommunityController::show');
         }
 
         $structure = $this->communityContext->structureForCommunity($community);
@@ -132,7 +132,7 @@ final readonly class CommunityController extends Controller
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in CommunityController::about');
         }
 
         $structure = $this->communityContext->structureForCommunity($community);

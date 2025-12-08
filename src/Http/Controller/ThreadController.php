@@ -69,7 +69,7 @@ final readonly class ThreadController
         $category = $request->attribute('category');
 
         if (!$community instanceof Community || $thread === null || !$board instanceof Board || !$category instanceof Category) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ThreadController::show');
         }
 
         $page = (int) ($request->query['page'] ?? 1);
@@ -161,7 +161,7 @@ final readonly class ThreadController
         $board = $request->attribute('board');
 
         if (!$community instanceof Community || !$board instanceof Board) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ThreadController::create');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -179,7 +179,7 @@ final readonly class ThreadController
         $board = $request->attribute('board');
 
         if (!$community instanceof Community || !$board instanceof Board) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ThreadController::store');
         }
 
         $currentUser = $this->auth->currentUser();

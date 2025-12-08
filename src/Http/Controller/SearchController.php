@@ -39,7 +39,7 @@ final readonly class SearchController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in SearchController::search');
         }
 
         $structure = $this->structureForCommunity($community);

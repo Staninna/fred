@@ -46,7 +46,7 @@ final readonly class PostController
         $board = $request->attribute('board');
 
         if (!$community instanceof Community || $thread === null || !$board instanceof Board) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in PostController::store');
         }
 
         $currentUser = $this->auth->currentUser();

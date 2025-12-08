@@ -38,13 +38,13 @@ final readonly class ProfileController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ProfileController::show');
         }
 
         $username = (string) ($request->params['username'] ?? '');
         $user = $this->users->findByUsername($username);
         if ($user === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'User not found: ' . $username);
         }
 
         $profile = $this->profiles->ensureExists($user->id, $community->id);
@@ -61,7 +61,7 @@ final readonly class ProfileController
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
         if ($user === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'User not found in ProfileController::editSignature');
         }
 
         return Response::redirect('/c/' . $community->slug . '/u/' . $currentUser->username);
@@ -76,7 +76,7 @@ final readonly class ProfileController
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
         if ($user === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'User not found in ProfileController::updateSignature');
         }
 
         $signature = trim((string) ($request->body['signature'] ?? ''));
@@ -135,7 +135,7 @@ final readonly class ProfileController
         ['community' => $community, 'currentUser' => $currentUser] = $context;
         $user = $this->users->findById($currentUser->id ?? 0);
         if ($user === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'User not found in ProfileController::updateAvatar');
         }
 
         $profile = $this->profiles->ensureExists($currentUser->id ?? 0, $community->id);
@@ -173,7 +173,7 @@ final readonly class ProfileController
 
         $user = $this->users->findById($currentUser->id ?? 0);
         if ($user === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'User not found in ProfileController::updateProfile');
         }
 
         $bio = trim((string) ($request->body['bio'] ?? ''));
@@ -239,7 +239,7 @@ final readonly class ProfileController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ProfileController::resolveCommunityAndUser');
         }
 
         $currentUser = $this->auth->currentUser();

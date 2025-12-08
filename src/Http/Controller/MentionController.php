@@ -43,7 +43,7 @@ final readonly class MentionController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in MentionController::inbox');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -95,7 +95,7 @@ final readonly class MentionController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in MentionController::markRead');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -111,7 +111,7 @@ final readonly class MentionController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in MentionController::markOneRead');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -130,7 +130,7 @@ final readonly class MentionController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in MentionController::suggest');
         }
 
         $currentUser = $this->auth->currentUser();

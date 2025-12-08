@@ -85,7 +85,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::deletePost');
         }
 
         if (!$this->permissions->canDeleteAnyPost($this->auth->currentUser(), $community->id)) {
@@ -110,7 +110,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::editPost');
         }
 
         if ($request->method === 'GET') {
@@ -173,7 +173,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::moveThread');
         }
 
         if (!$this->permissions->canMoveThread($this->auth->currentUser(), $community->id)) {
@@ -183,7 +183,7 @@ final readonly class ModerationController
         $targetBoardSlug = (string) ($request->body['target_board'] ?? '');
         $targetBoard = $this->communityContext->resolveBoard($community, $targetBoardSlug);
         if ($targetBoard === null) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Target board not found: ' . $targetBoardSlug);
         }
 
         $this->threads->moveToBoard($thread->id, $targetBoard->id);
@@ -198,7 +198,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::reportPost');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -225,7 +225,7 @@ final readonly class ModerationController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ModerationController::listBans');
         }
 
         if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
@@ -255,7 +255,7 @@ final readonly class ModerationController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ModerationController::createBan');
         }
 
         if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
@@ -322,7 +322,7 @@ final readonly class ModerationController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in ModerationController::deleteBan');
         }
 
         if (!$this->permissions->canBan($this->auth->currentUser(), $community->id)) {
@@ -343,7 +343,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::toggleLock');
         }
 
         if (!$this->permissions->canLockThread($this->auth->currentUser(), $community->id)) {
@@ -361,7 +361,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::toggleSticky');
         }
 
         if (!$this->permissions->canStickyThread($this->auth->currentUser(), $community->id)) {
@@ -379,7 +379,7 @@ final readonly class ModerationController
         $thread = $request->attribute('thread');
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Required attributes missing in ModerationController::toggleAnnouncement');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {

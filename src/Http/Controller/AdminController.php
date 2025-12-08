@@ -47,7 +47,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::structure');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -82,7 +82,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::settings');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -111,7 +111,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::updateSettings');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -153,7 +153,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::createCategory');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -176,7 +176,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::updateCategory');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -186,7 +186,7 @@ final readonly class AdminController
         $categoryId = (int) ($request->params['category'] ?? 0);
         $category = $this->categories->findById($categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Category not found or mismatch in AdminController::updateCategory: ' . $categoryId);
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
@@ -205,7 +205,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::reorderCategories');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -228,7 +228,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::deleteCategory');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -238,7 +238,7 @@ final readonly class AdminController
         $categoryId = (int) ($request->params['category'] ?? 0);
         $category = $this->categories->findById($categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Category not found or mismatch in AdminController::deleteCategory: ' . $categoryId);
         }
 
         $this->categories->delete($category->id);
@@ -250,7 +250,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::reorderBoards');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -282,7 +282,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::createBoard');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -337,7 +337,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::updateBoard');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -347,7 +347,7 @@ final readonly class AdminController
         $boardId = (int) ($request->params['board'] ?? 0);
         $board = $this->boards->findById($boardId);
         if ($board === null || $board->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Board not found or mismatch in AdminController::updateBoard: ' . $boardId);
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
@@ -392,7 +392,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::deleteBoard');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -402,7 +402,7 @@ final readonly class AdminController
         $boardId = (int) ($request->params['board'] ?? 0);
         $board = $this->boards->findById($boardId);
         if ($board === null || $board->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Board not found or mismatch in AdminController::deleteBoard: ' . $boardId);
         }
 
         $this->boards->delete($board->id);
@@ -414,7 +414,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::updateCommunityCss');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -441,7 +441,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::addModerator');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -497,7 +497,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::removeModerator');
         }
 
         $currentUser = $this->auth->currentUser();
@@ -521,7 +521,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::reports');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -549,7 +549,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::resolveReport');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
@@ -559,7 +559,7 @@ final readonly class AdminController
         $reportId = (int) ($request->params['report'] ?? 0);
         $report = $this->reports->findById($reportId);
         if ($report === null || $report->communityId !== $community->id) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Report not found or mismatch in AdminController::resolveReport: ' . $reportId);
         }
 
         $this->reports->updateStatus($reportId, 'closed', time());
@@ -571,7 +571,7 @@ final readonly class AdminController
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return $this->notFound($request);
+            return $this->notFound($request, 'Community attribute missing in AdminController::users');
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
