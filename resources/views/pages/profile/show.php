@@ -21,7 +21,7 @@ use Fred\Domain\Community\Community;
     'user' => $user,
     'community' => $community,
     'profile' => $profile,
-    'e' => $e,
+    'renderPartial' => $renderPartial,
 ]) ?>
 
 <?php if (($currentUser?->id ?? null) === $user->id): ?>

@@ -20,7 +20,7 @@
     <tr>
         <td class="table-heading">Avatar</td>
         <td>
-            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile]) ?>
+            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile, 'renderPartial' => $renderPartial]) ?>
         </td>
     </tr>
     <tr>

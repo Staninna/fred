@@ -20,4 +20,5 @@
                 'errors' => $errors ?? [],
                 'success' => $success ?? null,
                 'idPrefix' => $idPrefix ?? 'form-section',
+                'renderPartial' => $renderPartial,
             ]) ?>

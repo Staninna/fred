@@ -26,9 +26,10 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 'errors' => $profileErrors ?? [],
                 'success' => $success ?? null,
                 'idPrefix' => $messageIdPrefix,
+                'renderPartial' => $renderPartial,
             ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/profile" novalidate>
-                <?= $renderPartial('partials/csrf.php') ?>
+                <?= $renderPartial('partials/csrf.php', ['renderPartial' => $renderPartial]) ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="bio">Bio</label></td>

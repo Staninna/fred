@@ -22,14 +22,15 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
     'success' => $success ?? null,
     'idPrefix' => $messageIdPrefix,
     'infoText' => null,
+    'renderPartial' => $renderPartial,
 ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
-                <?= $renderPartial('partials/csrf.php') ?>
+                <?= $renderPartial('partials/csrf.php', ['renderPartial' => $renderPartial]) ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120">Current avatar</td>
                         <td>
-                            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile]) ?>
+                            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile, 'renderPartial' => $renderPartial]) ?>
                         </td>
                     </tr>
                     <tr>
