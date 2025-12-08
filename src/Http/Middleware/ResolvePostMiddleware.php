@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Http\Middleware;
 
+use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Domain\Community\Community;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Request;
@@ -15,6 +16,8 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ResolvePostMiddleware
 {
+    use HandlesNotFound;
+
     public function __construct(
         private CommunityHelper $communityHelper,
         private PostRepository $posts,
@@ -28,43 +31,28 @@ final readonly class ResolvePostMiddleware
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $postId = (int) ($request->params['post'] ?? 0);
         $post = $this->posts->findById($postId);
         if ($post === null || $post->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $thread = $this->threads->findById($post->threadId);
         if ($thread === null || $thread->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
         if ($board === null) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $category = $this->categories->findById($board->categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         return $next(
@@ -74,5 +62,10 @@ final readonly class ResolvePostMiddleware
                 ->withAttribute('board', $board)
                 ->withAttribute('category', $category),
         );
+    }
+
+    protected function view(): ViewRenderer
+    {
+        return $this->view;
     }
 }

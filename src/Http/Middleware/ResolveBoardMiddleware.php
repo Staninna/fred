@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Http\Middleware;
 
+use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Domain\Community\Community;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Request;
@@ -13,6 +14,8 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ResolveBoardMiddleware
 {
+    use HandlesNotFound;
+
     public function __construct(
         private CommunityHelper $communityHelper,
         private CategoryRepository $categories,
@@ -24,27 +27,18 @@ final readonly class ResolveBoardMiddleware
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $boardSlug = (string) ($request->params['board'] ?? '');
         $board = $this->communityHelper->resolveBoard($community, $boardSlug);
         if ($board === null) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $category = $this->categories->findById($board->categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         return $next(
@@ -52,5 +46,10 @@ final readonly class ResolveBoardMiddleware
                 ->withAttribute('board', $board)
                 ->withAttribute('category', $category),
         );
+    }
+
+    protected function view(): ViewRenderer
+    {
+        return $this->view;
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Http\Middleware;
 
+use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Domain\Community\Community;
 use Fred\Http\Controller\CommunityHelper;
 use Fred\Http\Request;
@@ -14,6 +15,8 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ResolveThreadMiddleware
 {
+    use HandlesNotFound;
+
     public function __construct(
         private CommunityHelper $communityHelper,
         private ThreadRepository $threads,
@@ -26,35 +29,23 @@ final readonly class ResolveThreadMiddleware
     {
         $community = $request->attribute('community');
         if (!$community instanceof Community) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $threadId = (int) ($request->params['thread'] ?? 0);
         $thread = $this->threads->findById($threadId);
         if ($thread === null || $thread->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
         if ($board === null) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         $category = $this->categories->findById($board->categoryId);
         if ($category === null || $category->communityId !== $community->id) {
-            return Response::notFound(
-                view: $this->view,
-                request: $request,
-            );
+            return $this->notFound($request);
         }
 
         return $next(
@@ -63,5 +54,10 @@ final readonly class ResolveThreadMiddleware
                 ->withAttribute('board', $board)
                 ->withAttribute('category', $category),
         );
+    }
+
+    protected function view(): ViewRenderer
+    {
+        return $this->view;
     }
 }
