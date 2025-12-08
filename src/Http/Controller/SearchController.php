@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Search\SearchService;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -31,8 +32,8 @@ final readonly class SearchController
 
     public function search(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 

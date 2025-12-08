@@ -18,6 +18,7 @@ final readonly class Request
         public array  $params = [],
         public array  $headers = [],
         public array  $session = [],
+        public array  $attributes = [],
     ) {
     }
 
@@ -48,6 +49,7 @@ final readonly class Request
             params: [],
             headers: $headers,
             session: $_SESSION ?? [],
+            attributes: [],
         );
     }
 
@@ -62,7 +64,31 @@ final readonly class Request
             params: $params,
             headers: $this->headers,
             session: $this->session,
+            attributes: $this->attributes,
         );
+    }
+
+    public function withAttribute(string $name, mixed $value): self
+    {
+        $attributes = $this->attributes;
+        $attributes[$name] = $value;
+
+        return new self(
+            method: $this->method,
+            path: $this->path,
+            query: $this->query,
+            body: $this->body,
+            files: $this->files,
+            params: $this->params,
+            headers: $this->headers,
+            session: $this->session,
+            attributes: $attributes,
+        );
+    }
+
+    public function attribute(string $name, mixed $default = null): mixed
+    {
+        return $this->attributes[$name] ?? $default;
     }
 
     public function header(string $name, mixed $default = null): mixed

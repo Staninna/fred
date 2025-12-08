@@ -6,6 +6,8 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\EmoticonSet;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -30,31 +32,16 @@ final readonly class ReactionController
 
     public function add(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        $post = $request->attribute('post');
+        $thread = $request->attribute('thread');
+        $board = $request->attribute('board');
+
+        if (!$community instanceof Community || $post === null || $thread === null || !$board instanceof Board) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
-
-        $postId = (int) ($request->params['post'] ?? 0);
-        $post = $this->posts->findById($postId);
-        if ($post === null || $post->communityId !== $community->id) {
-            return $this->notFound($request);
-        }
-
-        $thread = $this->threads->findById($post->threadId);
-        if ($thread === null || $thread->communityId !== $community->id) {
-            return $this->notFound($request);
-        }
-
-        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
-        if ($board === null) {
-            return $this->notFound($request);
-        }
 
         if ($thread->isLocked || $board->isLocked) {
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';

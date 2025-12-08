@@ -18,6 +18,11 @@ use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\UploadController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Navigation\NavigationTracker;
+use Fred\Http\Middleware\RequireAuthMiddleware;
+use Fred\Http\Middleware\ResolveBoardMiddleware;
+use Fred\Http\Middleware\ResolveCommunityMiddleware;
+use Fred\Http\Middleware\ResolvePostMiddleware;
+use Fred\Http\Middleware\ResolveThreadMiddleware;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -92,14 +97,11 @@ $authController = $container->get(AuthController::class);
 $profileController = $container->get(ProfileController::class);
 $searchController = $container->get(SearchController::class);
 $uploadController = $container->get(UploadController::class);
-
-$authRequired = static function (Request $request, callable $next) use ($authService): Response {
-    if ($authService->currentUser()->isGuest()) {
-        return Response::redirect('/login');
-    }
-
-    return $next($request);
-};
+$authRequired = $container->get(RequireAuthMiddleware::class);
+$communityContext = $container->get(ResolveCommunityMiddleware::class);
+$boardContext = $container->get(ResolveBoardMiddleware::class);
+$threadContext = $container->get(ResolveThreadMiddleware::class);
+$postContext = $container->get(ResolvePostMiddleware::class);
 
 $router->get('/', [$communityController, 'index']);
 $router->post('/communities', [$communityController, 'store']);
@@ -109,7 +111,6 @@ $router->get('/register', [$authController, 'showRegisterForm']);
 $router->post('/register', [$authController, 'register']);
 $router->post('/logout', [$authController, 'logout']);
 
-$router->get('/c/{community}', [$communityController, 'show']);
 $router->get('/uploads/{type}/{year}/{month}/{file}', [$uploadController, 'serve']);
 
 $router->group('/c/{community}', function (Router $router) use (
@@ -123,7 +124,10 @@ $router->group('/c/{community}', function (Router $router) use (
     $moderationController,
     $searchController,
     $reactionController,
-    $mentionController
+    $mentionController,
+    $boardContext,
+    $threadContext,
+    $postContext
 ) {
     $router->get('/', [$communityController, 'show']);
     $router->get('/about', [$communityController, 'about']);
@@ -138,26 +142,26 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/avatar', [$profileController, 'updateAvatar']);
     }, [$authRequired]);
 
-    $router->get('/b/{board}', [$boardController, 'show']);
+    $router->get('/b/{board}', [$boardController, 'show'], [$boardContext]);
     $router->group('/b/{board}', function (Router $router) use ($threadController) {
         $router->get('/thread/new', [$threadController, 'create']);
         $router->post('/thread', [$threadController, 'store']);
-    }, [$authRequired]);
+    }, [$authRequired, $boardContext]);
 
-    $router->get('/t/{thread}', [$threadController, 'show']);
-    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired]);
-    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired]);
-    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired]);
-    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired]);
-    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired]);
-    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired]);
-    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired]);
-    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired]);
-    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
-    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired]);
-    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
-    $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired]);
-    $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired]);
+    $router->get('/t/{thread}', [$threadController, 'show'], [$threadContext]);
+    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext]);
+    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext]);
+    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext]);
+    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext]);
+    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext]);
+    $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $postContext]);
+    $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired, $postContext]);
     $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired]);
     $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired]);
     $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired]);
@@ -187,7 +191,7 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/settings', [$adminController, 'updateSettings']);
         $router->get('/users', [$adminController, 'users']);
     }, [$authRequired]);
-});
+}, [$communityContext]);
 
 $router->setNotFoundHandler(function (Request $request) use ($container) {
     $view = $container->get(ViewRenderer::class);

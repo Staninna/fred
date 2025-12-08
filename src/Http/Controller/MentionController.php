@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -35,15 +36,12 @@ final readonly class MentionController
 
     public function inbox(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         $page = (int) ($request->query['page'] ?? 1);
         $page = $page < 1 ? 1 : $page;
@@ -90,15 +88,12 @@ final readonly class MentionController
 
     public function markRead(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         $this->mentions->markAllRead($currentUser->id ?? 0, $community->id);
 
@@ -109,15 +104,12 @@ final readonly class MentionController
 
     public function markOneRead(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         $mentionId = (int) ($request->params['mention'] ?? 0);
         if ($mentionId > 0) {
@@ -131,19 +123,12 @@ final readonly class MentionController
 
     public function suggest(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return new Response(
-                status: 401,
-                headers: ['Content-Type' => 'application/json; charset=utf-8'],
-                body: '[]',
-            );
-        }
 
         $term = trim((string) ($request->query['q'] ?? ''));
         if ($term === '' || \strlen($term) < 2) {

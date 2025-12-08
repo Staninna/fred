@@ -6,6 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -41,8 +42,8 @@ final readonly class AdminController
 
     public function structure(Request $request, array $errors = []): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -76,8 +77,8 @@ final readonly class AdminController
 
     public function settings(Request $request, array $errors = [], array $old = []): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -105,8 +106,8 @@ final readonly class AdminController
 
     public function updateSettings(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -147,8 +148,8 @@ final readonly class AdminController
 
     public function createCategory(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -170,8 +171,8 @@ final readonly class AdminController
 
     public function updateCategory(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -199,8 +200,8 @@ final readonly class AdminController
 
     public function reorderCategories(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -222,8 +223,8 @@ final readonly class AdminController
 
     public function deleteCategory(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -244,8 +245,8 @@ final readonly class AdminController
 
     public function reorderBoards(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -276,8 +277,8 @@ final readonly class AdminController
 
     public function createBoard(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -331,8 +332,8 @@ final readonly class AdminController
 
     public function updateBoard(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -386,8 +387,8 @@ final readonly class AdminController
 
     public function deleteBoard(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -408,8 +409,8 @@ final readonly class AdminController
 
     public function updateCommunityCss(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -435,8 +436,8 @@ final readonly class AdminController
 
     public function addModerator(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -491,8 +492,8 @@ final readonly class AdminController
 
     public function removeModerator(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -515,8 +516,8 @@ final readonly class AdminController
 
     public function reports(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -543,8 +544,8 @@ final readonly class AdminController
 
     public function resolveReport(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -565,8 +566,8 @@ final readonly class AdminController
 
     public function users(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 

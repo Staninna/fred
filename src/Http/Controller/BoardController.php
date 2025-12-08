@@ -6,6 +6,9 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -29,19 +32,11 @@ final readonly class BoardController
 
     public function show(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return $this->notFound($request);
-        }
+        $community = $request->attribute('community');
+        $board = $request->attribute('board');
+        $category = $request->attribute('category');
 
-        $boardSlug = (string) ($request->params['board'] ?? '');
-        $board = $this->communityHelper->resolveBoard($community, $boardSlug);
-        if ($board === null) {
-            return $this->notFound($request);
-        }
-
-        $category = $this->categories->findById($board->categoryId);
-        if ($category === null || $category->communityId !== $community->id) {
+        if (!$community instanceof Community || !$board instanceof Board || !$category instanceof Category) {
             return $this->notFound($request);
         }
 

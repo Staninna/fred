@@ -9,6 +9,8 @@ use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
+use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -40,25 +42,15 @@ final readonly class PostController
 
     public function store(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return $this->notFound($request);
-        }
+        $community = $request->attribute('community');
+        $thread = $request->attribute('thread');
+        $board = $request->attribute('board');
 
-        $thread = $this->threads->findById((int) ($request->params['thread'] ?? 0));
-        if ($thread === null || $thread->communityId !== $community->id) {
-            return $this->notFound($request);
-        }
-
-        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
-        if ($board === null) {
+        if (!$community instanceof Community || $thread === null || !$board instanceof Board) {
             return $this->notFound($request);
         }
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         if (!$this->permissions->canReply($currentUser)) {
             return new Response(

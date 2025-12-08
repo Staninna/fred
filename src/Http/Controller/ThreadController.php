@@ -12,6 +12,7 @@ use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
+use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\Post;
 use Fred\Http\Request;
@@ -55,24 +56,12 @@ final readonly class ThreadController
 
     public function show(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return $this->notFound($request);
-        }
+        $community = $request->attribute('community');
+        $thread = $request->attribute('thread');
+        $board = $request->attribute('board');
+        $category = $request->attribute('category');
 
-        $threadId = (int) ($request->params['thread'] ?? 0);
-        $thread = $this->threads->findById($threadId);
-        if ($thread === null || $thread->communityId !== $community->id) {
-            return $this->notFound($request);
-        }
-
-        $board = $this->communityHelper->resolveBoard($community, (string) $thread->boardId);
-        if ($board === null) {
-            return $this->notFound($request);
-        }
-
-        $category = $this->categories->findById($board->categoryId);
-        if ($category === null || $category->communityId !== $community->id) {
+        if (!$community instanceof Community || $thread === null || !$board instanceof Board || !$category instanceof Category) {
             return $this->notFound($request);
         }
 
@@ -152,16 +141,14 @@ final readonly class ThreadController
 
     public function create(Request $request): Response
     {
-        $context = $this->resolveBoardContext($request);
-        if ($context === null) {
+        $community = $request->attribute('community');
+        $board = $request->attribute('board');
+
+        if (!$community instanceof Community || !$board instanceof Board) {
             return $this->notFound($request);
         }
-        ['community' => $community, 'board' => $board] = $context;
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         if (!$this->permissions->canCreateThread($currentUser)) {
             return $this->renderCreate($request, $community, $board, ['You do not have permission to create threads.'], [], 403);
@@ -172,16 +159,14 @@ final readonly class ThreadController
 
     public function store(Request $request): Response
     {
-        $context = $this->resolveBoardContext($request);
-        if ($context === null) {
+        $community = $request->attribute('community');
+        $board = $request->attribute('board');
+
+        if (!$community instanceof Community || !$board instanceof Board) {
             return $this->notFound($request);
         }
-        ['community' => $community, 'board' => $board] = $context;
 
         $currentUser = $this->auth->currentUser();
-        if ($currentUser->isGuest()) {
-            return Response::redirect('/login');
-        }
 
         if (!$this->permissions->canCreateThread($currentUser)) {
             return $this->renderCreate(
@@ -328,25 +313,6 @@ final readonly class ThreadController
             ->set('customCss', trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')));
 
         return Response::view($this->view, 'pages/thread/create.php', $ctx, status: $status);
-    }
-
-    /**
-     * @return array{community: Community, board: Board}|null
-     */
-    private function resolveBoardContext(Request $request): ?array
-    {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
-            return null;
-        }
-
-        $boardSlug = (string) ($request->params['board'] ?? '');
-        $board = $this->communityHelper->resolveBoard($community, $boardSlug);
-        if ($board === null) {
-            return null;
-        }
-
-        return ['community' => $community, 'board' => $board];
     }
 
     private function notFound(Request $request): Response

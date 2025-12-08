@@ -37,8 +37,8 @@ final readonly class ProfileController
 
     public function show(Request $request): Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
@@ -233,8 +233,8 @@ final readonly class ProfileController
      */
     private function resolveCommunityAndUser(Request $request): array|Response
     {
-        $community = $this->communityHelper->resolveCommunity($request->params['community'] ?? null);
-        if ($community === null) {
+        $community = $request->attribute('community');
+        if (!$community instanceof Community) {
             return $this->notFound($request);
         }
 
