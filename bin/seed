@@ -37,10 +37,10 @@ $pdo = ConnectionFactory::make($config);
 $faker = FakerFactory::create();
 $faker->seed(1234);
 
-$boardCount = (int) ($argv[1] ?? 5);
-$threadsPerBoard = (int) ($argv[2] ?? 60);
-$postsPerThread = (int) ($argv[3] ?? 70);
-$userCount = (int) ($argv[4] ?? 75);
+$boardCount = (int) ($argv[1] ?? 7);
+$threadsPerBoard = (int) ($argv[2] ?? 100);
+$postsPerThread = (int) ($argv[3] ?? 75);
+$userCount = (int) ($argv[4] ?? 120);
 
 $progress = new ProgressTracker(static function (string $message): void {
     fwrite(STDOUT, "[seed] {$message}\n");
@@ -92,5 +92,6 @@ try {
     exit(0);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Seeding failed: ' . $exception->getMessage() . "\n");
+    fwrite(STDERR, 'Stack trace: ' . $exception->getTraceAsString() . "\n");
     exit(1);
 }

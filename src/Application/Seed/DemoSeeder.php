@@ -58,38 +58,52 @@ final readonly class DemoSeeder
         $now = time();
         $this->faker->unique(true);
 
-        $this->roles->ensureDefaultRoles();
-        $memberRole = $this->roles->findBySlug('member');
-        $moderatorRole = $this->roles->findBySlug('moderator');
-        $adminRole = $this->roles->findBySlug('admin');
-        if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
-            throw new \RuntimeException('Core roles are missing.');
+        // Start transaction for massive performance boost
+        $this->pdo()->beginTransaction();
+        
+        try {
+            $this->roles->ensureDefaultRoles();
+            $memberRole = $this->roles->findBySlug('member');
+            $moderatorRole = $this->roles->findBySlug('moderator');
+            $adminRole = $this->roles->findBySlug('admin');
+            if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
+                throw new \RuntimeException('Core roles are missing.');
+            }
+            $this->log('Core roles ensured');
+
+            $users = $this->seedUsers($memberRole->id, $moderatorRole->id, $adminRole->id, $now);
+            $this->log('Users ready: ' . \count($users));
+
+            $communities = $this->seedCommunities($now);
+            $boardIds = [];
+            $this->log('Communities ready: ' . \count($communities));
+
+            $this->ensureProfilesPerCommunityBatch($users, $communities, $now);
+            $this->log('Profiles ensured across communities');
+
+            foreach ($communities as $community) {
+                $boardIds = array_merge($boardIds, $this->seedCommunityContent($community, $users, $now));
+                $this->assignModerators($community->id, $users, $now, $moderatorRole->id);
+                $this->log('Moderators assigned for community ' . $community->slug);
+            }
+
+            $this->pdo()->commit();
+            $this->log('Demo seeding complete');
+
+            return [
+                'community_ids' => array_map(static fn ($c) => $c->id, $communities),
+                'user_ids' => array_map(static fn ($u) => $u->id, $users),
+                'board_ids' => $boardIds,
+            ];
+        } catch (\Throwable $e) {
+            $this->pdo()->rollBack();
+            throw $e;
         }
-        $this->log('Core roles ensured');
+    }
 
-        $users = $this->seedUsers($memberRole->id, $moderatorRole->id, $adminRole->id, $now);
-        $this->log('Users ready: ' . \count($users));
-
-        $communities = $this->seedCommunities($now);
-        $boardIds = [];
-        $this->log('Communities ready: ' . \count($communities));
-
-        $this->ensureProfilesPerCommunity($users, $communities, $now);
-        $this->log('Profiles ensured across communities');
-
-        foreach ($communities as $community) {
-            $boardIds = array_merge($boardIds, $this->seedCommunityContent($community, $users, $now));
-            $this->assignModerators($community->id, $users, $now, $moderatorRole->id);
-            $this->log('Moderators assigned for community ' . $community->slug);
-        }
-
-        $this->log('Demo seeding complete');
-
-        return [
-            'community_ids' => array_map(static fn ($c) => $c->id, $communities),
-            'user_ids' => array_map(static fn ($u) => $u->id, $users),
-            'board_ids' => $boardIds,
-        ];
+    private function pdo(): \PDO
+    {
+        return $this->posts->pdo();
     }
 
     private function findCategory(int $communityId, string $name): ?object
@@ -273,75 +287,147 @@ final readonly class DemoSeeder
         $existingThreads = $this->threads->listByBoardId($boardId);
         $toCreate = max(0, $this->threadsPerBoard - \count($existingThreads));
 
+        if ($toCreate === 0) {
+            return;
+        }
+
         $isGeneral = $boardSlug === 'general';
         $lockThread = $boardSlug === 'trading-post';
 
+        // Build thread data for batch insert
+        $threadsData = [];
         for ($i = 0; $i < $toCreate; $i++) {
             $author = $users[array_rand($users)];
-            $thread = $this->threads->create(
-                communityId: $communityId,
-                boardId: $boardId,
-                title: $this->threadTitle($boardSlug, $i),
-                authorId: $author->id,
-                isSticky: $isGeneral && $i === 0,
-                isLocked: $lockThread && $i === ($toCreate - 1),
-                isAnnouncement: $isGeneral && $i === 0,
-                timestamp: $timestamp - random_int(0, 20_000),
-            );
+            $threadsData[] = [
+                'communityId' => $communityId,
+                'boardId' => $boardId,
+                'title' => $this->threadTitle($boardSlug, $i),
+                'authorId' => $author->id,
+                'isSticky' => $isGeneral && $i === 0,
+                'isLocked' => $lockThread && $i === ($toCreate - 1),
+                'isAnnouncement' => $isGeneral && $i === 0,
+                'timestamp' => $timestamp - random_int(0, 20_000),
+            ];
+        }
 
+        // Batch insert threads (returns last inserted ID), derive the full range
+        $lastThreadId = $this->threads->batchInsert($threadsData);
+        $firstThreadId = $lastThreadId - ($toCreate - 1);
+        $actualThreadIds = range($firstThreadId, $lastThreadId);
+
+        // Build post data for batch insert
+        $postsData = [];
+        $postMetadata = []; // Track author and body for each post
+        
+        for ($i = 0; $i < $toCreate; $i++) {
+            $threadId = $actualThreadIds[$i];
+            
             for ($p = 0; $p < $this->postsPerThread; $p++) {
                 $postAuthor = $users[array_rand($users)];
                 $body = $this->postBody($boardSlug, $i, $p);
-                $post = $this->posts->create(
-                    communityId: $communityId,
-                    threadId: $thread->id,
-                    authorId: $postAuthor->id,
-                    bodyRaw: $body,
-                    bodyParsed: $this->parser()?->parse($body, $communitySlug),
-                    signatureSnapshot: null,
-                    timestamp: $timestamp - random_int(0, 20_000),
-                );
-
-                $this->mentions->notifyFromText($communityId, $post->id, $postAuthor->id, $body);
-                $this->seedReactionsForPost($communityId, $post->id, $users);
+                
+                $postsData[] = [
+                    'communityId' => $communityId,
+                    'threadId' => $threadId,
+                    'authorId' => $postAuthor->id,
+                    'bodyRaw' => $body,
+                    'bodyParsed' => $this->parser()?->parse($body, $communitySlug),
+                    'signatureSnapshot' => null,
+                    'timestamp' => $timestamp - random_int(0, 20_000),
+                ];
+                
+                $postMetadata[] = [
+                    'authorId' => $postAuthor->id,
+                    'body' => $body,
+                ];
             }
+        }
+
+        // Batch insert all posts (returns last inserted ID), derive the full range
+        $lastPostId = $this->posts->batchInsert($postsData);
+        $firstPostId = $lastPostId - (\count($postsData) - 1);
+        $actualPostIds = range($firstPostId, $lastPostId);
+        
+        $this->log('Inserted ' . \count($postsData) . ' posts, IDs from ' . $firstPostId . ' to ' . $lastPostId);
+        
+        // Now build mentions and reactions with actual post IDs
+        $mentionsData = [];
+        $reactionsData = [];
+        
+        for ($idx = 0; $idx < \count($postMetadata); $idx++) {
+            $postId = $actualPostIds[$idx];
+            $meta = $postMetadata[$idx];
+            
+            // Extract and collect mentions
+            $mentioned = $this->extractMentions($meta['body'], $users);
+            foreach ($mentioned as $mentionedUser) {
+                $mentionsData[] = [
+                    'communityId' => $communityId,
+                    'postId' => $postId,
+                    'mentionedUserId' => $mentionedUser->id,
+                    'mentionedByUserId' => $meta['authorId'],
+                    'createdAt' => $timestamp,
+                ];
+            }
+            
+            // Build reactions with actual post ID
+            $codes = $this->emoticons()?->codes() ?? [];
+            if ($codes !== []) {
+                $targetCount = $this->weightedReactionCount();
+                if ($targetCount > 0) {
+                    $userPool = $users;
+                    shuffle($userPool);
+                    for ($i = 0; $i < $targetCount; $i++) {
+                        $code = $codes[array_rand($codes)];
+                        $user = $userPool[$i % \count($userPool)];
+                        $reactionsData[] = [
+                            'communityId' => $communityId,
+                            'postId' => $postId,
+                            'userId' => $user->id,
+                            'emoticon' => $code,
+                            'timestamp' => $timestamp,
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Batch insert mentions and reactions
+        if ($mentionsData !== []) {
+            $this->log('Batch inserting ' . \count($mentionsData) . ' mentions');
+            $this->mentions->batchInsertNotifications($mentionsData);
+        }
+        if ($reactionsData !== []) {
+            $this->log('Batch inserting ' . \count($reactionsData) . ' reactions (post IDs from ' . min(array_column($reactionsData, 'postId')) . ' to ' . max(array_column($reactionsData, 'postId')) . ')');
+            $this->reactions->batchInsertReactions($reactionsData);
         }
 
         $this->log('Threads/posts seeded for board ' . $boardSlug . ': +' . $toCreate . ' threads');
     }
+
+    private function extractMentions(string $body, array $users): array
+    {
+        $mentioned = [];
+        if (preg_match_all('/@(\w+)/', $body, $matches)) {
+            foreach ($matches[1] as $username) {
+                foreach ($users as $user) {
+                    if ($user->username === $username) {
+                        $mentioned[] = $user;
+                        break;
+                    }
+                }
+            }
+        }
+        return $mentioned;
+    }
+
+
 
     private function parser(): BbcodeParser
     {
         return $this->parser ?? new BbcodeParser();
     }
 
-    private function seedReactionsForPost(int $communityId, int $postId, array $users): void
-    {
-        $existing = $this->reactions->listByPostIds([$postId]);
-        if (($existing[$postId] ?? []) !== []) {
-            return; // keep idempotent
-        }
-
-        $codes = $this->emoticons()?->codes() ?? [];
-        if ($codes === []) {
-            return;
-        }
-
-        $targetCount = $this->weightedReactionCount();
-        if ($targetCount === 0) {
-            return;
-        }
-
-        $userPool = $users;
-        shuffle($userPool);
-
-        for ($i = 0; $i < $targetCount; $i++) {
-            $code = $codes[array_rand($codes)];
-            $user = $userPool[$i % \count($userPool)];
-
-            $this->reactions->setUserReaction($communityId, $postId, $user->id, $code);
-        }
-    }
 
     private function weightedReactionCount(): int
     {
@@ -460,6 +546,24 @@ final readonly class DemoSeeder
                     timestamp: $timestamp,
                 );
             }
+        }
+    }
+
+    private function ensureProfilesPerCommunityBatch(array $users, array $communities, int $timestamp): void
+    {
+        $profiles = [];
+        foreach ($users as $user) {
+            foreach ($communities as $community) {
+                $profiles[] = [
+                    'userId' => $user->id,
+                    'communityId' => $community->id,
+                    'timestamp' => $timestamp,
+                ];
+            }
+        }
+        
+        if ($profiles !== []) {
+            $this->profiles->batchInsert($profiles);
         }
     }
 
