@@ -11,18 +11,20 @@ final class BbcodeParser
         $escaped = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
         $escaped = $this->convertLineQuotes($escaped);
 
-        $replacements = [
-            'b' => ['<strong>', '</strong>'],
-            'i' => ['<em>', '</em>'],
-            'code' => ['<pre><code>', '</code></pre>'],
-            'quote' => ['<blockquote>', '</blockquote>'],
-        ];
+        // Inline/simple tags
+        $escaped = $this->replaceTag($escaped, 'b', '<strong>', '</strong>');
+        $escaped = $this->replaceTag($escaped, 'i', '<em>', '</em>');
+        $escaped = $this->replaceTag($escaped, 'u', '<u>', '</u>');
+        $escaped = $this->replaceTag($escaped, 's', '<s>', '</s>');
+        $escaped = $this->replaceTag($escaped, 'quote', '<blockquote>', '</blockquote>');
+        $escaped = $this->replaceTag($escaped, 'spoiler', '<span class="spoiler">', '</span>');
 
-        foreach ($replacements as $tag => [$open, $close]) {
-            $pattern = \sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
-            $escaped = preg_replace($pattern, $open . '$1' . $close, $escaped) ?? $escaped;
-        }
+        // Code and lists before URL/img to avoid mangling inside blocks
+        $escaped = $this->replaceTag($escaped, 'code', '<pre><code>', '</code></pre>');
+        $escaped = $this->parseLists($escaped);
 
+        // Media / links
+        $escaped = $this->parseImages($escaped);
         $escaped = $this->parseUrlTags($escaped);
         
         if ($communitySlug !== null) {
@@ -32,14 +34,44 @@ final class BbcodeParser
         return nl2br($escaped);
     }
 
+    private function replaceTag(string $input, string $tag, string $open, string $close): string
+    {
+        $pattern = \sprintf('#\[%s](.*?)\[/\s*%s]#si', $tag, $tag);
+
+        return preg_replace($pattern, $open . '$1' . $close, $input) ?? $input;
+    }
+
     private function parseUrlTags(string $input): string
     {
         $pattern = '#\[url](https?://[^\s\[\]]+)\[/url]#i';
-        $input = preg_replace($pattern, '<a href="$1" rel="noopener" target="_blank">$1</a>', $input) ?? $input;
+        $input = preg_replace_callback($pattern, fn(array $m) => $this->anchor($m[1], $m[1]), $input) ?? $input;
 
         $patternWithLabel = '#\[url=(https?://[^\s\[\]]+)](.*?)\[/url]#i';
 
-        return preg_replace($patternWithLabel, '<a href="$1" rel="noopener" target="_blank">$2</a>', $input) ?? $input;
+        return preg_replace_callback($patternWithLabel, fn(array $m) => $this->anchor($m[1], $m[2]), $input) ?? $input;
+    }
+
+    private function parseImages(string $input): string
+    {
+        $pattern = '#\[img](https?://[^\s\[\]]+)\[/img]#i';
+
+        return preg_replace_callback($pattern, function (array $m): string {
+            $url = $this->sanitizeUrl($m[1]);
+            if ($url === null) {
+                return $m[0];
+            }
+
+            return '<img src="' . $url . '" alt="image" loading="lazy">';
+        }, $input) ?? $input;
+    }
+
+    private function parseLists(string $input): string
+    {
+        $input = preg_replace('#\[list]\s*#i', '<ul>', $input) ?? $input;
+        $input = preg_replace('#\[/list]#i', '</ul>', $input) ?? $input;
+        $input = preg_replace('#\[\*]\s*([^\n\r\[]+)#', '<li>$1</li>', $input) ?? $input;
+
+        return $input;
     }
 
     private function convertLineQuotes(string $input): string
@@ -64,4 +96,24 @@ final class BbcodeParser
             $input
         ) ?? $input;
     }
+
+        private function anchor(string $href, string $label): string
+        {
+            $safe = $this->sanitizeUrl($href);
+            if ($safe === null) {
+                return $label;
+            }
+
+            return '<a href="' . $safe . '" rel="noopener" target="_blank">' . $label . '</a>';
+        }
+
+        private function sanitizeUrl(string $url): ?string
+        {
+            $trimmed = trim($url);
+            if ($trimmed === '' || !preg_match('#^https?://#i', $trimmed)) {
+                return null;
+            }
+
+            return htmlspecialchars($trimmed, ENT_QUOTES, 'UTF-8');
+        }
 }

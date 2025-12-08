@@ -491,23 +491,69 @@ final readonly class DemoSeeder
                 . "And a playlist I'm looping: https://www.youtube.com/watch?v=dQw4w9WgXcQ\n"
                 . "Also pinging @stan and @user to chime in.";
         }
-
+        
         if ($boardSlug === 'trading-post') {
+            $image = 'https://picsum.photos/seed/' . $this->faker->word() . '/640/360';
             return 'Listing item: [b]' . $this->faker->words(3, true) . "[/b]\n"
                 . 'Condition: [i]' . $this->faker->word() . "[/i]\n"
-                . 'Details: [code]' . $this->faker->sentence(6) . "[/code]\n"
-                . 'Price: ' . $this->faker->numberBetween(20, 300) . " credits.\n"
-                . 'More pics: [url=https://example.com/' . $this->faker->slug() . ']link[/url]';
+                . "Specs:\n- CPU: " . $this->faker->word() . "\n- RAM: " . $this->faker->numberBetween(4, 64) . " GB\n- Notes: " . $this->faker->sentence(6) . "\n"
+                . 'Gallery: [img]' . $image . "[/img]\n"
+                . 'More pics: [url=https://example.com/' . $this->faker->slug() . ']link[/url]\n'
+                . 'Price: ' . $this->faker->numberBetween(20, 300) . " credits.";
         }
 
         if ($boardSlug === 'help-desk') {
-            return '[quote]' . $this->faker->sentence(8) . "[/quote]\n"
-                . "Steps tried:\n"
-                . '[code]' . $this->faker->sentence(5) . "[/code]\n"
-                . 'Any ideas?';
+            return '[quote]' . $this->faker->sentence(10) . "[/quote]\n"
+                . "What I tried:\n"
+                . "[list]\n[*]Rebooted twice\n[*]Cleared cache\n[*]Checked cables\n[/list]\n"
+                . "Logs:\n[code]" . $this->faker->sentence(8) . "\n" . $this->faker->sentence(8) . "[/code]\n"
+                . "Environment: PHP 8.3, SQLite\n"
+                . 'Any ideas @mod or @stan?';
         }
 
-        return $this->faker->paragraph(3);
+        // Variety pool for other boards
+        $templates = [
+            fn() => "Show-and-tell: [b]" . $this->faker->words(2, true) . "[/b]\n"
+                . "Setup photo: [img]https://picsum.photos/seed/" . $this->faker->word() . "/800/450[/img]\n"
+                . "Parts list:\n[list]\n[*]" . $this->faker->word() . "\n[*]" . $this->faker->word() . "\n[*]" . $this->faker->word() . "\n[/list]\n"
+                . "Benchmarks: [code]fps=" . $this->faker->numberBetween(30, 240) . "[/code]",
+            fn() => "Quick tip: use [code]" . $this->faker->word() . " --help[/code] to debug.\n"
+                . "Reference doc: [url=https://example.com/docs/" . $this->faker->slug() . "]link[/url]\n"
+                . "Also @user might know.",
+            fn() => "Weekend project log:\n" . $this->faker->paragraph(2) . "\n"
+                . "Playlist: https://open.spotify.com/track/" . $this->faker->sha1() . "\n"
+                . "Map: https://maps.google.com/?q=" . urlencode($this->faker->city()),
+            fn() => "Code drop:\n[code]\n<?php\nfunction ping() {\n    return '" . $this->faker->word() . "';\n}\n[/code]\n"
+                . "Does this look right?",
+            fn() => "Poll: favorite distro?\n[list]\n[*]Debian\n[*]Arch\n[*]Fedora\n[*]macOS\n[/list]\n"
+                . "Reply with >>" . $this->faker->numberBetween(1, 10) . ' to vote.',
+            fn() => "Image-heavy post:\n[img]https://picsum.photos/seed/" . $this->faker->word() . "/600/400[/img]\n"
+                . "Second view: [img]https://picsum.photos/seed/" . $this->faker->word() . "/600/400[/img]",
+            fn() => "Release notes draft:\n[code]\n## v" . $this->faker->randomFloat(2, 0, 5) . "\n- Added " . $this->faker->word() . "\n- Fixed " . $this->faker->word() . "\n[/code]\n"
+                . "Changelog preview?",
+            fn() => "Gallery dump:\n" . implode("\n", array_map(fn() => '[img]https://picsum.photos/seed/' . $this->faker->word() . '/500/320[/img]', range(1, 3))) . "\n"
+                . "Which angle is best?",
+            fn() => "Memory lane: [quote]" . $this->faker->sentence(12) . "[/quote]\n"
+                . "Old flyer: [img]https://picsum.photos/seed/retro" . $this->faker->numberBetween(1, 999) . "/720/480[/img]",
+            fn() => "Micro how-to:\n[list]\n[*]Clone repo\n[*]Run [code]composer install[/code]\n[*]Launch [code]php -S localhost:8000[/code]\n[/list]\n"
+                . "Attached log: [code]" . $this->faker->sentence(6) . "[/code]",
+            fn() => "Bug repro steps:\n1. Open profile\n2. Click avatar\n3. Upload image\nObserved: " . $this->faker->sentence(8) . "\nExpected: " . $this->faker->sentence(6) . "\n"
+                . "Screenshot: [img]https://picsum.photos/seed/bug" . $this->faker->numberBetween(1, 9999) . "/640/360[/img]\n"
+                . "Tagging @mod.",
+            fn() => "Data table:\n[code]\n| User | Score |\n| --- | --- |\n| " . $this->faker->userName() . " | " . $this->faker->numberBetween(1, 9999) . " |\n| " . $this->faker->userName() . " | " . $this->faker->numberBetween(1, 9999) . " |\n[/code]\n"
+                . "CSV: [url=https://example.com/" . $this->faker->slug() . ".csv]download[/url]",
+            fn() => "Theme idea:\n[code]\n:root {\n  --accent: #" . substr($this->faker->hexColor(), 1) . ";\n  --bg: #" . substr($this->faker->hexColor(), 1) . ";\n}\n[/code]\n"
+                . "Preview: [img]https://picsum.photos/seed/theme" . $this->faker->numberBetween(1, 9999) . "/640/360[/img]",
+            fn() => "API trace:\n[code]{\\n  'status': '" . $this->faker->word() . "',\\n  'latency_ms': " . $this->faker->numberBetween(20, 900) . "\\n}[/code]\n"
+                . "Any perf tips?",
+            fn() => "Daily question: " . $this->faker->sentence(9) . "\n"
+                . "Link: [url=https://example.com/" . $this->faker->slug() . "]context[/url]\n"
+                . "Drop your takes below.",
+        ];
+
+        $pick = $templates[array_rand($templates)];
+
+        return $pick();
     }
 
     private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp): ?User
