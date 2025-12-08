@@ -25,17 +25,22 @@ final readonly class ViewRenderer
     ) {
     }
 
-    public function render(string $template, array $data = [], ?string $layout = null): string
+    /**
+     * @param array<string, mixed>|ViewContext $data
+     */
+    public function render(string $template, array|ViewContext $data = [], ?string $layout = null): string
     {
+        $dataArray = $data instanceof ViewContext ? $data->all() : $data;
         $basePath = rtrim($this->viewPath, '/');
 
-        $renderPartial = function (string $partial, array $partialData = []) use ($basePath): string {
-            return $this->renderFile($basePath . '/' . ltrim($partial, '/'), $partialData, $basePath);
+        $renderPartial = function (string $partial, array|ViewContext $partialData = []) use ($basePath): string {
+            $pData = $partialData instanceof ViewContext ? $partialData->all() : $partialData;
+            return $this->renderFile($basePath . '/' . ltrim($partial, '/'), $pData, $basePath);
         };
 
         $content = $this->renderFile(
             $basePath . '/' . ltrim($template, '/'),
-            array_merge($data, ['renderPartial' => $renderPartial]),
+            array_merge($dataArray, ['renderPartial' => $renderPartial]),
             $basePath,
         );
 
@@ -46,7 +51,7 @@ final readonly class ViewRenderer
 
         return $this->renderFile(
             $basePath . '/' . ltrim($chosenLayout, '/'),
-            array_merge($data, [
+            array_merge($dataArray, [
                 'content' => $content,
                 'renderPartial' => $renderPartial,
             ]),
@@ -64,7 +69,7 @@ final readonly class ViewRenderer
         }
 
         $e = static fn (string $value, int $flags = ENT_QUOTES): string => htmlspecialchars($value, $flags, 'UTF-8');
-        
+
         $renderPartial = function (string $partial, array $partialData = []) use ($viewRoot): string {
             return $this->renderFile($viewRoot . '/' . ltrim($partial, '/'), $partialData, $viewRoot);
         };

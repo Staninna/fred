@@ -6,6 +6,7 @@ namespace Fred\Http;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function header;
@@ -50,6 +51,27 @@ final readonly class Response
 
         return new self(
             status: 404,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
+    /**
+     * Create an HTML response with rendered view.
+     *
+     * @param array<string, mixed>|ViewContext $data
+     */
+    public static function view(
+        ViewRenderer $view,
+        string $template,
+        array|ViewContext $data = [],
+        ?string $layout = null,
+        int $status = 200,
+    ): self {
+        $body = $view->render($template, $data, $layout);
+
+        return new self(
+            status: $status,
             headers: ['Content-Type' => 'text/html; charset=utf-8'],
             body: $body,
         );
