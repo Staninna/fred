@@ -64,6 +64,10 @@ final readonly class ViewRenderer
         }
 
         $e = static fn (string $value, int $flags = ENT_QUOTES): string => htmlspecialchars($value, $flags, 'UTF-8');
+        
+        $renderPartial = function (string $partial, array $partialData = []) use ($viewRoot): string {
+            return $this->renderFile($viewRoot . '/' . ltrim($partial, '/'), $partialData, $viewRoot);
+        };
 
         extract($data, EXTR_SKIP);
 
