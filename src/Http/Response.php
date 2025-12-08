@@ -25,7 +25,11 @@ final readonly class Response
     {
         return new self(
             status: $status,
-            headers: ['Location' => $location],
+            headers: [
+                'Location' => $location,
+                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'Pragma' => 'no-cache',
+            ],
             body: '',
         );
     }
