@@ -17,6 +17,7 @@
 /** @var array<int, string> $userReactions */
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 /** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
+/** @var array<int, string[]> $linkPreviewUrlsByPost */
 /** @var callable(string, array): string $renderPartial */
 
 use Fred\Domain\Forum\Post;
@@ -131,6 +132,10 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                     <?php $previews = $linkPreviewsByPost[$post->id] ?? []; ?>
                     <?php if ($previews !== []): ?>
                         <?= $renderPartial('partials/link_preview.php', ['previews' => $previews, 'e' => $e]) ?>
+                    <?php elseif (!empty($linkPreviewUrlsByPost[$post->id] ?? [])): ?>
+                        <div class="link-preview-slot" data-preview-post="<?= $post->id ?>">
+                            <div class="small muted" data-preview-notice>Fetching link preview...</div>
+                        </div>
                     <?php endif; ?>
                     <?php if (!empty($canReact ?? false)): ?>
                         <details class="reaction-picker">

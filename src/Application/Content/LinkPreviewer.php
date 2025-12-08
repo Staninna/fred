@@ -37,7 +37,8 @@ use const LIBXML_NONET;
 final class LinkPreviewer
 {
     private string $cacheDir;
-    private int $ttlSeconds = 43200; // 12 hours
+    private int $ttlSeconds = 86400; // 24 hours for successful fetches
+    private int $failedTtlSeconds = 3600; // Avoid retrying failed hosts for an hour
 
     public function __construct(private readonly AppConfig $config)
     {
@@ -52,8 +53,7 @@ final class LinkPreviewer
      */
     public function previewsForText(string $text, int $limit = 3): array
     {
-        preg_match_all('#https?://[^\s\[\]<>"\']+#i', $text, $matches);
-        $urls = array_slice(array_unique($matches[0] ?? []), 0, max(1, $limit));
+        $urls = $this->extractUrls($text, $limit);
 
         $previews = [];
         foreach ($urls as $url) {
@@ -64,6 +64,19 @@ final class LinkPreviewer
         }
 
         return $previews;
+    }
+
+    /**
+     * Extract unique HTTP(S) URLs from text without fetching them.
+     *
+     * @return array<int, string>
+     */
+    public function extractUrls(string $text, int $limit = 3): array
+    {
+        preg_match_all('#https?://[^\s\[\]<>"\']+#i', $text, $matches);
+        $limit = max(1, $limit);
+
+        return array_slice(array_unique($matches[0] ?? []), 0, $limit);
     }
 
     /** @return array{url:string, title:string, description:string|null, image:string|null, host:string}|null */
@@ -77,15 +90,21 @@ final class LinkPreviewer
         $cacheKey = sha1($url);
         $cachePath = $this->cacheDir . '/' . $cacheKey . '.json';
 
-        if (file_exists($cachePath) && (time() - filemtime($cachePath)) < $this->ttlSeconds) {
+        if (file_exists($cachePath)) {
+            $age = time() - filemtime($cachePath);
             $cached = json_decode((string) file_get_contents($cachePath), true);
-            if (is_array($cached) && isset($cached['url'], $cached['title'])) {
+            if (is_array($cached) && ($cached['failed'] ?? false) === true) {
+                if ($age < $this->failedTtlSeconds) {
+                    return null;
+                }
+            } elseif (is_array($cached) && isset($cached['url'], $cached['title']) && $age < $this->ttlSeconds) {
                 return $cached;
             }
         }
 
         $metadata = $this->fetchMetadata($url);
         if ($metadata === null) {
+            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url], JSON_PRETTY_PRINT));
             return null;
         }
 

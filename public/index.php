@@ -159,6 +159,7 @@ $router->group('/c/{community}', function (Router $router) use (
     }, [$authRequired, $boardContext]);
 
     $router->get('/t/{thread}', [$threadController, 'show'], [$threadContext]);
+    $router->get('/t/{thread}/previews', [$threadController, 'previews'], [$threadContext]);
     $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $threadContext, $permissions->check('canReply')]);
     $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
     $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);

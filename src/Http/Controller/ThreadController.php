@@ -33,6 +33,11 @@ use Fred\Infrastructure\View\ViewRenderer;
 use PDO;
 use Throwable;
 
+use function array_filter;
+use function array_map;
+use function array_slice;
+use function explode;
+use function json_encode;
 use function trim;
 
 final readonly class ThreadController
@@ -97,10 +102,11 @@ final readonly class ThreadController
         $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
 
         $linkPreviewsByPost = [];
+        $linkPreviewUrlsByPost = [];
         foreach ($posts as $post) {
-            $previews = $this->linkPreviewer->previewsForText($post->bodyRaw ?? '');
-            if ($previews !== []) {
-                $linkPreviewsByPost[$post->id] = $previews;
+            $urls = $this->linkPreviewer->extractUrls($post->bodyRaw ?? '', 3);
+            if ($urls !== []) {
+                $linkPreviewUrlsByPost[$post->id] = $urls;
             }
         }
         $currentUser = $this->auth->currentUser();
@@ -124,6 +130,7 @@ final readonly class ThreadController
             ->set('reactionUsersByPost', $reactionUsersByPost)
             ->set('mentionsByPost', $mentionsByPost)
             ->set('linkPreviewsByPost', $linkPreviewsByPost)
+            ->set('linkPreviewUrlsByPost', $linkPreviewUrlsByPost)
             ->set('userReactions', $userReactions)
             ->set('emoticons', $this->emoticons->all())
             ->set('emoticonMap', $this->emoticons->urlsByCode())
@@ -153,6 +160,48 @@ final readonly class ThreadController
             ->set('reportError', $reportError);
 
         return Response::view($this->view, 'pages/thread/show.php', $ctx);
+    }
+
+    public function previews(Request $request): Response
+    {
+        $community = $request->attribute('community');
+        $thread = $request->attribute('thread');
+
+        if (!$community instanceof Community || $thread === null) {
+            return new Response(400, ['Content-Type' => 'application/json'], json_encode(['error' => 'Invalid context']));
+        }
+
+        $postsParam = (string) ($request->query['posts'] ?? '');
+        $postIds = array_filter(array_map('intval', array_slice(explode(',', $postsParam), 0, 25)), static fn (int $id) => $id > 0);
+
+        if ($postIds === []) {
+            return new Response(400, ['Content-Type' => 'application/json'], json_encode(['error' => 'No posts requested']));
+        }
+
+        $previews = [];
+
+        foreach ($postIds as $postId) {
+            $post = $this->posts->findById($postId);
+            if ($post === null || $post->threadId !== $thread->id) {
+                continue;
+            }
+
+            $items = $this->linkPreviewer->previewsForText($post->bodyRaw ?? '', 3);
+            if ($items === []) {
+                continue;
+            }
+
+            $previews[] = [
+                'postId' => $post->id,
+                'previews' => $items,
+            ];
+        }
+
+        return new Response(
+            status: 200,
+            headers: ['Content-Type' => 'application/json'],
+            body: json_encode(['previews' => $previews]),
+        );
     }
 
     public function create(Request $request): Response
