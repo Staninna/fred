@@ -48,8 +48,9 @@ final class AuthService
 
         if ($this->bans->isBanned($user->id, $this->now())) {
             $this->logout();
+            $this->cached = null;
 
-            return $this->cached = $this->guest();
+            return $this->guest();
         }
 
         return $this->cached = $this->mapUser($user);
