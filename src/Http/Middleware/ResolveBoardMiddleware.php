@@ -6,7 +6,7 @@ namespace Fred\Http\Middleware;
 
 use Fred\Http\Middleware\Concerns\HandlesNotFound;
 use Fred\Domain\Community\Community;
-use Fred\Http\Controller\CommunityHelper;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Database\CategoryRepository;
@@ -17,7 +17,7 @@ final readonly class ResolveBoardMiddleware
     use HandlesNotFound;
 
     public function __construct(
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private CategoryRepository $categories,
         private ViewRenderer $view,
     ) {
@@ -31,7 +31,7 @@ final readonly class ResolveBoardMiddleware
         }
 
         $boardSlug = (string) ($request->params['board'] ?? '');
-        $board = $this->communityHelper->resolveBoard($community, $boardSlug);
+        $board = $this->communityContext->resolveBoard($community, $boardSlug);
         if ($board === null) {
             return $this->notFound($request);
         }
