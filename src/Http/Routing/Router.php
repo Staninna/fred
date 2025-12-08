@@ -41,9 +41,17 @@ final class Router
     /** @var array<int, array<int, callable>> */
     private array $groupMiddlewareStack = [];
 
+    /** @var array<int, callable> */
+    private array $globalMiddleware = [];
+
     public function __construct(?string $publicPath = null)
     {
         $this->publicPath = $publicPath === null ? null : rtrim($publicPath, '/\\');
+    }
+
+    public function addGlobalMiddleware(callable $middleware): void
+    {
+        $this->globalMiddleware[] = $middleware;
     }
 
     public function get(string $path, callable $handler, array $middleware = []): void
@@ -224,7 +232,8 @@ final class Router
      */
     private function runMiddleware(Request $request, callable $handler, array $middleware): Response
     {
-        $pipeline = array_reverse($middleware);
+        $allMiddleware = array_merge($this->globalMiddleware, $middleware);
+        $pipeline = array_reverse($allMiddleware);
         $next = static fn (Request $incoming) => $handler($incoming);
 
         foreach ($pipeline as $layer) {
