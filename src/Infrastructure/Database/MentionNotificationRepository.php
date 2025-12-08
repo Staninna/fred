@@ -38,6 +38,40 @@ final class MentionNotificationRepository
         ]);
     }
 
+    /**
+     * Batch insert mention notifications for seeding performance
+     * @param array<array{communityId: int, postId: int, mentionedUserId: int, mentionedByUserId: int, createdAt: int}> $mentions
+     */
+    public function batchInsert(array $mentions): void
+    {
+        if ($mentions === []) {
+            return;
+        }
+
+        // Chunk to avoid SQLite's 999 parameter limit (5 params per row, so 199 rows max)
+        $chunks = array_chunk($mentions, 199);
+        
+        foreach ($chunks as $chunk) {
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($chunk as $mention) {
+                $placeholders[] = '(?, ?, ?, ?, ?, NULL)';
+                $values[] = $mention['communityId'];
+                $values[] = $mention['postId'];
+                $values[] = $mention['mentionedUserId'];
+                $values[] = $mention['mentionedByUserId'];
+                $values[] = $mention['createdAt'];
+            }
+
+            $sql = 'INSERT OR IGNORE INTO mention_notifications (community_id, post_id, mentioned_user_id, mentioned_by_user_id, created_at, read_at) VALUES '
+                . implode(', ', $placeholders);
+            
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($values);
+        }
+    }
+
     /** @return MentionNotification[] */
     public function listForUser(int $userId, int $communityId, int $limit = 20, int $offset = 0): array
     {

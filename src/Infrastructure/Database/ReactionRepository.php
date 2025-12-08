@@ -199,6 +199,83 @@ final class ReactionRepository
         }
     }
 
+    /**
+     * Batch insert reactions for seeding performance
+     * @param array<array{communityId: int, postId: int, userId: int, emoticon: string, timestamp: int}> $reactions
+     */
+    public function batchInsertReactions(array $reactions): void
+    {
+        if ($reactions === []) {
+            return;
+        }
+
+        // Chunk to avoid SQLite's 999 parameter limit (6 params per row, so 166 rows max)
+        $chunks = array_chunk($reactions, 166);
+        
+        foreach ($chunks as $chunk) {
+            // Insert user reactions
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($chunk as $reaction) {
+                $placeholders[] = '(?, ?, ?, ?, ?, ?)';
+                $values[] = $reaction['communityId'];
+                $values[] = $reaction['postId'];
+                $values[] = $reaction['userId'];
+                $values[] = $reaction['emoticon'];
+                $values[] = $reaction['timestamp'];
+                $values[] = $reaction['timestamp'];
+            }
+
+            $sql = 'INSERT OR IGNORE INTO post_reaction_users (community_id, post_id, user_id, emoticon, created_at, updated_at) VALUES '
+                . implode(', ', $placeholders);
+            
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($values);
+        }
+
+        // Aggregate counts by post and emoticon
+        $counts = [];
+        foreach ($reactions as $reaction) {
+            $key = $reaction['postId'] . '|' . $reaction['emoticon'];
+            if (!isset($counts[$key])) {
+                $counts[$key] = [
+                    'communityId' => $reaction['communityId'],
+                    'postId' => $reaction['postId'],
+                    'emoticon' => $reaction['emoticon'],
+                    'count' => 0,
+                    'timestamp' => $reaction['timestamp'],
+                ];
+            }
+            $counts[$key]['count']++;
+        }
+
+        // Batch insert reaction counts with chunking (6 params per row, so 166 rows max)
+        $countChunks = array_chunk(array_values($counts), 166);
+        
+        foreach ($countChunks as $countChunk) {
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($countChunk as $count) {
+                $placeholders[] = '(?, ?, ?, ?, ?, ?)';
+                $values[] = $count['communityId'];
+                $values[] = $count['postId'];
+                $values[] = $count['emoticon'];
+                $values[] = $count['count'];
+                $values[] = $count['timestamp'];
+                $values[] = $count['timestamp'];
+            }
+
+            $sql = 'INSERT INTO post_reactions (community_id, post_id, emoticon, count, created_at, updated_at) VALUES '
+                . implode(', ', $placeholders)
+                . ' ON CONFLICT(post_id, emoticon) DO UPDATE SET count = count + excluded.count, updated_at = excluded.updated_at';
+            
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($values);
+        }
+    }
+
     public function removeUserReaction(int $postId, int $userId): void
     {
         $this->pdo->beginTransaction();

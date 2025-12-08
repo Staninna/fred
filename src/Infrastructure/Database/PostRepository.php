@@ -13,6 +13,11 @@ final class PostRepository
     {
     }
 
+    public function pdo(): PDO
+    {
+        return $this->pdo;
+    }
+
     /**
      * @return Post[]
      */
@@ -129,6 +134,49 @@ final class PostRepository
         }
 
         return $post;
+    }
+
+    /**
+     * Batch insert posts for seeding performance
+     * @param array<array{communityId: int, threadId: int, authorId: int, bodyRaw: string, bodyParsed: ?string, signatureSnapshot: ?string, timestamp: int}> $posts
+     * @return int First inserted post ID
+     */
+    public function batchInsert(array $posts): int
+    {
+        if ($posts === []) {
+            return 0;
+        }
+
+        // Chunk to avoid SQLite's 999 parameter limit (8 params per row, so 124 rows max)
+        $chunks = array_chunk($posts, 124);
+        $lastId = 0;
+        
+        foreach ($chunks as $chunk) {
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($chunk as $post) {
+                $placeholders[] = '(?, ?, ?, ?, ?, ?, ?, ?)';
+                $values[] = $post['communityId'];
+                $values[] = $post['threadId'];
+                $values[] = $post['authorId'];
+                $values[] = $post['bodyRaw'];
+                $values[] = $post['bodyParsed'];
+                $values[] = $post['signatureSnapshot'];
+                $values[] = $post['timestamp'];
+                $values[] = $post['timestamp'];
+            }
+
+            $sql = 'INSERT INTO posts (community_id, thread_id, author_id, body_raw, body_parsed, signature_snapshot, created_at, updated_at) VALUES '
+                . implode(', ', $placeholders);
+            
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($values);
+            
+            $lastId = (int) $this->pdo->lastInsertId();
+        }
+
+        return $lastId;
     }
 
     private function hydrate(array $row): Post

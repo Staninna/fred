@@ -44,6 +44,15 @@ final readonly class MentionService
     }
 
     /**
+     * Batch insert notifications for seeding performance
+     * @param array<array{communityId: int, postId: int, mentionedUserId: int, mentionedByUserId: int, createdAt: int}> $notifications
+     */
+    public function batchInsertNotifications(array $notifications): void
+    {
+        $this->mentions->batchInsert($notifications);
+    }
+
+    /**
      * @return string[]
      */
     public function extractHandles(string $bodyRaw): array

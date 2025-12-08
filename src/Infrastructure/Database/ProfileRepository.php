@@ -93,6 +93,45 @@ final class ProfileRepository
         return $profile;
     }
 
+    /**
+     * Batch insert profiles for seeding performance
+     * @param array<array{userId: int, communityId: int, timestamp: int}> $profiles
+     */
+    public function batchInsert(array $profiles): void
+    {
+        if ($profiles === []) {
+            return;
+        }
+
+        // Chunk to avoid SQLite's 999 parameter limit (10 params per row, so 99 rows max)
+        $chunks = array_chunk($profiles, 99);
+        
+        foreach ($chunks as $chunk) {
+            $placeholders = [];
+            $values = [];
+            
+            foreach ($chunk as $profile) {
+                $placeholders[] = '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                $values[] = $profile['userId'];
+                $values[] = $profile['communityId'];
+                $values[] = '';
+                $values[] = '';
+                $values[] = '';
+                $values[] = '';
+                $values[] = '';
+                $values[] = '';
+                $values[] = $profile['timestamp'];
+                $values[] = $profile['timestamp'];
+            }
+
+            $sql = 'INSERT OR IGNORE INTO profiles (user_id, community_id, bio, location, website, signature_raw, signature_parsed, avatar_path, created_at, updated_at) VALUES '
+                . implode(', ', $placeholders);
+            
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($values);
+        }
+    }
+
     public function ensureExists(int $userId, int $communityId): Profile
     {
         $existing = $this->findByUserAndCommunity($userId, $communityId);
