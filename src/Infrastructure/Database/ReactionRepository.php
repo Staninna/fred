@@ -61,7 +61,9 @@ final class ReactionRepository
     public function decrement(int $postId, string $emoticon, int $amount = 1): void
     {
         $statement = $this->pdo->prepare(
-            'UPDATE post_reactions SET count = count - :amount, updated_at = :now WHERE post_id = :post_id AND emoticon = :emoticon'
+            'UPDATE post_reactions
+             SET count = MAX(count - :amount, 0), updated_at = :now
+             WHERE post_id = :post_id AND emoticon = :emoticon'
         );
 
         $statement->execute([
@@ -71,11 +73,12 @@ final class ReactionRepository
             'now' => time(),
         ]);
 
-        $this->pdo->prepare('DELETE FROM post_reactions WHERE post_id = :post_id AND emoticon = :emoticon AND count <= 0')
-            ->execute([
-                'post_id' => $postId,
-                'emoticon' => $emoticon,
-            ]);
+        $this->pdo->prepare(
+            'DELETE FROM post_reactions WHERE post_id = :post_id AND emoticon = :emoticon AND count <= 0'
+        )->execute([
+            'post_id' => $postId,
+            'emoticon' => $emoticon,
+        ]);
     }
 
     public function findUserReaction(int $postId, int $userId): ?string
