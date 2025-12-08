@@ -73,6 +73,19 @@ final class AllRoutesTest extends TestCase
                 continue;
             }
 
+            $view = $context['view'];
+            $auth = $context['auth'];
+            $config = $context['config'];
+            $communityHelper = $context['communityHelper'];
+
+            $view->share('currentUser', $auth->currentUser());
+            $view->share('environment', $config->environment);
+            $view->share('baseUrl', $config->baseUrl);
+            $view->share('activePath', $path);
+            $view->share('navSections', $communityHelper->navForCommunity());
+            $view->share('currentCommunity', null);
+            $view->share('customCss', '');
+
             $response = $router->dispatch(new Request(
                 method: 'GET',
                 path: $path,
@@ -224,7 +237,12 @@ final class AllRoutesTest extends TestCase
             $communityModeratorRepository
         );
 
-        return [$router, $seed];
+        return [$router, $seed + [
+            'view' => $view,
+            'auth' => $authService,
+            'config' => $config,
+            'communityHelper' => $communityHelper,
+        ]];
     }
 
     private function seedForumData(

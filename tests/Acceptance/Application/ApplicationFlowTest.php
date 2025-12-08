@@ -52,7 +52,7 @@ final class ApplicationFlowTest extends TestCase
         $context = $app['context'];
         $token = $app['csrfToken'];
 
-        $home = $router->dispatch(new Request(
+        $home = $this->dispatch($app, new Request(
             method: 'GET',
             path: '/',
             query: [],
@@ -61,7 +61,7 @@ final class ApplicationFlowTest extends TestCase
         $this->assertSame(200, $home->status);
         $this->assertStringContainsString($context['community']->name, $home->body);
 
-        $threadResponse = $router->dispatch(new Request(
+        $threadResponse = $this->dispatch($app, new Request(
             method: 'GET',
             path: '/c/' . $context['community']->slug . '/t/' . $context['thread']->id,
             query: [],
@@ -524,6 +524,9 @@ final class ApplicationFlowTest extends TestCase
         return [
             'router' => $router,
             'auth' => $authService,
+            'view' => $view,
+            'config' => $config,
+            'communityHelper' => $communityHelper,
             'context' => $seed,
             'csrfToken' => $csrfToken,
             'repos' => [
@@ -626,5 +629,23 @@ final class ApplicationFlowTest extends TestCase
                 'admin' => $adminUser,
             ],
         ];
+    }
+
+    private function dispatch(array $app, Request $request): Response
+    {
+        $view = $app['view'];
+        $auth = $app['auth'];
+        $config = $app['config'];
+        $communityHelper = $app['communityHelper'];
+
+        $view->share('currentUser', $auth->currentUser());
+        $view->share('environment', $config->environment);
+        $view->share('baseUrl', $config->baseUrl);
+        $view->share('activePath', $request->path);
+        $view->share('navSections', $communityHelper->navForCommunity());
+        $view->share('currentCommunity', null);
+        $view->share('customCss', '');
+
+        return $app['router']->dispatch($request);
     }
 }

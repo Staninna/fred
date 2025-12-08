@@ -14,6 +14,7 @@ use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
+use Fred\Http\Response;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
@@ -42,39 +43,39 @@ final class HttpRoutesTest extends TestCase
         $threadTitle = $context['thread_title'];
         $postBody = $context['post_body'];
 
-        $communityResponse = $router->dispatch(new Request(
+        $communityResponse = $this->dispatch($context, new Request(
             method: 'GET',
             path: '/c/' . $communitySlug,
             query: [],
             body: [],
-        ));
+        ), $router);
         $this->assertSame(200, $communityResponse->status);
         $this->assertStringContainsString('Main Plaza', $communityResponse->body);
 
-        $aboutResponse = $router->dispatch(new Request(
+        $aboutResponse = $this->dispatch($context, new Request(
             method: 'GET',
             path: '/c/' . $communitySlug . '/about',
             query: [],
             body: [],
-        ));
+        ), $router);
         $this->assertSame(200, $aboutResponse->status);
         $this->assertStringContainsString('About', $aboutResponse->body);
 
-        $boardResponse = $router->dispatch(new Request(
+        $boardResponse = $this->dispatch($context, new Request(
             method: 'GET',
             path: '/c/' . $communitySlug . '/b/' . $boardSlug,
             query: [],
             body: [],
-        ));
+        ), $router);
         $this->assertSame(200, $boardResponse->status);
         $this->assertStringContainsString($threadTitle, $boardResponse->body);
 
-        $threadResponse = $router->dispatch(new Request(
+        $threadResponse = $this->dispatch($context, new Request(
             method: 'GET',
             path: '/c/' . $communitySlug . '/t/' . $threadId,
             query: [],
             body: [],
-        ));
+        ), $router);
         $this->assertSame(200, $threadResponse->status);
         $this->assertStringContainsString($postBody, $threadResponse->body);
     }
@@ -243,7 +244,12 @@ final class HttpRoutesTest extends TestCase
             $postRepository,
         );
 
-        return [$router, $seed];
+        return [$router, $seed + [
+            'view' => $view,
+            'auth' => $authService,
+            'config' => $config,
+            'communityHelper' => $communityHelper,
+        ]];
     }
 
     private function seedForumData(
@@ -303,5 +309,23 @@ final class HttpRoutesTest extends TestCase
             'thread_title' => $thread->title,
             'post_body' => 'First message',
         ];
+    }
+
+    private function dispatch(array $context, Request $request, Router $router): Response
+    {
+        $view = $context['view'];
+        $auth = $context['auth'];
+        $config = $context['config'];
+        $communityHelper = $context['communityHelper'];
+
+        $view->share('currentUser', $auth->currentUser());
+        $view->share('environment', $config->environment);
+        $view->share('baseUrl', $config->baseUrl);
+        $view->share('activePath', $request->path);
+        $view->share('navSections', $communityHelper->navForCommunity());
+        $view->share('currentCommunity', null);
+        $view->share('customCss', '');
+
+        return $router->dispatch($request);
     }
 }
