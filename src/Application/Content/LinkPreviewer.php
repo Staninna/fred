@@ -158,7 +158,7 @@ final class LinkPreviewer
         $context = stream_context_create([
             'http' => [
                 'method' => 'GET',
-                'timeout' => 3,
+                'timeout' => 5,
                 'follow_location' => 1,
                 'user_agent' => 'FredForumLinkPreview/1.0',
             ],

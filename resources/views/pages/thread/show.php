@@ -188,7 +188,7 @@ use Fred\Domain\Forum\Post;
                 }
             });
         }, 4000);
-        const timeoutTimer = setTimeout(() => controller.abort(), 8000);
+        const timeoutTimer = setTimeout(() => controller.abort(), 15000);
 
         fetch(url, { headers: { 'Accept': 'application/json' }, signal: controller.signal })
             .then((resp) => resp.ok ? resp.json() : null)
