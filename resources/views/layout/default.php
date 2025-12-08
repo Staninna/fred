@@ -82,6 +82,14 @@ document.addEventListener('alpine:init', function () {
                 var after = el.value.slice(end);
                 var open = '[' + tag + ']';
                 var close = '[/' + tag + ']';
+                if (selection === '') {
+                    el.value = before + open + close + after;
+                    var cursor = before.length + open.length;
+                    el.focus();
+                    el.setSelectionRange(cursor, cursor);
+                    return;
+                }
+
                 el.value = before + open + selection + close + after;
                 var cursor = start + open.length + selection.length + close.length;
                 el.focus();
@@ -100,9 +108,43 @@ document.addEventListener('alpine:init', function () {
                 var label = selection !== '' ? selection : url;
                 var snippet = '[url=' + url + ']' + label + '[/url]';
                 el.value = before + snippet + after;
+                var cursor = selection === ''
+                    ? before.length + ('[url=' + url + ']').length
+                    : before.length + snippet.length;
+                el.focus();
+                el.setSelectionRange(cursor, cursor);
+            },
+            insertImage: function() {
+                var url = prompt('Image URL (http/https):', 'http://');
+                if (!url) return;
+                var el = this.target;
+                if (!el) return;
+                var start = el.selectionStart ?? el.value.length;
+                var end = el.selectionEnd ?? el.value.length;
+                var before = el.value.slice(0, start);
+                var after = el.value.slice(end);
+                var snippet = '[img]' + url + '[/img]';
+                el.value = before + snippet + after;
                 var cursor = before.length + snippet.length;
                 el.focus();
                 el.setSelectionRange(cursor, cursor);
+            },
+            insertList: function() {
+                var el = this.target;
+                if (!el) return;
+                var start = el.selectionStart ?? el.value.length;
+                var end = el.selectionEnd ?? el.value.length;
+                var before = el.value.slice(0, start);
+                var selection = el.value.slice(start, end);
+                var after = el.value.slice(end);
+                var items = selection ? selection.split(/\n+/) : ['item 1', 'item 2'];
+                var body = items.map(function (line) { return '[*]' + line; }).join('\n');
+                var snippet = '[list]\n' + body + '\n[/list]';
+                el.value = before + snippet + after;
+                var selectStart = before.length + '[list]\n'.length;
+                var selectEnd = selectStart + body.length;
+                el.focus();
+                el.setSelectionRange(selectStart, selectEnd);
             }
         };
     });
