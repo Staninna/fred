@@ -122,6 +122,41 @@ final class MentionNotificationRepository
         ]);
     }
 
+    /**
+     * @param int[] $postIds
+     * @return array<int, MentionNotification[]>
+     */
+    public function listForPosts(array $postIds): array
+    {
+        if ($postIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($postIds), '?'));
+        $statement = $this->pdo->prepare(
+            "SELECT mn.id, mn.community_id, c.slug AS community_slug, mn.post_id, mn.mentioned_user_id, mn.mentioned_by_user_id,
+                    mn.created_at, mn.read_at, p.thread_id, p.body_raw, t.title AS thread_title,
+                    u.display_name AS author_name, u.username AS author_username
+             FROM mention_notifications mn
+             JOIN posts p ON p.id = mn.post_id
+             JOIN threads t ON t.id = p.thread_id
+             JOIN users u ON u.id = mn.mentioned_by_user_id
+             JOIN communities c ON c.id = mn.community_id
+             WHERE mn.post_id IN ($placeholders)
+             ORDER BY mn.id ASC"
+        );
+        $statement->execute($postIds);
+
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $grouped = [];
+        foreach ($rows as $row) {
+            $notification = $this->hydrate($row);
+            $grouped[$notification->postId][] = $notification;
+        }
+
+        return $grouped;
+    }
+
     private function hydrate(array $row): MentionNotification
     {
         return new MentionNotification(

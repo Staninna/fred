@@ -24,8 +24,10 @@ use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 use PDO;
@@ -47,10 +49,12 @@ final readonly class ThreadController
         private PostRepository $posts,
         private BbcodeParser $parser,
         private LinkPreviewer $linkPreviewer,
+        private UserRepository $users,
         private ProfileRepository $profiles,
         private UploadService $uploads,
         private AttachmentRepository $attachments,
         private ReactionRepository $reactions,
+        private MentionNotificationRepository $mentionNotifications,
         private EmoticonSet $emoticons,
         private MentionService $mentions,
         private PDO $pdo,
@@ -80,9 +84,18 @@ final readonly class ThreadController
 
         $structure = $this->structureForCommunity($community);
         $posts = $this->posts->listByThreadIdPaginated($thread->id, $perPage, $offset);
-        $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
-        $reactionsByPost = $this->reactions->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
-        $reactionUsersByPost = $this->reactions->listUsersByPostIds(array_map(static fn ($p) => $p->id, $posts));
+
+        $postIds = array_map(static fn ($p) => $p->id, $posts);
+        $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
+
+        $attachmentsByPost = $this->attachments->listByPostIds($postIds);
+        $reactionsByPost = $this->reactions->listByPostIds($postIds);
+        $reactionUsersByPost = $this->reactions->listUsersByPostIds($postIds);
+        $mentionsByPost = $this->mentionNotifications->listForPosts($postIds);
+
+        $usersById = $this->users->findByIds($authorIds);
+        $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
+
         $linkPreviewsByPost = [];
         foreach ($posts as $post) {
             $previews = $this->linkPreviewer->previewsForText($post->bodyRaw ?? '');
@@ -90,11 +103,9 @@ final readonly class ThreadController
                 $linkPreviewsByPost[$post->id] = $previews;
             }
         }
-        $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
-        $profilesByUser = $this->profiles->listByUsersInCommunity($authorIds, $community->id);
         $currentUser = $this->auth->currentUser();
         $userReactions = !$currentUser->isGuest()
-            ? $this->reactions->listUserReactions(array_map(static fn ($p) => $p->id, $posts), $currentUser->id ?? 0)
+            ? $this->reactions->listUserReactions($postIds, $currentUser->id ?? 0)
             : [];
         $reportNotice = isset($request->query['reported']) ? 'Thank you. A moderator will review this post.' : null;
         $reportError = isset($request->query['report_error']) ? 'Report could not be submitted. Reason is required.' : null;
@@ -106,10 +117,12 @@ final readonly class ThreadController
             ->set('category', $category)
             ->set('thread', $thread)
             ->set('posts', $posts)
+            ->set('usersById', $usersById)
             ->set('profilesByUserId', $profilesByUser)
             ->set('attachmentsByPost', $attachmentsByPost)
             ->set('reactionsByPost', $reactionsByPost)
             ->set('reactionUsersByPost', $reactionUsersByPost)
+            ->set('mentionsByPost', $mentionsByPost)
             ->set('linkPreviewsByPost', $linkPreviewsByPost)
             ->set('userReactions', $userReactions)
             ->set('emoticons', $this->emoticons->all())

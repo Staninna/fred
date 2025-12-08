@@ -35,6 +35,37 @@ final readonly class UserRepository
         return $this->hydrate($row);
     }
 
+    /**
+     * @param int[] $ids
+     * @return array<int, User>
+     */
+    public function findByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, \count($ids), '?'));
+        $statement = $this->pdo->prepare(
+            "SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,
+                    r.slug AS role_slug, r.name AS role_name
+             FROM users u
+             JOIN roles r ON r.id = u.role_id
+             WHERE u.id IN ($placeholders)"
+        );
+
+        $statement->execute($ids);
+
+        $rows = $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $users = [];
+        foreach ($rows as $row) {
+            $user = $this->hydrate($row);
+            $users[$user->id] = $user;
+        }
+
+        return $users;
+    }
+
     public function findByUsername(string $username): ?User
     {
         $statement = $this->pdo->prepare(
