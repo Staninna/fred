@@ -1,7 +1,7 @@
 <?php
 /** @var array<int, array{title: string, items: array<int, array{label: string, href: string}>}>|null $navSections */
 /** @var string|null $activePath */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 /** @var \Fred\Domain\Community\Community|null $currentCommunity */
 /** @var int|null $mentionUnreadCount */

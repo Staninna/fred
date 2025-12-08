@@ -4,7 +4,7 @@
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 ?>
 
 <?= $renderPartial('partials/form_section_header.php', [

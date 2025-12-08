@@ -16,7 +16,7 @@
 /** @var array<int, Board> $allBoards */
 /** @var bool $canModerate */
 /** @var array<int, \Fred\Domain\Auth\Profile> $profilesByUserId */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Board;

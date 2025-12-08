@@ -2,7 +2,7 @@
 /** @var \Fred\Domain\Community\Community $community */
 /** @var array<int, \Fred\Domain\Community\Category> $categories */
 /** @var array<int, array<int, \Fred\Domain\Community\Board>> $boardsByCategory */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

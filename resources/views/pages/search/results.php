@@ -5,7 +5,7 @@
 /** @var array<int, array<string, mixed>> $posts */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string $query */
 /** @var \Fred\Domain\Community\Board|null $boardFilter */
 /** @var \Fred\Domain\Auth\User|null $userFilter */

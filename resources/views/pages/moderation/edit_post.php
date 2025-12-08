@@ -3,7 +3,7 @@
 /** @var \Fred\Domain\Community\Community $community */
 /** @var array<int, string> $errors */
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var string|null $success */
 

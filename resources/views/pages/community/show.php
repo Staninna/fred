@@ -3,7 +3,7 @@
 /** @var array<int, Category> $categories */
 /** @var CurrentUser $currentUser*/
 /** @var array<int, array<int, Board>> $boardsByCategory */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var bool $canModerate */
 

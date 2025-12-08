@@ -5,7 +5,7 @@
 /** @var array<string, string> $old */
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string|null $success */
 
 use Fred\Application\Auth\CurrentUser;

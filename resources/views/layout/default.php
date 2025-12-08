@@ -1,6 +1,6 @@
 <?php
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var \Fred\Domain\Community\Community|null $currentCommunity */
 /** @var string|null $customCss */
 ?>

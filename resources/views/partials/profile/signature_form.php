@@ -3,7 +3,7 @@
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var array<int, string> $signatureErrors */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string|null $success */
 
 $messageIdPrefix = 'signature-settings';

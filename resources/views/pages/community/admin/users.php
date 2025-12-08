@@ -4,7 +4,7 @@
 /** @var string $query */
 /** @var string $role */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 
 use Fred\Domain\Community\Community;
 

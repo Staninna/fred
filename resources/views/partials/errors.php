@@ -1,6 +1,6 @@
 <?php
 /** @var array<int, string> $errors */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string|null $success */
 /** @var string|null $idPrefix */
 

@@ -2,7 +2,7 @@
 /** @var \Fred\Domain\Auth\User $user */
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var \Fred\Domain\Community\Community $community */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">

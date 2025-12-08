@@ -1,7 +1,7 @@
 <?php
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string $title */
 /** @var string|null $infoText */
 /** @var string|null $success */

@@ -4,7 +4,7 @@
 /** @var Community $community */
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var array<int, string> $profileErrors */
 /** @var array<int, string> $signatureErrors */
 /** @var array<int, string> $avatarErrors */

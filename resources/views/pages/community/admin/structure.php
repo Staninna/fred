@@ -4,7 +4,7 @@
 /** @var array<int, array<int, Board>> $boardsByCategory */
 /** @var array<int, string> $errors */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var array<int, array{user_id:int, username:string, assigned_at:int}> $moderators */
 /** @var array<int, string> $usernames */
 /** @var string|null $success */

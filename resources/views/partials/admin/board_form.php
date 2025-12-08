@@ -1,5 +1,5 @@
 <?php
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string $action */
 /** @var string $submitLabel */
 /** @var \Fred\Domain\Community\Board|null $board */

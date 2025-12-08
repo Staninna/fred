@@ -4,7 +4,7 @@
 /** @var string|null $selected */
 /** @var string|null $placeholder */
 /** @var string|null $id */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string|null $class */
 /** @var bool|null $required */
 /** @var string|null $ariaDescribedBy */

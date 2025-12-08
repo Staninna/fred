@@ -3,7 +3,7 @@
 /** @var string $emptyMessage */
 /** @var string $type */
 /** @var \Fred\Domain\Community\Community $community */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 ?>
 
 <?php if ($items === []): ?>

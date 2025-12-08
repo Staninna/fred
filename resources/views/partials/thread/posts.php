@@ -1,6 +1,6 @@
 <?php
 /** @var array<int, Post> $posts */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var bool $canEditAnyPost */
 /** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */

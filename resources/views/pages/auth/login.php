@@ -2,7 +2,7 @@
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var callable(string, array): string $renderPartial */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var string|null $success */
 
 $messageIdPrefix = 'login-form';

@@ -1,5 +1,5 @@
 <?php
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var string $action */
 /** @var string $submitLabel */

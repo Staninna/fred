@@ -2,7 +2,7 @@
 /** @var \Fred\Domain\Community\Community $community */
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var array<int, string> $avatarErrors */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var string|null $success */
 

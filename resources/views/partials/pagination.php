@@ -3,7 +3,7 @@
 /** @var int $totalPages */
 /** @var string $baseUrl */
 /** @var bool $isTable */
-/** @var callable(string, int): string $e */
+/** @var callable(string, ?int=): string $e */
 ?>
 <?php if ($totalPages > 1): ?>
     <?php $containerIsTable = $isTable ?? false; ?>
