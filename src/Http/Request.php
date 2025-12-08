@@ -40,6 +40,11 @@ final readonly class Request
             }
         }
 
+        $normalizedHeaders = [];
+        foreach ($headers as $key => $value) {
+            $normalizedHeaders[strtolower((string) $key)] = $value;
+        }
+
         return new self(
             method: trim($method),
             path: $path,
@@ -47,7 +52,7 @@ final readonly class Request
             body: $_POST ?? [],
             files: $_FILES ?? [],
             params: [],
-            headers: $headers,
+            headers: $normalizedHeaders,
             session: $_SESSION ?? [],
             attributes: [],
         );
@@ -94,13 +99,8 @@ final readonly class Request
     public function header(string $name, mixed $default = null): mixed
     {
         $normalized = strtolower($name);
-        foreach ($this->headers as $key => $value) {
-            if (strtolower((string) $key) === $normalized) {
-                return $value;
-            }
-        }
 
-        return $default;
+        return $this->headers[$normalized] ?? $default;
     }
 
     public function isHxRequest(): bool
