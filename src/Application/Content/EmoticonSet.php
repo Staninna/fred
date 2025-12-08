@@ -9,9 +9,11 @@ use Fred\Infrastructure\Config\AppConfig;
 use function basename;
 use function ltrim;
 use function pathinfo;
+use function rawurlencode;
 use function rtrim;
 use function sort;
 use function strtolower;
+use function trim;
 
 use const PATHINFO_FILENAME;
 
@@ -25,6 +27,8 @@ final class EmoticonSet
 
     /** @var array<string, string> */
     private array $cacheMap = [];
+
+    private ?string $versionSuffix = null;
 
     public function __construct(private readonly AppConfig $config)
     {
@@ -59,7 +63,7 @@ final class EmoticonSet
             $items[] = [
                 'code' => $code,
                 'filename' => $filename,
-                'url' => '/emoticons/' . ltrim($filename, '/'),
+                'url' => '/emoticons/' . ltrim($filename, '/') . $this->versionSuffix(),
             ];
         }
 
@@ -112,5 +116,19 @@ final class EmoticonSet
     public function codes(): array
     {
         return array_map(static fn (array $item) => $item['code'], $this->all());
+    }
+
+    public function versionSuffix(): string
+    {
+        if ($this->versionSuffix !== null) {
+            return $this->versionSuffix;
+        }
+
+        $env = trim($this->config->environment);
+        if ($env === '') {
+            return $this->versionSuffix = '';
+        }
+
+        return $this->versionSuffix = '?v=' . rawurlencode($env);
     }
 }

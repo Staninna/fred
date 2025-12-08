@@ -13,11 +13,29 @@
 /** @var array<int, array<string, int>> $reactionsByPost */
 /** @var array<int, array{code: string, filename: string, url: string}> $emoticons */
 /** @var array<string, string> $emoticonMap */
+/** @var string $emoticonVersion */
 /** @var array<int, string> $userReactions */
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 
 use Fred\Domain\Forum\Post;
 use Fred\Domain\Forum\Attachment;
+?>
+
+<?php
+$emoticonVersion = $emoticonVersion ?? '';
+$resolvedEmoticons = [];
+$resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $emoticonMap, $emoticonVersion): string {
+    $normalized = strtolower($code);
+    if (isset($resolvedEmoticons[$normalized])) {
+        return $resolvedEmoticons[$normalized];
+    }
+
+    if (isset($emoticonMap[$normalized])) {
+        return $resolvedEmoticons[$normalized] = $emoticonMap[$normalized];
+    }
+
+    return $resolvedEmoticons[$normalized] = '/emoticons/' . rawurlencode($normalized) . '.png' . $emoticonVersion;
+};
 ?>
 
 <?php if ($posts === []): ?>
@@ -77,10 +95,7 @@ use Fred\Domain\Forum\Attachment;
                     <?php if ($postReactions !== []): ?>
                         <div class="reactions">
                             <?php foreach ($postReactions as $reactionCode => $count): ?>
-                                <?php $reactionUrl = $emoticonMap[$reactionCode] ?? null; ?>
-                                <?php if ($reactionUrl === null): ?>
-                                    <?php $reactionUrl = '/emoticons/' . $e($reactionCode) . '.png'; ?>
-                                <?php endif; ?>
+                                <?php $reactionUrl = $resolveEmoticonUrl($reactionCode); ?>
                                 <?php $who = $reactionUsers[$reactionCode] ?? ['names' => [], 'extra' => 0]; ?>
                                 <?php $tooltip = $who['names'] === [] ? '' : implode(', ', $who['names']); ?>
                                 <?php if (($who['extra'] ?? 0) > 0) { $tooltip .= ' +' . (int) $who['extra'] . ' more'; } ?>
@@ -98,7 +113,13 @@ use Fred\Domain\Forum\Attachment;
                                         data-tooltip="<?= $e($tooltip) ?>"
                                         aria-label="<?= $e($tooltip !== '' ? $tooltip : 'Reactions') ?>"
                                     >
-                                        <img src="<?= $e($reactionUrl) ?>" alt="<?= $e($reactionCode) ?>" width="18" height="18" onerror="this.src='/emoticons/<?= $e($reactionCode) ?>.gif'">
+                                        <img
+                                            src="<?= $e($reactionUrl) ?>"
+                                            alt="<?= $e($reactionCode) ?>"
+                                            width="18"
+                                            height="18"
+                                            onerror="this.src='/emoticons/<?= $e(rawurlencode($reactionCode)) ?>.gif<?= $e($emoticonVersion) ?>'"
+                                        >
                                         <span class="small">x<?= (int) $count ?></span>
                                     </button>
                                 </form>

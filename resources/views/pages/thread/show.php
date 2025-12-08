@@ -143,6 +143,8 @@ use Fred\Domain\Forum\Post;
         'reactionsByPost' => $reactionsByPost ?? [],
         'reactionUsersByPost' => $reactionUsersByPost ?? [],
         'emoticons' => $emoticons ?? [],
+        'emoticonMap' => $emoticonMap ?? [],
+        'emoticonVersion' => $emoticonVersion ?? '',
         'userReactions' => $userReactions ?? [],
     ]) ?>
 </div>
