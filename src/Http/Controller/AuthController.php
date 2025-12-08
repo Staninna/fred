@@ -17,7 +17,6 @@ final readonly class AuthController
         private ViewRenderer $view,
         private AppConfig    $config,
         private AuthService  $auth,
-        private CommunityHelper $communityHelper,
     ) {
     }
 

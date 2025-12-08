@@ -6,9 +6,12 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
@@ -28,9 +31,11 @@ final readonly class MentionController
         private AuthService $auth,
         private AppConfig $config,
         private ViewRenderer $view,
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private MentionNotificationRepository $mentions,
         private UserRepository $users,
+        private BoardRepository $boards,
+        private CategoryRepository $categories,
     ) {
     }
 
@@ -61,7 +66,7 @@ final readonly class MentionController
         );
         $unreadCount = $this->mentions->countUnread($currentUser->id ?? 0, $community->id);
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->structureForCommunity($community);
 
         $ctx = ViewContext::make()
             ->set('pageTitle', 'Mentions')
@@ -76,7 +81,7 @@ final readonly class MentionController
             ->set('postsPerPage', self::THREAD_POSTS_PER_PAGE)
             ->set('mentionUnreadCount', $unreadCount)
             ->set('currentCommunity', $community)
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -161,5 +166,31 @@ final readonly class MentionController
             view: $this->view,
             request: $request,
         );
+    }
+
+    private function structureForCommunity(Community $community): array
+    {
+        $categories = $this->categories->listByCommunityId($community->id);
+        $boards = $this->boards->listByCommunityId($community->id);
+
+        return [
+            'categories' => $categories,
+            'boardsByCategory' => $this->groupBoards($boards),
+        ];
+    }
+
+    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    private function groupBoards(array $boards): array
+    {
+        $grouped = [];
+        foreach ($boards as $board) {
+            $grouped[$board->categoryId][] = $board;
+        }
+
+        foreach ($grouped as $categoryId => $items) {
+            $grouped[$categoryId] = array_values($items);
+        }
+
+        return $grouped;
     }
 }

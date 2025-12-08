@@ -7,25 +7,31 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
-use function trim;
+use Fred\Support\Str;
 
-final readonly class CommunityController
+final readonly class CommunityController extends Controller
 {
     public function __construct(
-        private ViewRenderer $view,
-        private AppConfig $config,
-        private AuthService $auth,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
         private CommunityRepository $communities,
+        private CategoryRepository $categories,
+        private BoardRepository $boards,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function index(Request $request, array $errors = [], array $old = []): Response
@@ -38,7 +44,7 @@ final readonly class CommunityController
             ->set('communities', $communities)
             ->set('errors', $errors)
             ->set('old', $old)
-            ->set('navSections', $this->communityHelper->navSections(null, [], [], $communities))
+            ->set('navSections', $this->communityContext->navSections(null, [], [], $communities))
             ->set('canModerate', $this->permissions->canModerate($currentUser))
             ->set('canCreateCommunity', $this->permissions->canCreateCommunity($currentUser));
 
@@ -66,7 +72,7 @@ final readonly class CommunityController
             $errors[] = 'Name is required.';
         }
 
-        $slug = $slug === '' ? $this->communityHelper->slugify($name) : $this->communityHelper->slugify($slug);
+        $slug = $slug === '' ? Str::slugify($name) : Str::slugify($slug);
         if ($slug === '') {
             $errors[] = 'Slug is required.';
         }
@@ -100,7 +106,7 @@ final readonly class CommunityController
             return $this->notFound($request);
         }
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->communityContext->structureForCommunity($community);
         $allCommunities = $this->communities->all();
         $currentUser = $this->auth->currentUser();
 
@@ -111,7 +117,7 @@ final readonly class CommunityController
             ->set('boardsByCategory', $structure['boardsByCategory'])
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -129,7 +135,7 @@ final readonly class CommunityController
             return $this->notFound($request);
         }
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->communityContext->structureForCommunity($community);
 
         $ctx = ViewContext::make()
             ->set('pageTitle', $community->name . ' · About')
@@ -137,7 +143,7 @@ final readonly class CommunityController
             ->set('categories', $structure['categories'])
             ->set('boardsByCategory', $structure['boardsByCategory'])
             ->set('currentCommunity', $community)
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -146,13 +152,5 @@ final readonly class CommunityController
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
         return Response::view($this->view, 'pages/community/about.php', $ctx);
-    }
-
-    private function notFound(Request $request): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            request: $request,
-        );
     }
 }

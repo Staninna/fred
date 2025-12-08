@@ -14,10 +14,12 @@ use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Domain\Forum\Post;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
@@ -38,8 +40,9 @@ final readonly class ThreadController
         private AppConfig $config,
         private AuthService $auth,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private CategoryRepository $categories,
+        private BoardRepository $boards,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
@@ -75,7 +78,7 @@ final readonly class ThreadController
         }
         $offset = ($page - 1) * $perPage;
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->structureForCommunity($community);
         $posts = $this->posts->listByThreadIdPaginated($thread->id, $perPage, $offset);
         $attachmentsByPost = $this->attachments->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
         $reactionsByPost = $this->reactions->listByPostIds(array_map(static fn ($p) => $p->id, $posts));
@@ -127,7 +130,7 @@ final readonly class ThreadController
             ->set('canDeleteAnyPost', $this->permissions->canDeleteAnyPost($currentUser, $community->id))
             ->set('canBanUsers', $this->permissions->canBan($currentUser, $community->id))
             ->set('allBoards', $structure['boards'])
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -296,7 +299,7 @@ final readonly class ThreadController
         array $old = [],
         int $status = 200,
     ): Response {
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->structureForCommunity($community);
 
         $ctx = ViewContext::make()
             ->set('pageTitle', 'New thread')
@@ -305,7 +308,7 @@ final readonly class ThreadController
             ->set('errors', $errors)
             ->set('old', $old)
             ->set('currentCommunity', $community)
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -321,5 +324,32 @@ final readonly class ThreadController
             view: $this->view,
             request: $request,
         );
+    }
+
+    private function structureForCommunity(Community $community): array
+    {
+        $categories = $this->categories->listByCommunityId($community->id);
+        $boards = $this->boards->listByCommunityId($community->id);
+
+        return [
+            'categories' => $categories,
+            'boards' => $boards,
+            'boardsByCategory' => $this->groupBoards($boards),
+        ];
+    }
+
+    /** @param Board[] $boards @return array<int, Board[]> */
+    private function groupBoards(array $boards): array
+    {
+        $grouped = [];
+        foreach ($boards as $board) {
+            $grouped[$board->categoryId][] = $board;
+        }
+
+        foreach ($grouped as $categoryId => $items) {
+            $grouped[$categoryId] = array_values($items);
+        }
+
+        return $grouped;
     }
 }

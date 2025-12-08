@@ -28,7 +28,6 @@ final readonly class PostController
         private AuthService $auth,
         private ViewRenderer $view,
         private AppConfig $config,
-        private CommunityHelper $communityHelper,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,

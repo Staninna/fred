@@ -11,34 +11,37 @@ use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
 use Fred\Http\Request;
 use Fred\Http\Response;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
-final readonly class BoardController
+final readonly class BoardController extends Controller
 {
     public function __construct(
-        private ViewRenderer $view,
-        private AppConfig $config,
-        private AuthService $auth,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
+        private BoardRepository $boards,
         private CategoryRepository $categories,
         private ThreadRepository $threads,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function show(Request $request): Response
     {
+        /** @var Community $community */
         $community = $request->attribute('community');
+        /** @var Board $board */
         $board = $request->attribute('board');
+        /** @var Category $category */
         $category = $request->attribute('category');
-
-        if (!$community instanceof Community || !$board instanceof Board || !$category instanceof Category) {
-            return $this->notFound($request);
-        }
 
         $page = (int) ($request->query['page'] ?? 1);
         $page = $page < 1 ? 1 : $page;
@@ -50,7 +53,7 @@ final readonly class BoardController
         }
         $offset = ($page - 1) * $perPage;
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->communityContext->structureForCommunity($community);
         $threads = $this->threads->listByBoardIdPaginated($board->id, $perPage, $offset);
         $currentUser = $this->auth->currentUser();
 
@@ -69,7 +72,7 @@ final readonly class BoardController
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
             ->set('canCreateThread', $this->permissions->canCreateThread($currentUser))
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -77,16 +80,5 @@ final readonly class BoardController
             ->set('customCss', trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')));
 
         return Response::view($this->view, 'pages/board/show.php', $ctx);
-    }
-
-    private function notFound(Request $request): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
-            request: $request,
-            navSections: $this->communityHelper->navForCommunity(),
-        );
     }
 }

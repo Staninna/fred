@@ -11,6 +11,7 @@ use Fred\Application\Content\UploadService;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\Post as ForumPost;
 use Fred\Domain\Forum\Thread;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -32,7 +33,7 @@ final readonly class ModerationController
         private AppConfig $config,
         private AuthService $auth,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private \Fred\Application\Content\BbcodeParser $parser,
@@ -116,7 +117,7 @@ final readonly class ModerationController
             if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
                 return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
             }
-            $structure = $this->communityHelper->structureForCommunity($community);
+            $structure = $this->structureForCommunity($community);
 
             $ctx = ViewContext::make()
                 ->set('pageTitle', 'Edit post')
@@ -128,7 +129,7 @@ final readonly class ModerationController
                 ->set('errors', [])
                 ->set('currentCommunity', $community)
                 ->set('page', (int) ($request->query['page'] ?? 1))
-                ->set('navSections', $this->communityHelper->navSections(
+                ->set('navSections', $this->communityContext->navSections(
                     $community,
                     $structure['categories'],
                     $structure['boardsByCategory'],
@@ -180,7 +181,7 @@ final readonly class ModerationController
         }
 
         $targetBoardSlug = (string) ($request->body['target_board'] ?? '');
-        $targetBoard = $this->communityHelper->resolveBoard($community, $targetBoardSlug);
+        $targetBoard = $this->communityContext->resolveBoard($community, $targetBoardSlug);
         if ($targetBoard === null) {
             return $this->notFound($request);
         }
@@ -243,7 +244,7 @@ final readonly class ModerationController
             ->set('activePath', $request->path)
             ->set('errors', [])
             ->set('old', [])
-            ->set('navSections', $this->communityHelper->navForCommunity($community))
+            ->set('navSections', $this->communityContext->navForCommunity($community))
             ->set('usernames', $usernames)
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -310,7 +311,7 @@ final readonly class ModerationController
                 'reason' => $reason,
                 'expires_at' => $expires,
             ])
-            ->set('navSections', $this->communityHelper->navForCommunity($community))
+            ->set('navSections', $this->communityContext->navForCommunity($community))
             ->set('usernames', $usernames)
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
@@ -396,5 +397,31 @@ final readonly class ModerationController
             view: $this->view,
             request: $request,
         );
+    }
+
+    private function structureForCommunity(Community $community): array
+    {
+        $categories = $this->categories->listByCommunityId($community->id);
+        $boards = $this->boards->listByCommunityId($community->id);
+
+        return [
+            'categories' => $categories,
+            'boardsByCategory' => $this->groupBoards($boards),
+        ];
+    }
+
+    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    private function groupBoards(array $boards): array
+    {
+        $grouped = [];
+        foreach ($boards as $board) {
+            $grouped[$board->categoryId][] = $board;
+        }
+
+        foreach ($grouped as $categoryId => $items) {
+            $grouped[$categoryId] = array_values($items);
+        }
+
+        return $grouped;
     }
 }

@@ -7,6 +7,7 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -20,6 +21,8 @@ use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
+use function preg_replace;
+use function strtolower;
 use function trim;
 
 final readonly class AdminController
@@ -29,7 +32,7 @@ final readonly class AdminController
         private AppConfig $config,
         private AuthService $auth,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private CategoryRepository $categories,
         private BoardRepository $boards,
         private CommunityRepository $communities,
@@ -51,7 +54,7 @@ final readonly class AdminController
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->structureForCommunity($community);
         $moderators = $this->communityModerators->listByCommunity($community->id);
         $usernames = $this->users->listUsernames();
 
@@ -294,7 +297,7 @@ final readonly class AdminController
 
         $name = trim((string) ($request->body['name'] ?? ''));
         $slugInput = trim((string) ($request->body['slug'] ?? ''));
-        $slug = $slugInput === '' ? $this->communityHelper->slugify($name) : $this->communityHelper->slugify($slugInput);
+        $slug = $slugInput === '' ? $this->slugify($name) : $this->slugify($slugInput);
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
@@ -349,7 +352,7 @@ final readonly class AdminController
 
         $name = trim((string) ($request->body['name'] ?? ''));
         $slugInput = trim((string) ($request->body['slug'] ?? ''));
-        $slug = $slugInput === '' ? $this->communityHelper->slugify($name) : $this->communityHelper->slugify($slugInput);
+        $slug = $slugInput === '' ? $this->slugify($name) : $this->slugify($slugInput);
         $description = trim((string) ($request->body['description'] ?? ''));
         $position = (int) ($request->body['position'] ?? 0);
         $isLocked = isset($request->body['is_locked']);
@@ -591,6 +594,40 @@ final readonly class AdminController
             ->set('customCss', trim((string) ($community->customCss ?? '')));
 
         return Response::view($this->view, 'pages/community/admin/users.php', $ctx);
+    }
+
+    private function structureForCommunity(Community $community): array
+    {
+        $categories = $this->categories->listByCommunityId($community->id);
+        $boards = $this->boards->listByCommunityId($community->id);
+
+        return [
+            'categories' => $categories,
+            'boardsByCategory' => $this->groupBoards($boards),
+        ];
+    }
+
+    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    private function groupBoards(array $boards): array
+    {
+        $grouped = [];
+        foreach ($boards as $board) {
+            $grouped[$board->categoryId][] = $board;
+        }
+
+        foreach ($grouped as $categoryId => $items) {
+            $grouped[$categoryId] = array_values($items);
+        }
+
+        return $grouped;
+    }
+
+    private function slugify(string $value): string
+    {
+        $slug = strtolower(trim($value));
+        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug) ?? '';
+
+        return trim((string) $slug, '-');
     }
 
     private function notFound(Request $request): Response

@@ -8,9 +8,12 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Search\SearchService;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\Database\BoardRepository;
+use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -24,8 +27,10 @@ final readonly class SearchController
         private AppConfig $config,
         private AuthService $auth,
         private PermissionService $permissions,
-        private CommunityHelper $communityHelper,
+        private CommunityContext $communityContext,
         private SearchService $search,
+        private BoardRepository $boards,
+        private CategoryRepository $categories,
         private UserRepository $users,
     ) {
     }
@@ -37,13 +42,13 @@ final readonly class SearchController
             return $this->notFound($request);
         }
 
-        $structure = $this->communityHelper->structureForCommunity($community);
+        $structure = $this->structureForCommunity($community);
         $query = trim((string) ($request->query['q'] ?? ''));
         $boardParam = (string) ($request->query['board'] ?? '');
         $userParam = trim((string) ($request->query['user'] ?? ''));
         $usernames = $this->users->listUsernames();
 
-        $boardFilter = $boardParam !== '' ? $this->communityHelper->resolveBoard($community, $boardParam) : null;
+        $boardFilter = $boardParam !== '' ? $this->communityContext->resolveBoard($community, $boardParam) : null;
         $userFilter = $userParam !== '' ? $this->users->findByUsername($userParam) : null;
 
         $errors = [];
@@ -101,7 +106,7 @@ final readonly class SearchController
             ->set('currentCommunity', $community)
             ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
             ->set('usernames', $usernames)
-            ->set('navSections', $this->communityHelper->navSections(
+            ->set('navSections', $this->communityContext->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
@@ -122,5 +127,32 @@ final readonly class SearchController
             view: $this->view,
             request: $request,
         );
+    }
+
+    private function structureForCommunity(Community $community): array
+    {
+        $categories = $this->categories->listByCommunityId($community->id);
+        $boards = $this->boards->listByCommunityId($community->id);
+
+        return [
+            'categories' => $categories,
+            'boards' => $boards,
+            'boardsByCategory' => $this->groupBoards($boards),
+        ];
+    }
+
+    /** @param \Fred\Domain\Community\Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    private function groupBoards(array $boards): array
+    {
+        $grouped = [];
+        foreach ($boards as $board) {
+            $grouped[$board->categoryId][] = $board;
+        }
+
+        foreach ($grouped as $categoryId => $items) {
+            $grouped[$categoryId] = array_values($items);
+        }
+
+        return $grouped;
     }
 }

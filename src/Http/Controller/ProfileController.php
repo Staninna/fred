@@ -27,7 +27,6 @@ final readonly class ProfileController
         private ViewRenderer $view,
         private AppConfig $config,
         private AuthService $auth,
-        private CommunityHelper $communityHelper,
         private UserRepository $users,
         private ProfileRepository $profiles,
         private BbcodeParser $parser,
@@ -171,6 +170,11 @@ final readonly class ProfileController
             return $context;
         }
         ['community' => $community, 'currentUser' => $currentUser] = $context;
+
+        $user = $this->users->findById($currentUser->id ?? 0);
+        if ($user === null) {
+            return $this->notFound($request);
+        }
 
         $bio = trim((string) ($request->body['bio'] ?? ''));
         $location = trim((string) ($request->body['location'] ?? ''));

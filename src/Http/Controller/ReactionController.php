@@ -22,7 +22,6 @@ final readonly class ReactionController
         private AuthService $auth,
         private AppConfig $config,
         private ViewRenderer $view,
-        private CommunityHelper $communityHelper,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private ReactionRepository $reactions,
