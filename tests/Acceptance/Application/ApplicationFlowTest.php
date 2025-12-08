@@ -17,7 +17,7 @@ use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityController;
-use Fred\Http\Controller\CommunityHelper;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Controller\MentionController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
@@ -563,7 +563,7 @@ final class ApplicationFlowTest extends TestCase
             bans: $banRepository,
         );
         $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
-        $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
+        $communityContext = new \Fred\Http\Navigation\CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
         $csrfGuard = new CsrfGuard();
         $csrfToken = $csrfGuard->token();
@@ -578,23 +578,23 @@ final class ApplicationFlowTest extends TestCase
             return $next($request);
         };
 
-        $communityContext = new ResolveCommunityMiddleware($communityHelper, $view);
-        $boardContext = new ResolveBoardMiddleware($communityHelper, $categoryRepository, $view);
-        $threadContext = new ResolveThreadMiddleware($communityHelper, $threadRepository, $categoryRepository, $view);
-        $postContext = new ResolvePostMiddleware($communityHelper, $postRepository, $threadRepository, $categoryRepository, $view);
+        $communityContextMiddleware = new ResolveCommunityMiddleware($communityContext, $view);
+        $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view);
+        $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view);
+        $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view);
 
-        $authController = new AuthController($view, $config, $authService, $communityHelper);
-        $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
-        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
-        $boardController = new BoardController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository);
-        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository, $postRepository, new BbcodeParser(), $linkPreviewer, $profileRepository, $uploadService, $attachmentRepository, $reactionRepository, $emoticonSet, $mentionService, $pdo);
-        $postController = new PostController($authService, $view, $config, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, $mentionService);
-        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, $mentionService);
-        $profileController = new ProfileController($view, $config, $authService, $communityHelper, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
-        $searchController = new SearchController($view, $config, $authService, $permissionService, $communityHelper, $searchService, $userRepository);
+        $authController = new AuthController($view, $config, $authService);
+        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
+        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
+        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
+        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $threadRepository, $postRepository, new BbcodeParser(), $linkPreviewer, $profileRepository, $uploadService, $attachmentRepository, $reactionRepository, $emoticonSet, $mentionService, $pdo);
+        $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, $mentionService);
+        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, $mentionService);
+        $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
+        $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
         $uploadController = new UploadController($config);
-        $reactionController = new ReactionController($authService, $config, $view, $communityHelper, $threadRepository, $postRepository, $reactionRepository, $emoticonSet);
-        $mentionController = new MentionController($authService, $config, $view, $communityHelper, $mentionNotificationRepository, $userRepository);
+        $reactionController = new ReactionController($authService, $config, $view, $threadRepository, $postRepository, $reactionRepository, $emoticonSet);
+        $mentionController = new MentionController($authService, $config, $view, $communityContext, $mentionNotificationRepository, $userRepository, $boardRepository, $categoryRepository);
 
         $authRequired = static function (Request $request, callable $next) use ($authService): Response {
             if ($authService->currentUser()->isGuest()) {
@@ -612,7 +612,7 @@ final class ApplicationFlowTest extends TestCase
         $router->post('/register', [$authController, 'register'], [$csrfProtect]);
         $router->post('/logout', [$authController, 'logout'], [$csrfProtect]);
 
-        $router->get('/c/{community}', [$communityController, 'show'], [$communityContext]);
+        $router->get('/c/{community}', [$communityController, 'show'], [$communityContextMiddleware]);
         $router->get('/uploads/{type}/{year}/{month}/{file}', [$uploadController, 'serve']);
 
         $router->group('/c/{community}', function (Router $router) use (
@@ -628,12 +628,12 @@ final class ApplicationFlowTest extends TestCase
             $reactionController,
             $mentionController,
             $csrfProtect,
-            $communityContext,
+            $communityContextMiddleware,
             $boardContext,
             $threadContext,
             $postContext
         ) {
-            $router->get('/', [$communityController, 'show'], [$communityContext]);
+            $router->get('/', [$communityController, 'show'], [$communityContextMiddleware]);
             $router->get('/about', [$communityController, 'about']);
             $router->get('/u/{username}', [$profileController, 'show']);
 
@@ -666,14 +666,14 @@ final class ApplicationFlowTest extends TestCase
             $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $csrfProtect, $postContext]);
             $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $csrfProtect, $postContext]);
             $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired, $csrfProtect, $postContext]);
-            $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired, $communityContext]);
-            $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired, $csrfProtect, $communityContext]);
-            $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired, $csrfProtect, $communityContext]);
-            $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired, $communityContext]);
+            $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired, $communityContextMiddleware]);
+            $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired, $csrfProtect, $communityContextMiddleware]);
+            $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired, $csrfProtect, $communityContextMiddleware]);
+            $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired, $communityContextMiddleware]);
 
-            $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $communityContext]);
-            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect, $communityContext]);
-            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $csrfProtect, $communityContext]);
+            $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $communityContextMiddleware]);
+            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect, $communityContextMiddleware]);
+            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $csrfProtect, $communityContextMiddleware]);
             $router->get('/search', [$searchController, 'search']);
 
             $router->group('/admin', function (Router $router) use ($adminController, $authRequired, $csrfProtect) {
@@ -695,7 +695,7 @@ final class ApplicationFlowTest extends TestCase
                 $router->post('/settings', [$adminController, 'updateSettings'], [$authRequired, $csrfProtect]);
                 $router->get('/users', [$adminController, 'users']);
             }, [$authRequired]);
-        }, [$communityContext]);
+        }, [$communityContextMiddleware]);
 
         $seed = $this->seedData(
             communityRepository: $communityRepository,
@@ -713,10 +713,10 @@ final class ApplicationFlowTest extends TestCase
             'auth' => $authService,
             'view' => $view,
             'config' => $config,
-            'communityHelper' => $communityHelper,
             'context' => $seed,
             'csrfToken' => $csrfToken,
             'emoticons' => $emoticonSet,
+            'communityContext' => $communityContext,
             'repos' => [
                 'users' => $userRepository,
                 'threads' => $threadRepository,
@@ -826,13 +826,13 @@ final class ApplicationFlowTest extends TestCase
         $view = $app['view'];
         $auth = $app['auth'];
         $config = $app['config'];
-        $communityHelper = $app['communityHelper'];
+        $communityContext = $app['communityContext'];
 
         $view->share('currentUser', $auth->currentUser());
         $view->share('environment', $config->environment);
         $view->share('baseUrl', $config->baseUrl);
         $view->share('activePath', $request->path);
-        $view->share('navSections', $communityHelper->navForCommunity());
+        $view->share('navSections', $communityContext->navSections(null, [], []));
         $view->share('currentCommunity', null);
         $view->share('customCss', '');
         $view->share('csrfToken', $app['csrfToken']);

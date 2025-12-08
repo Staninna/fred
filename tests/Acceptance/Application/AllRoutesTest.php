@@ -8,13 +8,17 @@ use Fred\Application\Auth\AuthService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
-use Fred\Http\Controller\CommunityHelper;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\ThreadController;
+use Fred\Http\Middleware\ResolveBoardMiddleware;
+use Fred\Http\Middleware\ResolveCommunityMiddleware;
+use Fred\Http\Middleware\ResolvePostMiddleware;
+use Fred\Http\Middleware\ResolveThreadMiddleware;
 use Fred\Http\Request;
 use Fred\Http\Routing\Router;
 use Fred\Infrastructure\Config\AppConfig;
@@ -75,13 +79,13 @@ final class AllRoutesTest extends TestCase
             $view = $context['view'];
             $auth = $context['auth'];
             $config = $context['config'];
-            $communityHelper = $context['communityHelper'];
+            $communityContext = $context['communityContext'];
 
             $view->share('currentUser', $auth->currentUser());
             $view->share('environment', $config->environment);
             $view->share('baseUrl', $config->baseUrl);
             $view->share('activePath', $path);
-            $view->share('navSections', $communityHelper->navForCommunity());
+            $view->share('navSections', $communityContext->navSections(null, [], []));
             $view->share('currentCommunity', null);
             $view->share('customCss', '');
 
@@ -150,21 +154,26 @@ final class AllRoutesTest extends TestCase
             bans: $banRepository,
         );
         $permissionService = new \Fred\Application\Auth\PermissionService($permissionRepository, $communityModeratorRepository);
-        $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
+        $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
 
         $router = new Router($this->basePath('public'));
 
-        $authController = new AuthController($view, $config, $authService, $communityHelper);
-        $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
+        $communityContextMiddleware = new ResolveCommunityMiddleware($communityContext, $view);
+        $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view);
+        $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view);
+        $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view);
+
+        $authController = new AuthController($view, $config, $authService);
+        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
         $reportRepository = new \Fred\Infrastructure\Database\ReportRepository($pdo);
-        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
-        $boardController = new BoardController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository);
-        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository, $postRepository, new BbcodeParser(), new \Fred\Application\Content\LinkPreviewer($config), $profileRepository, $uploadService, $attachmentRepository, new \Fred\Infrastructure\Database\ReactionRepository($pdo), new \Fred\Application\Content\EmoticonSet($config), new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)), $pdo);
-        $postController = new PostController($authService, $view, $config, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
-        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
-        $profileController = new ProfileController($view, $config, $authService, $communityHelper, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
-        $searchController = new SearchController($view, $config, $authService, $permissionService, $communityHelper, $searchService, $userRepository);
+        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
+        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
+        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $threadRepository, $postRepository, new BbcodeParser(), new \Fred\Application\Content\LinkPreviewer($config), $profileRepository, $uploadService, $attachmentRepository, new \Fred\Infrastructure\Database\ReactionRepository($pdo), new \Fred\Application\Content\EmoticonSet($config), new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)), $pdo);
+        $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
+        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
+        $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
+        $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
 
         // This is a partial copy from public/index.php. Ideally, this would be refactored.
         $router->get('/', [$communityController, 'index']);
@@ -175,7 +184,7 @@ final class AllRoutesTest extends TestCase
         $router->post('/register', [$authController, 'register']);
         $router->post('/logout', [$authController, 'logout']);
 
-        $router->get('/c/{community}', [$communityController, 'show']);
+        $router->get('/c/{community}', [$communityController, 'show'], [$communityContextMiddleware]);
 
         $router->group('/c/{community}', function (Router $router) use (
             $communityController,
@@ -185,43 +194,47 @@ final class AllRoutesTest extends TestCase
             $adminController,
             $profileController,
             $moderationController,
-            $searchController
+            $searchController,
+            $communityContextMiddleware,
+            $boardContext,
+            $threadContext,
+            $postContext
         ) {
-            $router->get('/', [$communityController, 'show']);
-            $router->get('/u/{username}', [$profileController, 'show']);
-            $router->get('/settings/profile', [$profileController, 'editProfile']);
-            $router->post('/settings/profile', [$profileController, 'updateProfile']);
-            $router->get('/settings/signature', [$profileController, 'editSignature']);
-            $router->post('/settings/signature', [$profileController, 'updateSignature']);
-            $router->get('/b/{board}', [$boardController, 'show']);
-            $router->get('/b/{board}/thread/new', [$threadController, 'create']);
-            $router->post('/b/{board}/thread', [$threadController, 'store']);
-            $router->get('/t/{thread}', [$threadController, 'show']);
-            $router->post('/t/{thread}/reply', [$postController, 'store']);
-            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread']);
-            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread']);
-            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread']);
-            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread']);
-            $router->post('/t/{thread}/move', [$moderationController, 'moveThread']);
-            $router->get('/p/{post}/edit', [$moderationController, 'editPost']);
-            $router->post('/p/{post}/delete', [$moderationController, 'deletePost']);
-            $router->post('/p/{post}/edit', [$moderationController, 'editPost']);
-            $router->get('/admin/bans', [$moderationController, 'listBans']);
-            $router->post('/admin/bans', [$moderationController, 'createBan']);
-            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan']);
-            $router->get('/search', [$searchController, 'search']);
-            $router->group('/admin', function (Router $router) use ($adminController) {
-                $router->get('/structure', [$adminController, 'structure']);
-                $router->post('/categories', [$adminController, 'createCategory']);
-                $router->post('/categories/{category}', [$adminController, 'updateCategory']);
-                $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory']);
-                $router->post('/boards', [$adminController, 'createBoard']);
-                $router->post('/boards/{board}', [$adminController, 'updateBoard']);
-                $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard']);
-                $router->post('/moderators', [$adminController, 'addModerator']);
-                $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator']);
+            $router->get('/', [$communityController, 'show'], [$communityContextMiddleware]);
+            $router->get('/u/{username}', [$profileController, 'show'], [$communityContextMiddleware]);
+            $router->get('/settings/profile', [$profileController, 'editProfile'], [$communityContextMiddleware]);
+            $router->post('/settings/profile', [$profileController, 'updateProfile'], [$communityContextMiddleware]);
+            $router->get('/settings/signature', [$profileController, 'editSignature'], [$communityContextMiddleware]);
+            $router->post('/settings/signature', [$profileController, 'updateSignature'], [$communityContextMiddleware]);
+            $router->get('/b/{board}', [$boardController, 'show'], [$communityContextMiddleware, $boardContext]);
+            $router->get('/b/{board}/thread/new', [$threadController, 'create'], [$communityContextMiddleware, $boardContext]);
+            $router->post('/b/{board}/thread', [$threadController, 'store'], [$communityContextMiddleware, $boardContext]);
+            $router->get('/t/{thread}', [$threadController, 'show'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/reply', [$postController, 'store'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$communityContextMiddleware, $threadContext]);
+            $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$communityContextMiddleware, $threadContext]);
+            $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$communityContextMiddleware, $postContext]);
+            $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$communityContextMiddleware, $postContext]);
+            $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$communityContextMiddleware, $postContext]);
+            $router->get('/admin/bans', [$moderationController, 'listBans'], [$communityContextMiddleware]);
+            $router->post('/admin/bans', [$moderationController, 'createBan'], [$communityContextMiddleware]);
+            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$communityContextMiddleware]);
+            $router->get('/search', [$searchController, 'search'], [$communityContextMiddleware]);
+            $router->group('/admin', function (Router $router) use ($adminController, $communityContextMiddleware, $boardContext) {
+                $router->get('/structure', [$adminController, 'structure'], [$communityContextMiddleware]);
+                $router->post('/categories', [$adminController, 'createCategory'], [$communityContextMiddleware]);
+                $router->post('/categories/{category}', [$adminController, 'updateCategory'], [$communityContextMiddleware]);
+                $router->post('/categories/{category}/delete', [$adminController, 'deleteCategory'], [$communityContextMiddleware]);
+                $router->post('/boards', [$adminController, 'createBoard'], [$communityContextMiddleware]);
+                $router->post('/boards/{board}', [$adminController, 'updateBoard'], [$communityContextMiddleware, $boardContext]);
+                $router->post('/boards/{board}/delete', [$adminController, 'deleteBoard'], [$communityContextMiddleware, $boardContext]);
+                $router->post('/moderators', [$adminController, 'addModerator'], [$communityContextMiddleware]);
+                $router->post('/moderators/{user}/delete', [$adminController, 'removeModerator'], [$communityContextMiddleware]);
             });
-        });
+        }, [$communityContextMiddleware]);
 
         $seed = $this->seedForumData(
             $pdo,
@@ -240,7 +253,7 @@ final class AllRoutesTest extends TestCase
             'view' => $view,
             'auth' => $authService,
             'config' => $config,
-            'communityHelper' => $communityHelper,
+            'communityContext' => $communityContext,
         ]];
     }
 

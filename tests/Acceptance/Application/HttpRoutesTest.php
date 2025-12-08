@@ -8,7 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
-use Fred\Http\Controller\CommunityHelper;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
@@ -141,28 +141,30 @@ final class HttpRoutesTest extends TestCase
             bans: new \Fred\Infrastructure\Database\BanRepository($pdo),
         );
         $permissionService = new \Fred\Application\Auth\PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
-        $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
+        $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
-        $communityContext = new ResolveCommunityMiddleware($communityHelper, $view);
-        $boardContext = new ResolveBoardMiddleware($communityHelper, $categoryRepository, $view);
-        $threadContext = new ResolveThreadMiddleware($communityHelper, $threadRepository, $categoryRepository, $view);
-        $postContext = new ResolvePostMiddleware($communityHelper, $postRepository, $threadRepository, $categoryRepository, $view);
-        $authController = new AuthController($view, $config, $authService, $communityHelper);
+        $communityContextMiddleware = new ResolveCommunityMiddleware($communityContext, $view);
+        $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view);
+        $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view);
+        $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view);
+        $authController = new AuthController($view, $config, $authService);
         $communityController = new CommunityController(
             $view,
             $config,
             $authService,
-            $permissionService, // Corrected: should be PermissionService
-            $communityHelper,
-            $communityRepository, // Added: missing CommunityRepository
+            $communityContext,
+            $permissionService,
+            $communityRepository,
+            $categoryRepository,
+            $boardRepository,
         );
         $adminController = new AdminController(
             $view,
             $config,
             $authService,
             $permissionService, // Corrected: should be PermissionService
-            $communityHelper,
+            $communityContext,
             $categoryRepository,
             $boardRepository,
             $communityRepository,
@@ -175,8 +177,9 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
-            $permissionService, // Corrected: should be PermissionService
-            $communityHelper,
+            $communityContext,
+            $permissionService,
+            $boardRepository,
             $categoryRepository,
             $threadRepository,
         );
@@ -185,8 +188,9 @@ final class HttpRoutesTest extends TestCase
             $config,
             $authService,
             $permissionService,
-            $communityHelper,
+            $communityContext,
             $categoryRepository,
+            $boardRepository,
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
@@ -203,7 +207,6 @@ final class HttpRoutesTest extends TestCase
             $authService,
             $view,
             $config,
-            $communityHelper,
             $threadRepository,
             $postRepository,
             new BbcodeParser(),
@@ -218,7 +221,7 @@ final class HttpRoutesTest extends TestCase
             $config,
             $authService,
             $permissionService,
-            $communityHelper,
+            $communityContext,
             $threadRepository,
             $postRepository,
             new \Fred\Application\Content\BbcodeParser(), // Missing
@@ -234,31 +237,31 @@ final class HttpRoutesTest extends TestCase
 
         $router->get('/', [$communityController, 'index']);
         $router->post('/communities', [$communityController, 'store']);
-        $router->get('/c/{community}', [$communityController, 'show'], [$communityContext]);
-        $router->get('/c/{community}/about', [$communityController, 'about'], [$communityContext]);
-        $router->get('/c/{community}/b/{board}', [$boardController, 'show'], [$communityContext, $boardContext]);
-        $router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create'], [$communityContext, $boardContext]);
-        $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store'], [$communityContext, $boardContext]);
-        $router->get('/c/{community}/t/{thread}', [$threadController, 'show'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/reply', [$postController, 'store'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/lock', [$moderationController, 'lockThread'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$communityContext, $threadContext]);
-        $router->post('/c/{community}/t/{thread}/move', [$moderationController, 'moveThread'], [$communityContext, $threadContext]);
-        $router->get('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContext, $postContext]);
-        $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost'], [$communityContext, $postContext]);
-        $router->post('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContext, $postContext]);
-        $router->get('/c/{community}/admin/bans', [$moderationController, 'listBans'], [$communityContext]);
-        $router->post('/c/{community}/admin/bans', [$moderationController, 'createBan'], [$communityContext]);
-        $router->post('/c/{community}/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$communityContext]);
-        $router->get('/c/{community}/admin/structure', [$adminController, 'structure'], [$communityContext]);
-        $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory'], [$communityContext]);
-        $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory'], [$communityContext]);
-        $router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory'], [$communityContext]);
-        $router->post('/c/{community}/admin/boards', [$adminController, 'createBoard'], [$communityContext]);
-        $router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard'], [$communityContext]);
-        $router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard'], [$communityContext]);
+        $router->get('/c/{community}', [$communityController, 'show'], [$communityContextMiddleware]);
+        $router->get('/c/{community}/about', [$communityController, 'about'], [$communityContextMiddleware]);
+        $router->get('/c/{community}/b/{board}', [$boardController, 'show'], [$communityContextMiddleware, $boardContext]);
+        $router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create'], [$communityContextMiddleware, $boardContext]);
+        $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store'], [$communityContextMiddleware, $boardContext]);
+        $router->get('/c/{community}/t/{thread}', [$threadController, 'show'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/reply', [$postController, 'store'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/lock', [$moderationController, 'lockThread'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$communityContextMiddleware, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/move', [$moderationController, 'moveThread'], [$communityContextMiddleware, $threadContext]);
+        $router->get('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContextMiddleware, $postContext]);
+        $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost'], [$communityContextMiddleware, $postContext]);
+        $router->post('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContextMiddleware, $postContext]);
+        $router->get('/c/{community}/admin/bans', [$moderationController, 'listBans'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/bans', [$moderationController, 'createBan'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$communityContextMiddleware]);
+        $router->get('/c/{community}/admin/structure', [$adminController, 'structure'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/boards', [$adminController, 'createBoard'], [$communityContextMiddleware]);
+        $router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard'], [$communityContextMiddleware, $boardContext]);
+        $router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard'], [$communityContextMiddleware, $boardContext]);
         $router->get('/login', [$authController, 'showLoginForm']);
         $router->post('/login', [$authController, 'login']);
         $router->get('/register', [$authController, 'showRegisterForm']);
@@ -279,7 +282,7 @@ final class HttpRoutesTest extends TestCase
             'view' => $view,
             'auth' => $authService,
             'config' => $config,
-            'communityHelper' => $communityHelper,
+            'communityContext' => $communityContext,
         ]];
     }
 
@@ -347,13 +350,13 @@ final class HttpRoutesTest extends TestCase
         $view = $context['view'];
         $auth = $context['auth'];
         $config = $context['config'];
-        $communityHelper = $context['communityHelper'];
+        $communityContext = $context['communityContext'];
 
         $view->share('currentUser', $auth->currentUser());
         $view->share('environment', $config->environment);
         $view->share('baseUrl', $config->baseUrl);
         $view->share('activePath', $request->path);
-        $view->share('navSections', $communityHelper->navForCommunity());
+        $view->share('navSections', $communityContext->navSections(null, [], []));
         $view->share('currentCommunity', null);
         $view->share('customCss', '');
 
