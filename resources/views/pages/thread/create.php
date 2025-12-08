@@ -5,10 +5,20 @@
 /** @var array<string, string> $old */
 /** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
+/** @var string|null $success */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 
+$messageIdPrefix = 'thread-create';
+$messageTargets = [];
+if (!empty($errors)) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -31,13 +41,17 @@ use Fred\Domain\Community\Community;
     </tr>
     <tr>
         <td>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+            <?= $renderPartial('partials/errors.php', [
+                'errors' => $errors,
+                'success' => $success ?? null,
+                'idPrefix' => $messageIdPrefix,
+            ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread" enctype="multipart/form-data" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140"><label for="title">Title</label></td>
-                        <td><input id="title" name="title" type="text" value="<?= $e($old['title'] ?? '') ?>" required></td>
+                        <td><input id="title" name="title" type="text" value="<?= $e($old['title'] ?? '') ?>" required<?= $messageAria ?>></td>
                     </tr>
                 </table>
                 <?= $renderPartial('partials/thread/message_form.php', [
@@ -48,6 +62,7 @@ use Fred\Domain\Community\Community;
                     'textareaLabel' => 'Body',
                     'bodyValue' => $old['body'] ?? '',
                     'includeAttachment' => true,
+                    'messagesDescribedBy' => trim(implode(' ', $messageTargets)),
                     'renderPartial' => $renderPartial,
                 ]) ?>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>">Cancel</a>

@@ -7,6 +7,7 @@
 /** @var callable(string, int): string $e */
 /** @var array<int, array{user_id:int, username:string, assigned_at:int}> $moderators */
 /** @var array<int, string> $usernames */
+/** @var string|null $success */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
@@ -15,6 +16,17 @@ use Fred\Domain\Community\Community;
 ?>
 
 <?php $boardTotal = array_sum(array_map('count', $boardsByCategory)); ?>
+<?php
+$messageIdPrefix = 'community-structure';
+$messageTargets = [];
+if (!empty($errors)) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
@@ -30,7 +42,11 @@ use Fred\Domain\Community\Community;
     </tr>
 </table>
 
-<?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+<?= $renderPartial('partials/errors.php', [
+    'errors' => $errors,
+    'success' => $success ?? null,
+    'idPrefix' => $messageIdPrefix,
+]) ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
@@ -48,7 +64,7 @@ use Fred\Domain\Community\Community;
                             <tr>
                                 <td width="200"><?= $e($category->name) ?></td>
                                 <td>
-                                    <input name="category_positions[<?= $category->id ?>]" type="number" value="<?= $category->position ?>" style="width:90px;">
+                                    <input name="category_positions[<?= $category->id ?>]" type="number" value="<?= $category->position ?>" style="width:90px;"<?= $messageAria ?>>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -81,7 +97,7 @@ use Fred\Domain\Community\Community;
                             <?php foreach ($categoryBoards as $board): ?>
                                 <tr>
                                     <td width="200"><?= $e($board->name) ?></td>
-                                    <td><input name="board_positions[<?= $board->id ?>]" type="number" value="<?= $board->position ?>" style="width:90px;"></td>
+                                    <td><input name="board_positions[<?= $board->id ?>]" type="number" value="<?= $board->position ?>" style="width:90px;"<?= $messageAria ?>></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endforeach; ?>
@@ -132,6 +148,7 @@ use Fred\Domain\Community\Community;
                     'placeholder' => 'Select user',
                     'options' => $modUserOptions,
                     'selected' => '',
+                    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
                 ]);
                 ?>
                 <button class="button" type="submit">Assign</button>

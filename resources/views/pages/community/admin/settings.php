@@ -11,6 +11,16 @@ use Fred\Domain\Community\Community;
 $nameValue = $old['name'] ?? $community->name;
 $descriptionValue = $old['description'] ?? $community->description;
 $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
+$success = $saved ? 'Settings saved.' : null;
+$messageIdPrefix = 'community-settings';
+$messageTargets = [];
+if (!empty($errors)) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 
 ?>
 
@@ -24,11 +34,15 @@ $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
     </tr>
     <tr>
         <td class="table-heading">Status</td>
-        <td><?= $saved ? '<span class="notice">Saved</span>' : 'Edit details below.' ?></td>
+        <td><?= $success !== null ? '<span class="notice">Saved</span>' : 'Edit details below.' ?></td>
     </tr>
 </table>
 
-<?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+<?= $renderPartial('partials/errors.php', [
+    'errors' => $errors,
+    'success' => $success,
+    'idPrefix' => $messageIdPrefix,
+]) ?>
 
 <form method="post" action="/c/<?= $e($community->slug) ?>/admin/settings" novalidate>
     <?= $renderPartial('partials/csrf.php') ?>
@@ -38,11 +52,11 @@ $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
         </tr>
         <tr>
             <td width="160"><label for="community_name">Name</label></td>
-            <td><input id="community_name" name="name" type="text" value="<?= $e($nameValue) ?>" required></td>
+            <td><input id="community_name" name="name" type="text" value="<?= $e($nameValue) ?>" required<?= $messageAria ?>></td>
         </tr>
         <tr>
             <td><label for="community_description">Description</label></td>
-            <td><textarea id="community_description" name="description" rows="3" style="width: 100%;"><?= $e($descriptionValue) ?></textarea></td>
+            <td><textarea id="community_description" name="description" rows="3" style="width: 100%;"<?= $messageAria ?>><?= $e($descriptionValue) ?></textarea></td>
         </tr>
     </table>
 
@@ -53,7 +67,7 @@ $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
         <tr>
             <td colspan="2">
                 <div class="small muted">Custom CSS is injected after the base theme. Max 8000 characters.</div>
-                <textarea name="custom_css" rows="8" style="width: 100%;"><?= $e($cssValue) ?></textarea>
+                <textarea name="custom_css" rows="8" style="width: 100%;"<?= $messageAria ?>><?= $e($cssValue) ?></textarea>
                 <div style="margin-top:6px;">
                     <button class="button" type="submit">Save settings</button>
                 </div>

@@ -4,6 +4,8 @@
 /** @var callable(string, int): string $e */
 /** @var string $title */
 /** @var string|null $infoText */
+/** @var string|null $success */
+/** @var string|null $idPrefix */
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
@@ -14,4 +16,8 @@
             <?php if (!empty($infoText)): ?>
                 <div class="info-line"><?= $e($infoText) ?></div>
             <?php endif; ?>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors ?? []]) ?>
+            <?= $renderPartial('partials/errors.php', [
+                'errors' => $errors ?? [],
+                'success' => $success ?? null,
+                'idPrefix' => $idPrefix ?? 'form-section',
+            ]) ?>

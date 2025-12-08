@@ -7,13 +7,17 @@
 /** @var callable(string, int): string $e */
 /** @var string|null $class */
 /** @var bool|null $required */
+/** @var string|null $ariaDescribedBy */
 
 $id = $id ?? $name;
 $classAttr = isset($class) && $class !== '' ? ' class="' . $e($class) . '"' : '';
 $requiredAttr = !empty($required) ? ' required' : '';
+$ariaAttr = isset($ariaDescribedBy) && trim((string) $ariaDescribedBy) !== ''
+    ? ' aria-describedby="' . $e($ariaDescribedBy) . '"'
+    : '';
 ?>
 
-<select name="<?= $e($name) ?>" id="<?= $e($id) ?>"<?= $classAttr ?><?= $requiredAttr ?>>
+<select name="<?= $e($name) ?>" id="<?= $e($id) ?>"<?= $classAttr ?><?= $requiredAttr ?><?= $ariaAttr ?>>
     <?php if (!empty($placeholder ?? '')): ?>
         <option value=""><?= $e($placeholder) ?></option>
     <?php endif; ?>

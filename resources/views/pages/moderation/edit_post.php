@@ -5,6 +5,17 @@
 /** @var \Fred\Application\Auth\CurrentUser|null $currentUser */
 /** @var callable(string, int): string $e */
 /** @var callable(string, array): string $renderPartial */
+/** @var string|null $success */
+
+$messageIdPrefix = 'moderation-edit-post';
+$messageTargets = [];
+if (!empty($errors)) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -13,7 +24,11 @@
     </tr>
     <tr>
         <td>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+            <?= $renderPartial('partials/errors.php', [
+                'errors' => $errors,
+                'success' => $success ?? null,
+                'idPrefix' => $messageIdPrefix,
+            ]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/p/<?= $post->id ?>/edit" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <input type="hidden" name="page" value="<?= (int) ($page ?? 1) ?>">
@@ -22,7 +37,7 @@
                         <td width="120"><label for="body">Body</label></td>
                         <td>
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'body']) ?>
-                            <textarea id="body" name="body" rows="6" required><?= $e($post->bodyRaw) ?></textarea>
+                            <textarea id="body" name="body" rows="6" required<?= $messageAria ?>><?= $e($post->bodyRaw) ?></textarea>
                         </td>
                     </tr>
                 </table>

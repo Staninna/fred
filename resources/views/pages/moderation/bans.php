@@ -5,6 +5,17 @@
 /** @var callable(string, int): string $e */
 /** @var callable(string, array): string $renderPartial */
 /** @var array<int, string> $usernames */
+/** @var string|null $success */
+
+$messageIdPrefix = 'ban-create';
+$messageTargets = [];
+if (!empty($errors ?? [])) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -13,7 +24,11 @@
     </tr>
     <tr>
         <td colspan="3">
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors ?? []]) ?>
+            <?= $renderPartial('partials/errors.php', [
+                'errors' => $errors ?? [],
+                'success' => $success ?? null,
+                'idPrefix' => $messageIdPrefix,
+            ]) ?>
             <form method="post" action="<?= $e($_SERVER['REQUEST_URI'] ?? '') ?>" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
@@ -28,13 +43,14 @@
                                 'placeholder' => 'Select user',
                                 'options' => $banUserOptions,
                                 'selected' => $old['username'] ?? '',
+                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
                             ]);
                             ?>
                         </td>
                     </tr>
                     <tr>
                         <td><label for="reason">Reason</label></td>
-                        <td><input id="reason" name="reason" type="text" value="<?= $e($old['reason'] ?? '') ?>" required></td>
+                        <td><input id="reason" name="reason" type="text" value="<?= $e($old['reason'] ?? '') ?>" required<?= $messageAria ?>></td>
                     </tr>
                     <?php
                     $expiresValue = '';
@@ -54,6 +70,7 @@
                                 type="datetime-local"
                                 value="<?= $e($expiresValue) ?>"
                                 placeholder="Pick date/time or leave blank for permanent"
+                                <?= $messageAria ?>
                             >
                         </td>
                     </tr>

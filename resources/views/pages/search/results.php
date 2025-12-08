@@ -11,6 +11,17 @@
 /** @var \Fred\Domain\Auth\User|null $userFilter */
 /** @var array<int, string> $usernames */
 /** @var \Fred\Domain\Community\Community $community */
+/** @var string|null $success */
+
+$messageIdPrefix = 'search-form';
+$messageTargets = [];
+if (!empty($errors)) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -19,12 +30,16 @@
     </tr>
     <tr>
         <td colspan="2">
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+            <?= $renderPartial('partials/errors.php', [
+                'errors' => $errors,
+                'success' => $success ?? null,
+                'idPrefix' => $messageIdPrefix,
+            ]) ?>
             <form method="get" action="/c/<?= $e($community->slug) ?>/search" novalidate>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="q">Query</label></td>
-                        <td><input id="q" name="q" type="text" value="<?= $e($query ?? '') ?>" required></td>
+                        <td><input id="q" name="q" type="text" value="<?= $e($query ?? '') ?>" required<?= $messageAria ?>></td>
                     </tr>
                     <tr>
                         <td><label for="board">Board</label></td>
@@ -37,6 +52,7 @@
                                 'placeholder' => 'All boards',
                                 'options' => $boardOptions,
                                 'selected' => $boardFilter?->slug ?? '',
+                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
                             ]);
                             ?>
                         </td>
@@ -52,6 +68,7 @@
                                 'placeholder' => 'All users',
                                 'options' => $userOptions,
                                 'selected' => $userFilter?->username ?? '',
+                                'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
                             ]);
                             ?>
                         </td>

@@ -4,8 +4,25 @@
 /** @var array<int, string> $avatarErrors */
 /** @var callable(string, int): string $e */
 /** @var callable(string, array): string $renderPartial */
+/** @var string|null $success */
+
+$messageIdPrefix = 'avatar-settings';
+$messageTargets = [];
+if (!empty($avatarErrors ?? [])) {
+    $messageTargets[] = $messageIdPrefix . '-errors';
+}
+if (!empty($success ?? '')) {
+    $messageTargets[] = $messageIdPrefix . '-success';
+}
+$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
 ?>
-<?= $renderPartial('partials/form_section_header.php', ['title' => 'Avatar', 'errors' => $avatarErrors ?? [], 'infoText' => null]) ?>
+<?= $renderPartial('partials/form_section_header.php', [
+    'title' => 'Avatar',
+    'errors' => $avatarErrors ?? [],
+    'success' => $success ?? null,
+    'idPrefix' => $messageIdPrefix,
+    'infoText' => null,
+]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
@@ -17,7 +34,7 @@
                     </tr>
                     <tr>
                         <td><label for="avatar">New avatar</label></td>
-                        <td><input id="avatar" name="avatar" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" required></td>
+                        <td><input id="avatar" name="avatar" type="file" accept=".png,.jpg,.jpeg,.gif,.webp" required<?= $messageAria ?>></td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Upload avatar</button>
