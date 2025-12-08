@@ -45,6 +45,9 @@ final readonly class UserRepository
             return [];
         }
 
+        // Normalize to sequential integers to match positional placeholders.
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+
         $placeholders = implode(',', array_fill(0, \count($ids), '?'));
         $statement = $this->pdo->prepare(
             "SELECT u.id, u.username, u.display_name, u.password_hash, u.role_id, u.created_at,

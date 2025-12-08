@@ -204,7 +204,7 @@ final readonly class DemoSeeder
             $boards = $this->seedBoards($community->id, $category->id, $timestamp);
             foreach ($boards as $board) {
                 $boardIds[] = $board->id;
-                $this->seedThreadsAndPosts($community->id, $board->id, $board->slug, $users, $timestamp);
+                $this->seedThreadsAndPosts($community->id, $community->slug, $board->id, $board->slug, $users, $timestamp);
             }
         }
 
@@ -268,7 +268,7 @@ final readonly class DemoSeeder
     /**
      * @throws RandomException
      */
-    private function seedThreadsAndPosts(int $communityId, int $boardId, string $boardSlug, array $users, int $timestamp): void
+    private function seedThreadsAndPosts(int $communityId, string $communitySlug, int $boardId, string $boardSlug, array $users, int $timestamp): void
     {
         $existingThreads = $this->threads->listByBoardId($boardId);
         $toCreate = max(0, $this->threadsPerBoard - \count($existingThreads));
@@ -297,7 +297,7 @@ final readonly class DemoSeeder
                     threadId: $thread->id,
                     authorId: $postAuthor->id,
                     bodyRaw: $body,
-                    bodyParsed: $this->parser()?->parse($body),
+                    bodyParsed: $this->parser()?->parse($body, $communitySlug),
                     signatureSnapshot: null,
                     timestamp: $timestamp - random_int(0, 20_000),
                 );
