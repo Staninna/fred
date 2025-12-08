@@ -121,9 +121,29 @@ document.addEventListener('alpine:init', function () {
             }
         }
     }
-    window.addEventListener('scroll', function () {
+
+    var lastWrite = 0;
+    var pending = false;
+
+    function saveScroll() {
+        pending = false;
+        lastWrite = performance.now();
         sessionStorage.setItem(key, String(window.scrollY || 0));
-    });
+    }
+
+    function onScroll() {
+        var now = performance.now();
+        if (now - lastWrite < 150) {
+            return;
+        }
+        if (pending) {
+            return;
+        }
+        pending = true;
+        window.requestAnimationFrame(saveScroll);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
 })();
 </script>
 <script>
