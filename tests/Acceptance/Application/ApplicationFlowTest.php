@@ -7,6 +7,9 @@ namespace Tests\Acceptance\Application;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Content\UploadService;
 use Fred\Application\Security\CsrfGuard;
 use Fred\Application\Search\SearchService;
@@ -15,8 +18,10 @@ use Fred\Http\Controller\AuthController;
 use Fred\Http\Controller\BoardController;
 use Fred\Http\Controller\CommunityController;
 use Fred\Http\Controller\CommunityHelper;
+use Fred\Http\Controller\MentionController;
 use Fred\Http\Controller\ModerationController;
 use Fred\Http\Controller\PostController;
+use Fred\Http\Controller\ReactionController;
 use Fred\Http\Controller\ProfileController;
 use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\ThreadController;
@@ -38,6 +43,8 @@ use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
+use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
@@ -109,6 +116,7 @@ final class ApplicationFlowTest extends TestCase
         $context = $app['context'];
         $repos = $app['repos'];
         $token = $app['csrfToken'];
+        $emoticonCode = $app['emoticons']->codes()[0] ?? '001';
 
         $register = $router->dispatch(new Request(
             method: 'POST',
@@ -281,6 +289,119 @@ final class ApplicationFlowTest extends TestCase
         $this->assertNotEmpty(array_filter($bans, static fn (array $ban): bool => (int) $ban['user_id'] === $userToBan->id));
     }
 
+    public function testContentReactionsLinkPreviewsAndMentionsFlow(): void
+    {
+        session_start();
+        $app = $this->buildApp();
+
+        $router = $app['router'];
+        $context = $app['context'];
+        $repos = $app['repos'];
+        $token = $app['csrfToken'];
+        $emoticonCode = $app['emoticons']->codes()[0] ?? '001';
+
+        $communitySlug = $context['community']->slug;
+        $threadId = $context['thread']->id;
+
+        $previewUrl = 'https://example.com/article';
+        $previewCachePath = $this->basePath('storage/link_previews/' . sha1($previewUrl) . '.json');
+        @mkdir((string) dirname($previewCachePath), 0775, true);
+        $previewWritten = file_put_contents(
+            $previewCachePath,
+            (string) json_encode([
+                'url' => $previewUrl,
+                'title' => 'Example Article',
+                'description' => 'A concise preview description.',
+                'image' => null,
+                'host' => 'example.com',
+            ], JSON_PRETTY_PRINT),
+        );
+        $this->assertNotFalse($previewWritten);
+
+        $login = $router->dispatch(new Request(
+            method: 'POST',
+            path: '/login',
+            query: [],
+            body: [
+                'username' => 'member',
+                'password' => 'secret',
+                '_token' => $token,
+            ],
+        ));
+        $this->assertSame(302, $login->status);
+
+        $body = 'Check this out ' . $previewUrl . ' and hello @moderator!';
+        $reply = $router->dispatch(new Request(
+            method: 'POST',
+            path: '/c/' . $communitySlug . '/t/' . $threadId . '/reply',
+            query: [],
+            body: ['body' => $body, '_token' => $token],
+        ));
+        $this->assertSame(302, $reply->status);
+        $replyLocation = $reply->headers['Location'] ?? '';
+        $this->assertStringContainsString('#post-', $replyLocation);
+        preg_match('~#post-(\d+)~', $replyLocation, $postMatches);
+        $postId = (int) ($postMatches[1] ?? 0);
+        $this->assertGreaterThan(0, $postId);
+        $post = $repos['posts']->findById($postId);
+        $this->assertNotNull($post);
+        $this->assertStringContainsString('@moderator', $post->bodyRaw ?? '');
+
+        $allMentions = $repos['mentions']->listForUser($context['users']['moderator']->id, $context['community']->id);
+        $this->assertCount(1, $allMentions, 'Expected 1 mention for moderator; got ' . count($allMentions));
+        $this->assertSame($postId, $allMentions[0]->postId);
+
+        $react = $router->dispatch(new Request(
+            method: 'POST',
+            path: '/c/' . $communitySlug . '/p/' . $postId . '/react',
+            query: [],
+            body: ['emoticon' => $emoticonCode, '_token' => $token],
+        ));
+        $this->assertSame(302, $react->status);
+        $reactions = $repos['reactions']->listByPostIds([$postId]);
+        $this->assertSame(1, $reactions[$postId][$emoticonCode] ?? 0);
+        $this->assertSame($emoticonCode, $repos['reactions']->findUserReaction($postId, $context['users']['member']->id));
+
+        $removeReaction = $router->dispatch(new Request(
+            method: 'POST',
+            path: '/c/' . $communitySlug . '/p/' . $postId . '/react',
+            query: [],
+            body: ['remove' => '1', '_token' => $token],
+        ));
+        $this->assertSame(302, $removeReaction->status);
+        $this->assertSame([], $repos['reactions']->listByPostIds([$postId]));
+
+        $threadPage = $this->dispatch($app, new Request(
+            method: 'GET',
+            path: '/c/' . $communitySlug . '/t/' . $threadId,
+            query: [],
+            body: [],
+        ));
+        $this->assertSame(200, $threadPage->status);
+        $this->assertStringContainsString('Example Article', $threadPage->body);
+        $this->assertStringContainsString('example.com', $threadPage->body);
+
+        $_SESSION['user_id'] = $context['users']['moderator']->id;
+        $mentionInbox = $this->dispatchWithRefreshedAuth($app, new Request(
+            method: 'GET',
+            path: '/c/' . $communitySlug . '/mentions',
+            query: [],
+            body: [],
+        ));
+        $this->assertSame(200, $mentionInbox->status);
+        $this->assertStringContainsString('Unread: 1', $mentionInbox->body);
+        $this->assertStringContainsString((string) $postId, $mentionInbox->body);
+
+        $markRead = $router->dispatch(new Request(
+            method: 'POST',
+            path: '/c/' . $communitySlug . '/mentions/' . $allMentions[0]->id . '/read',
+            query: [],
+            body: ['_token' => $token],
+        ));
+        $this->assertSame(302, $markRead->status);
+        $this->assertSame(0, $repos['mentions']->countUnread($context['users']['moderator']->id, $context['community']->id));
+    }
+
     public function testAdminCanManageCommunitiesBoardsAndModerators(): void
     {
         session_start();
@@ -353,6 +474,45 @@ final class ApplicationFlowTest extends TestCase
         $this->assertTrue($repos['communityModerators']->isModerator($newCommunity->id, $memberUser->id));
     }
 
+    public function testMentionExtractionAndNotification(): void
+    {
+        $pdo = $this->makeMigratedPdo();
+        $userRepository = new UserRepository($pdo);
+        $roleRepository = new RoleRepository($pdo);
+        $communityRepository = new CommunityRepository($pdo);
+        $categoryRepository = new CategoryRepository($pdo);
+        $boardRepository = new BoardRepository($pdo);
+        $threadRepository = new ThreadRepository($pdo);
+        $postRepository = new PostRepository($pdo);
+        $mentionNotificationRepository = new MentionNotificationRepository($pdo);
+
+        $roleRepository->ensureDefaultRoles();
+        $memberRole = $roleRepository->findBySlug('member');
+        $this->assertNotNull($memberRole);
+
+        $user1 = $userRepository->create('alice', 'Alice', password_hash('secret', PASSWORD_BCRYPT), $memberRole->id, time());
+        $user2 = $userRepository->create('bobsmith', 'Bob', password_hash('secret', PASSWORD_BCRYPT), $memberRole->id, time());
+
+        $community = $communityRepository->create('test', 'Test', 'Test community', null, time());
+        $category = $categoryRepository->create($community->id, 'Test Cat', 1, time());
+        $board = $boardRepository->create($community->id, $category->id, 'testboard', 'Test Board', 'desc', 1, false, null, time());
+        $thread = $threadRepository->create($community->id, $board->id, 'Test Thread', $user1->id, false, false, false, time());
+        $post = $postRepository->create($community->id, $thread->id, $user1->id, 'Hey @alice and @bobsmith check this', 'parsed', null, time());
+
+        $mentionService = new MentionService($userRepository, $mentionNotificationRepository);
+        $handles = $mentionService->extractHandles('Hey @alice and @bobsmith check this out');
+        $this->assertSame(['alice', 'bobsmith'], $handles);
+
+        $mentionService->notifyFromText(
+            communityId: $community->id,
+            postId: $post->id,
+            authorId: $user1->id,
+            bodyRaw: 'Hey @alice and @bobsmith check this',
+        );
+
+        $this->assertSame(1, $mentionNotificationRepository->countForUser($user2->id, $community->id));
+    }
+
     /**
      * @return array{
      *     router: Router,
@@ -391,6 +551,11 @@ final class ApplicationFlowTest extends TestCase
         $banRepository = new BanRepository($pdo);
         $attachmentRepository = new AttachmentRepository($pdo);
         $reportRepository = new ReportRepository($pdo);
+        $reactionRepository = new ReactionRepository($pdo);
+        $mentionNotificationRepository = new MentionNotificationRepository($pdo);
+        $mentionService = new MentionService($userRepository, $mentionNotificationRepository);
+        $emoticonSet = new EmoticonSet($config);
+        $linkPreviewer = new LinkPreviewer($config);
         $uploadService = new UploadService($config);
         $authService = new AuthService(
             users: $userRepository,
@@ -422,12 +587,14 @@ final class ApplicationFlowTest extends TestCase
         $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
         $boardController = new BoardController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository);
-        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository, $postRepository, new BbcodeParser(), new \Fred\Application\Content\LinkPreviewer($config), $profileRepository, $uploadService, $attachmentRepository, new \Fred\Infrastructure\Database\ReactionRepository($pdo), new \Fred\Application\Content\EmoticonSet($config), new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)), $pdo);
-        $postController = new PostController($authService, $view, $config, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
-        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new \Fred\Application\Content\MentionService($userRepository, new \Fred\Infrastructure\Database\MentionNotificationRepository($pdo)));
+        $threadController = new ThreadController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $threadRepository, $postRepository, new BbcodeParser(), $linkPreviewer, $profileRepository, $uploadService, $attachmentRepository, $reactionRepository, $emoticonSet, $mentionService, $pdo);
+        $postController = new PostController($authService, $view, $config, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, $mentionService);
+        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityHelper, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, $mentionService);
         $profileController = new ProfileController($view, $config, $authService, $communityHelper, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
         $searchController = new SearchController($view, $config, $authService, $permissionService, $communityHelper, $searchService, $userRepository);
         $uploadController = new UploadController($config);
+        $reactionController = new ReactionController($authService, $config, $view, $communityHelper, $threadRepository, $postRepository, $reactionRepository, $emoticonSet);
+        $mentionController = new MentionController($authService, $config, $view, $communityHelper, $mentionNotificationRepository, $userRepository);
 
         $authRequired = static function (Request $request, callable $next) use ($authService): Response {
             if ($authService->currentUser()->isGuest()) {
@@ -458,6 +625,8 @@ final class ApplicationFlowTest extends TestCase
             $authRequired,
             $moderationController,
             $searchController,
+            $reactionController,
+            $mentionController,
             $csrfProtect,
             $communityContext,
             $boardContext,
@@ -496,6 +665,11 @@ final class ApplicationFlowTest extends TestCase
             $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $csrfProtect, $postContext]);
             $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $csrfProtect, $postContext]);
             $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $csrfProtect, $postContext]);
+            $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired, $csrfProtect, $postContext]);
+            $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired, $communityContext]);
+            $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired, $csrfProtect, $communityContext]);
+            $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired, $csrfProtect, $communityContext]);
+            $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired, $communityContext]);
 
             $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $communityContext]);
             $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect, $communityContext]);
@@ -542,6 +716,7 @@ final class ApplicationFlowTest extends TestCase
             'communityHelper' => $communityHelper,
             'context' => $seed,
             'csrfToken' => $csrfToken,
+            'emoticons' => $emoticonSet,
             'repos' => [
                 'users' => $userRepository,
                 'threads' => $threadRepository,
@@ -552,6 +727,8 @@ final class ApplicationFlowTest extends TestCase
                 'bans' => $banRepository,
                 'communityModerators' => $communityModeratorRepository,
                 'roles' => $roleRepository,
+                'reactions' => $reactionRepository,
+                'mentions' => $mentionNotificationRepository,
             ],
         ];
     }
@@ -658,7 +835,19 @@ final class ApplicationFlowTest extends TestCase
         $view->share('navSections', $communityHelper->navForCommunity());
         $view->share('currentCommunity', null);
         $view->share('customCss', '');
+        $view->share('csrfToken', $app['csrfToken']);
 
         return $app['router']->dispatch($request);
+    }
+
+    private function dispatchWithRefreshedAuth(array $app, Request $request): Response
+    {
+        $auth = $app['auth'];
+        $reflection = new \ReflectionClass($auth);
+        $cachedProperty = $reflection->getProperty('cached');
+        $cachedProperty->setAccessible(true);
+        $cachedProperty->setValue($auth, null);
+
+        return $this->dispatch($app, $request);
     }
 }
