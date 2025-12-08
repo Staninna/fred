@@ -6,31 +6,20 @@ namespace Fred\Application\Content;
 
 use DOMDocument;
 use DOMXPath;
+use Fred\Infrastructure\Config\AppConfig;
 
+use function array_slice;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function filemtime;
-
-use const FILTER_FLAG_NO_PRIV_RANGE;
-use const FILTER_FLAG_NO_RES_RANGE;
-use const FILTER_VALIDATE_IP;
-
 use function filter_var;
-
-use Fred\Infrastructure\Config\AppConfig;
-
+use function in_array;
 use function is_array;
 use function is_dir;
 use function json_decode;
 use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-
 use function libxml_clear_errors;
-
-use const LIBXML_NONET;
-
 use function libxml_use_internal_errors;
 use function max;
 use function parse_url;
@@ -38,6 +27,12 @@ use function preg_match_all;
 use function sha1;
 use function strtolower;
 use function trim;
+
+use const FILTER_FLAG_NO_PRIV_RANGE;
+use const FILTER_FLAG_NO_RES_RANGE;
+use const FILTER_VALIDATE_IP;
+use const JSON_PRETTY_PRINT;
+use const LIBXML_NONET;
 
 final class LinkPreviewer
 {
@@ -62,13 +57,52 @@ final class LinkPreviewer
         $urls = $this->extractUrls($text, $limit);
 
         $previews = [];
+        $toFetch = [];
+        $cachePaths = [];
 
         foreach ($urls as $url) {
-            $preview = $this->previewForUrl($url);
+            $url = trim($url);
 
-            if ($preview !== null) {
-                $previews[] = $preview;
+            if ($url === '' || !$this->isSafeUrl($url)) {
+                continue;
             }
+
+            $cacheCheck = $this->cachedPreview($url);
+            $cachePaths[$url] = $cacheCheck['path'];
+
+            if ($cacheCheck['status'] === 'hit' && isset($cacheCheck['data'])) {
+                $previews[] = $cacheCheck['data'];
+                continue;
+            }
+
+            if ($cacheCheck['status'] === 'failed_recent') {
+                continue;
+            }
+
+            $toFetch[] = $url;
+        }
+
+        if ($toFetch === []) {
+            return $previews;
+        }
+
+        $metadataByUrl = $this->fetchMetadataConcurrent($toFetch);
+
+        foreach ($toFetch as $url) {
+            $metadata = $metadataByUrl[$url] ?? null;
+            $cachePath = $cachePaths[$url] ?? null;
+
+            if ($cachePath === null) {
+                continue;
+            }
+
+            if ($metadata !== null) {
+                @file_put_contents($cachePath, (string) json_encode($metadata, JSON_PRETTY_PRINT));
+                $previews[] = $metadata;
+                continue;
+            }
+
+            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url], JSON_PRETTY_PRINT));
         }
 
         return $previews;
@@ -170,6 +204,89 @@ final class LinkPreviewer
             return null;
         }
 
+        return $this->parseMetadata($url, $html);
+    }
+
+    /**
+     * Attempt to fetch multiple URLs concurrently. Falls back to sequential fetches if cURL multi is unavailable.
+     *
+     * @param array<int, string> $urls
+     * @return array<string, array{url:string, title:string, description:string|null, image:string|null, host:string}|null>
+     */
+    private function fetchMetadataConcurrent(array $urls): array
+    {
+        if (!function_exists('curl_multi_init')) {
+            $results = [];
+
+            foreach ($urls as $url) {
+                $results[$url] = $this->fetchMetadata($url);
+            }
+
+            return $results;
+        }
+
+        $multi = curl_multi_init();
+        $handles = [];
+
+        foreach ($urls as $url) {
+            $ch = curl_init($url);
+
+            if ($ch === false) {
+                $handles[$url] = null;
+                continue;
+            }
+
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 5,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_USERAGENT => 'FredForumLinkPreview/1.0',
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ]);
+
+            curl_multi_add_handle($multi, $ch);
+            $handles[$url] = $ch;
+        }
+
+        do {
+            $status = curl_multi_exec($multi, $active);
+
+            if ($active) {
+                curl_multi_select($multi, 1.0);
+            }
+        } while ($active && $status === CURLM_OK);
+
+        $results = [];
+
+        foreach ($handles as $url => $ch) {
+            if ($ch === null) {
+                $results[$url] = null;
+                continue;
+            }
+
+            $error = curl_errno($ch);
+            $content = $error === 0 ? (string) curl_multi_getcontent($ch) : '';
+
+            if ($error === 0 && trim($content) !== '') {
+                $results[$url] = $this->parseMetadata($url, $content);
+            } else {
+                $results[$url] = null;
+            }
+
+            curl_multi_remove_handle($multi, $ch);
+            curl_close($ch);
+        }
+
+        curl_multi_close($multi);
+
+        return $results;
+    }
+
+    /** @return array{url:string, title:string, description:string|null, image:string|null, host:string}|null */
+    private function parseMetadata(string $url, string $html): ?array
+    {
         $doc = new DOMDocument();
         libxml_use_internal_errors(true);
         $loaded = @$doc->loadHTML($html, LIBXML_NONET);
@@ -220,4 +337,35 @@ final class LinkPreviewer
 
         return $text === '' ? null : $text;
     }
+
+    /**
+     * @return array{status: 'hit'|'miss'|'failed_recent', data?: array{url:string, title:string, description:string|null, image:string|null, host:string}, path: string}
+     */
+    private function cachedPreview(string $url): array
+    {
+        $cacheKey = sha1($url);
+        $cachePath = $this->cacheDir . '/' . $cacheKey . '.json';
+
+        if (!file_exists($cachePath)) {
+            return ['status' => 'miss', 'path' => $cachePath];
+        }
+
+        $age = time() - filemtime($cachePath);
+        $cached = json_decode((string) file_get_contents($cachePath), true);
+
+        if (is_array($cached) && ($cached['failed'] ?? false) === true) {
+            if ($age < $this->failedTtlSeconds) {
+                return ['status' => 'failed_recent', 'path' => $cachePath];
+            }
+
+            return ['status' => 'miss', 'path' => $cachePath];
+        }
+
+        if (is_array($cached) && isset($cached['url'], $cached['title']) && $age < $this->ttlSeconds) {
+            return ['status' => 'hit', 'data' => $cached, 'path' => $cachePath];
+        }
+
+        return ['status' => 'miss', 'path' => $cachePath];
+    }
 }
+
