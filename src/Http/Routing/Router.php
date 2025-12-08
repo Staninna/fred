@@ -185,7 +185,9 @@ final class Router
             $path,
         );
 
-        return ['#^' . $regex . '$#', $paramNames];
+        $regex = rtrim($regex ?? '', '/');
+
+        return ['#^' . $regex . '/?$#', $paramNames];
     }
 
     private function applyGroupPrefix(string $path): string
@@ -196,10 +198,15 @@ final class Router
             $prefix .= '/' . ltrim($part, '/');
         }
 
-        $combined = rtrim($prefix, '/') . '/' . ltrim($path, '/');
+        $normalizedPath = $path === '/' ? '' : '/' . ltrim($path, '/');
+        $combined = ($prefix === '' ? '' : rtrim($prefix, '/')) . $normalizedPath;
         $combined = preg_replace('#//+#', '/', $combined) ?? '/';
 
-        return $combined === '' ? '/' : $combined;
+        if ($combined === '') {
+            return '/';
+        }
+
+        return $combined;
     }
 
     private function gatherGroupMiddleware(array $routeMiddleware): array

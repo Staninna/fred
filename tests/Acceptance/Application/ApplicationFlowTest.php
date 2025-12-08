@@ -24,6 +24,10 @@ use Fred\Http\Controller\UploadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
+use Fred\Http\Middleware\ResolveBoardMiddleware;
+use Fred\Http\Middleware\ResolveCommunityMiddleware;
+use Fred\Http\Middleware\ResolvePostMiddleware;
+use Fred\Http\Middleware\ResolveThreadMiddleware;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\BanRepository;
@@ -409,6 +413,11 @@ final class ApplicationFlowTest extends TestCase
             return $next($request);
         };
 
+        $communityContext = new ResolveCommunityMiddleware($communityHelper, $view);
+        $boardContext = new ResolveBoardMiddleware($communityHelper, $categoryRepository, $view);
+        $threadContext = new ResolveThreadMiddleware($communityHelper, $threadRepository, $categoryRepository, $view);
+        $postContext = new ResolvePostMiddleware($communityHelper, $postRepository, $threadRepository, $categoryRepository, $view);
+
         $authController = new AuthController($view, $config, $authService, $communityHelper);
         $communityController = new CommunityController($view, $config, $authService, $permissionService, $communityHelper, $communityRepository);
         $adminController = new AdminController($view, $config, $authService, $permissionService, $communityHelper, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
@@ -436,7 +445,7 @@ final class ApplicationFlowTest extends TestCase
         $router->post('/register', [$authController, 'register'], [$csrfProtect]);
         $router->post('/logout', [$authController, 'logout'], [$csrfProtect]);
 
-        $router->get('/c/{community}', [$communityController, 'show']);
+        $router->get('/c/{community}', [$communityController, 'show'], [$communityContext]);
         $router->get('/uploads/{type}/{year}/{month}/{file}', [$uploadController, 'serve']);
 
         $router->group('/c/{community}', function (Router $router) use (
@@ -449,9 +458,13 @@ final class ApplicationFlowTest extends TestCase
             $authRequired,
             $moderationController,
             $searchController,
-            $csrfProtect
+            $csrfProtect,
+            $communityContext,
+            $boardContext,
+            $threadContext,
+            $postContext
         ) {
-            $router->get('/', [$communityController, 'show']);
+            $router->get('/', [$communityController, 'show'], [$communityContext]);
             $router->get('/about', [$communityController, 'about']);
             $router->get('/u/{username}', [$profileController, 'show']);
 
@@ -464,29 +477,29 @@ final class ApplicationFlowTest extends TestCase
                 $router->post('/avatar', [$profileController, 'updateAvatar'], [$authRequired, $csrfProtect]);
             }, [$authRequired]);
 
-            $router->get('/b/{board}', [$boardController, 'show']);
-            $router->group('/b/{board}', function (Router $router) use ($threadController, $authRequired, $csrfProtect) {
+            $router->get('/b/{board}', [$boardController, 'show'], [$boardContext]);
+            $router->group('/b/{board}', function (Router $router) use ($threadController, $authRequired, $csrfProtect, $boardContext) {
                 $router->get('/thread/new', [$threadController, 'create']);
                 $router->post('/thread', [$threadController, 'store'], [$authRequired, $csrfProtect]);
-            }, [$authRequired]);
+            }, [$authRequired, $boardContext]);
 
-            $router->get('/t/{thread}', [$threadController, 'show']);
-            $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $csrfProtect]);
-            $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $csrfProtect]);
-            $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired]);
-            $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $csrfProtect]);
-            $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $csrfProtect]);
-            $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $csrfProtect]);
+            $router->get('/t/{thread}', [$threadController, 'show'], [$threadContext]);
+            $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $csrfProtect, $threadContext]);
+            $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext]);
+            $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $csrfProtect, $postContext]);
+            $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $csrfProtect, $postContext]);
+            $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $csrfProtect, $postContext]);
 
-            $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired]);
-            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect]);
-            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $csrfProtect]);
+            $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $communityContext]);
+            $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $csrfProtect, $communityContext]);
+            $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $csrfProtect, $communityContext]);
             $router->get('/search', [$searchController, 'search']);
 
             $router->group('/admin', function (Router $router) use ($adminController, $authRequired, $csrfProtect) {
@@ -508,7 +521,7 @@ final class ApplicationFlowTest extends TestCase
                 $router->post('/settings', [$adminController, 'updateSettings'], [$authRequired, $csrfProtect]);
                 $router->get('/users', [$adminController, 'users']);
             }, [$authRequired]);
-        });
+        }, [$communityContext]);
 
         $seed = $this->seedData(
             communityRepository: $communityRepository,

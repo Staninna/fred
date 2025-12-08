@@ -16,6 +16,10 @@ use Fred\Http\Controller\ThreadController;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
+use Fred\Http\Middleware\ResolveBoardMiddleware;
+use Fred\Http\Middleware\ResolveCommunityMiddleware;
+use Fred\Http\Middleware\ResolvePostMiddleware;
+use Fred\Http\Middleware\ResolveThreadMiddleware;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
@@ -80,6 +84,29 @@ final class HttpRoutesTest extends TestCase
         $this->assertStringContainsString($postBody, $threadResponse->body);
     }
 
+    public function testCommunityRouteDoesNot404WithOrWithoutTrailingSlash(): void
+    {
+        [$router, $context] = $this->buildApp();
+
+        $communitySlug = $context['community_slug'];
+
+        $withoutSlash = $this->dispatch($context, new Request(
+            method: 'GET',
+            path: '/c/' . $communitySlug,
+            query: [],
+            body: [],
+        ), $router);
+        $this->assertSame(200, $withoutSlash->status);
+
+        $withSlash = $this->dispatch($context, new Request(
+            method: 'GET',
+            path: '/c/' . $communitySlug . '/',
+            query: [],
+            body: [],
+        ), $router);
+        $this->assertSame(200, $withSlash->status);
+    }
+
     /**
      * @return array{0: Router, 1: array<string, mixed>}
      */
@@ -117,6 +144,10 @@ final class HttpRoutesTest extends TestCase
         $communityHelper = new CommunityHelper($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
+        $communityContext = new ResolveCommunityMiddleware($communityHelper, $view);
+        $boardContext = new ResolveBoardMiddleware($communityHelper, $categoryRepository, $view);
+        $threadContext = new ResolveThreadMiddleware($communityHelper, $threadRepository, $categoryRepository, $view);
+        $postContext = new ResolvePostMiddleware($communityHelper, $postRepository, $threadRepository, $categoryRepository, $view);
         $authController = new AuthController($view, $config, $authService, $communityHelper);
         $communityController = new CommunityController(
             $view,
@@ -203,31 +234,31 @@ final class HttpRoutesTest extends TestCase
 
         $router->get('/', [$communityController, 'index']);
         $router->post('/communities', [$communityController, 'store']);
-        $router->get('/c/{community}', [$communityController, 'show']);
-        $router->get('/c/{community}/about', [$communityController, 'about']);
-        $router->get('/c/{community}/b/{board}', [$boardController, 'show']);
-        $router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create']);
-        $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store']);
-        $router->get('/c/{community}/t/{thread}', [$threadController, 'show']);
-        $router->post('/c/{community}/t/{thread}/reply', [$postController, 'store']);
-        $router->post('/c/{community}/t/{thread}/lock', [$moderationController, 'lockThread']);
-        $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread']);
-        $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread']);
-        $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread']);
-        $router->post('/c/{community}/t/{thread}/move', [$moderationController, 'moveThread']);
-        $router->get('/c/{community}/p/{post}/edit', [$moderationController, 'editPost']);
-        $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost']);
-        $router->post('/c/{community}/p/{post}/edit', [$moderationController, 'editPost']);
-        $router->get('/c/{community}/admin/bans', [$moderationController, 'listBans']);
-        $router->post('/c/{community}/admin/bans', [$moderationController, 'createBan']);
-        $router->post('/c/{community}/admin/bans/{ban}/delete', [$moderationController, 'deleteBan']);
-        $router->get('/c/{community}/admin/structure', [$adminController, 'structure']);
-        $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory']);
-        $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory']);
-        $router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory']);
-        $router->post('/c/{community}/admin/boards', [$adminController, 'createBoard']);
-        $router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard']);
-        $router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard']);
+        $router->get('/c/{community}', [$communityController, 'show'], [$communityContext]);
+        $router->get('/c/{community}/about', [$communityController, 'about'], [$communityContext]);
+        $router->get('/c/{community}/b/{board}', [$boardController, 'show'], [$communityContext, $boardContext]);
+        $router->get('/c/{community}/b/{board}/thread/new', [$threadController, 'create'], [$communityContext, $boardContext]);
+        $router->post('/c/{community}/b/{board}/thread', [$threadController, 'store'], [$communityContext, $boardContext]);
+        $router->get('/c/{community}/t/{thread}', [$threadController, 'show'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/reply', [$postController, 'store'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/lock', [$moderationController, 'lockThread'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$communityContext, $threadContext]);
+        $router->post('/c/{community}/t/{thread}/move', [$moderationController, 'moveThread'], [$communityContext, $threadContext]);
+        $router->get('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContext, $postContext]);
+        $router->post('/c/{community}/p/{post}/delete', [$moderationController, 'deletePost'], [$communityContext, $postContext]);
+        $router->post('/c/{community}/p/{post}/edit', [$moderationController, 'editPost'], [$communityContext, $postContext]);
+        $router->get('/c/{community}/admin/bans', [$moderationController, 'listBans'], [$communityContext]);
+        $router->post('/c/{community}/admin/bans', [$moderationController, 'createBan'], [$communityContext]);
+        $router->post('/c/{community}/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$communityContext]);
+        $router->get('/c/{community}/admin/structure', [$adminController, 'structure'], [$communityContext]);
+        $router->post('/c/{community}/admin/categories', [$adminController, 'createCategory'], [$communityContext]);
+        $router->post('/c/{community}/admin/categories/{category}', [$adminController, 'updateCategory'], [$communityContext]);
+        $router->post('/c/{community}/admin/categories/{category}/delete', [$adminController, 'deleteCategory'], [$communityContext]);
+        $router->post('/c/{community}/admin/boards', [$adminController, 'createBoard'], [$communityContext]);
+        $router->post('/c/{community}/admin/boards/{board}', [$adminController, 'updateBoard'], [$communityContext]);
+        $router->post('/c/{community}/admin/boards/{board}/delete', [$adminController, 'deleteBoard'], [$communityContext]);
         $router->get('/login', [$authController, 'showLoginForm']);
         $router->post('/login', [$authController, 'login']);
         $router->get('/register', [$authController, 'showRegisterForm']);
