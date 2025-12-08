@@ -32,12 +32,11 @@ use Fred\Infrastructure\View\ViewRenderer;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Search\SearchService;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class AllRoutesTest extends TestCase
 {
-    /**
-     * @dataProvider roleProvider
-     */
+    #[DataProvider('roleProvider')]
     public function testAllGetRoutesDoNotProduceServerErrors(string $role): void
     {
         session_start();
