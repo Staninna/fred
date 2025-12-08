@@ -15,14 +15,19 @@ use function ob_start;
 use function rtrim;
 use function str_replace;
 
-final readonly class ViewRenderer
+final class ViewRenderer
 {
     /** @param array<string, mixed> $sharedData */
     public function __construct(
-        private string  $viewPath,
-        private ?string $defaultLayout = 'layout/default.php',
+        private readonly string  $viewPath,
+        private readonly ?string $defaultLayout = 'layout/default.php',
         private array $sharedData = [],
     ) {
+    }
+
+    public function share(string $key, mixed $value): void
+    {
+        $this->sharedData[$key] = $value;
     }
 
     /**

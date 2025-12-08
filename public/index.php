@@ -198,10 +198,6 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
     $body = $view->render('errors/404.php', [
         'pageTitle' => 'Page not found',
         'path' => $request->path,
-        'activePath' => $request->path,
-        'environment' => $config->environment,
-        'currentUser' => $auth->currentUser(),
-        'navSections' => $communityHelper->navForCommunity(),
     ]);
 
     return new Response(
@@ -213,6 +209,18 @@ $router->setNotFoundHandler(function (Request $request) use ($container) {
 
 $request = Request::fromGlobals();
 
+// Setup global view data
+$viewRenderer = $container->get(ViewRenderer::class);
+$communityHelper = $container->get(\Fred\Http\Controller\CommunityHelper::class);
+
+$viewRenderer->share('currentUser', $authService->currentUser());
+$viewRenderer->share('environment', $config->environment);
+$viewRenderer->share('baseUrl', $config->baseUrl);
+$viewRenderer->share('activePath', $request->path);
+$viewRenderer->share('navSections', $communityHelper->navForCommunity());
+$viewRenderer->share('currentCommunity', null);
+$viewRenderer->share('customCss', '');
+
 $csrf = $container->get(CsrfGuard::class);
 if ($request->method === 'POST' && !$csrf->isValid($request)) {
     try {
@@ -223,11 +231,6 @@ if ($request->method === 'POST' && !$csrf->isValid($request)) {
 
         $body = $view->render('errors/419.php', [
             'pageTitle' => 'CSRF token mismatch',
-            'environment' => $config->environment,
-            'currentUser' => $auth->currentUser(),
-            'activePath' => $request->path,
-            'navSections' => $communityHelper->navForCommunity(),
-            'currentCommunity' => null,
         ]);
     } catch (\Throwable) {
         $body = '<h1>CSRF token mismatch</h1>';
@@ -268,8 +271,6 @@ try {
 
         $body = $view->render('errors/500.php', [
             'pageTitle' => 'Server error',
-            'environment' => $config->environment,
-            'currentUser' => $auth->currentUser(),
             ...$debug,
         ]);
     } catch (\Throwable) {

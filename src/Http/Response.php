@@ -38,14 +38,10 @@ final readonly class Response
         ?array $navSections = null,
         string $body = '<h1>Not Found</h1>',
     ): self {
-        if ($view !== null && $config !== null && $auth !== null) {
+        if ($view !== null) {
             $body = $view->render('errors/404.php', [
                 'pageTitle' => 'Page not found',
                 'path' => $request?->path ?? '',
-                'activePath' => $request?->path ?? '',
-                'environment' => $config->environment,
-                'currentUser' => $auth->currentUser(),
-                'navSections' => $navSections,
             ]);
         }
 
