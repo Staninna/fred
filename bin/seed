@@ -37,10 +37,10 @@ $pdo = ConnectionFactory::make($config);
 $faker = FakerFactory::create();
 $faker->seed(1234);
 
-$boardCount = (int) ($argv[1] ?? 4);
-$threadsPerBoard = (int) ($argv[2] ?? 30);
-$postsPerThread = (int) ($argv[3] ?? 30);
-$userCount = (int) ($argv[4] ?? 50);
+$boardCount = (int) ($argv[1] ?? 5);
+$threadsPerBoard = (int) ($argv[2] ?? 60);
+$postsPerThread = (int) ($argv[3] ?? 70);
+$userCount = (int) ($argv[4] ?? 75);
 
 $progress = new ProgressTracker(static function (string $message): void {
     fwrite(STDOUT, "[seed] {$message}\n");
