@@ -46,6 +46,8 @@ final readonly class ReactionController
             return Response::redirect('/login');
         }
 
+        $userId = (int) $currentUser->id;
+
         $postId = (int) $post->id;
 
         if ($thread->isLocked || $board->isLocked) {
@@ -58,7 +60,7 @@ final readonly class ReactionController
         $pageSuffix = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
 
         if ($remove) {
-            $this->reactions->removeUserReaction($postId, $currentUser->id ?? 0);
+            $this->reactions->removeUserReaction($postId, $userId);
 
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageSuffix . $postId);
         }
@@ -70,7 +72,7 @@ final readonly class ReactionController
         $this->reactions->setUserReaction(
             communityId: $community->id,
             postId: $postId,
-            userId: $currentUser->id ?? 0,
+            userId: $userId,
             emoticon: $emoticon,
         );
 
