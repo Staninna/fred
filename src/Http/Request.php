@@ -45,6 +45,11 @@ final readonly class Request
             $normalizedHeaders[strtolower((string) $key)] = $value;
         }
 
+        $session = $_SESSION ?? [];
+        if (!\is_array($session)) {
+            $session = [];
+        }
+
         return new self(
             method: trim($method),
             path: $path,
@@ -53,7 +58,7 @@ final readonly class Request
             files: $_FILES ?? [],
             params: [],
             headers: $normalizedHeaders,
-            session: $_SESSION ?? [],
+            session: $session,
             attributes: [],
         );
     }

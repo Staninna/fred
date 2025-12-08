@@ -79,11 +79,16 @@ final readonly class Response
 
     public function send(): void
     {
+        if (headers_sent()) {
+            echo $this->body;
+            return;
+        }
+
         http_response_code($this->status);
 
         foreach ($this->headers as $name => $value) {
             $formattedValue = \is_array($value) ? implode(', ', $value) : $value;
-            header($name . ': ' . $formattedValue);
+            header($name . ': ' . $formattedValue, replace: true);
         }
 
         echo $this->body;
