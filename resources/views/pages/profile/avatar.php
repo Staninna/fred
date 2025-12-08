@@ -7,25 +7,18 @@
 /** @var callable(string, int): string $e */
 ?>
 
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th>Edit avatar</th>
-    </tr>
-    <tr>
-        <td>
-            <div class="info-line">Upload an image (png, jpg, gif, webp). Max 500 KB.</div>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+<?= $renderPartial('partials/form_section_header.php', [
+    'title' => 'Edit avatar',
+    'errors' => $errors,
+    'infoText' => 'Upload an image (png, jpg, gif, webp). Max 500 KB.'
+]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="140">Current avatar</td>
                         <td>
-                            <?php if (!empty($profile?->avatarPath ?? '')): ?>
-                                <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="Avatar" style="max-width: 120px; max-height: 120px;">
-                            <?php else: ?>
-                                <span class="muted">No avatar set.</span>
-                            <?php endif; ?>
+                            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile]) ?>
                         </td>
                     </tr>
                     <tr>

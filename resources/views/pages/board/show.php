@@ -5,6 +5,7 @@
 /** @var array<int, \Fred\Domain\Forum\Thread> $threads */
 /** @var CurrentUser|null $currentUser */
 /** @var callable(string, int): string $e */
+/** @var callable(string, array): string $renderPartial */
 /** @var bool $canModerate */
 /** @var bool $canCreateThread */
 
@@ -15,26 +16,14 @@ use Fred\Domain\Community\Community;
 
 ?>
 
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th colspan="2">Board: <?= $e($board->name) ?></th>
-    </tr>
-    <tr>
-        <td class="table-heading">Description</td>
-        <td><?= $e($board->description) ?></td>
-    </tr>
-    <tr>
-        <td class="table-heading">Location</td>
-        <td>
-            Community: <?= $e($community->name) ?> ·
-            Category: <?= $e($category->name) ?> ·
-            Slug: <?= $e($board->slug) ?>
-        </td>
-    </tr>
-    <tr>
-        <td class="table-heading">Status</td>
-        <td><?= $board->isLocked ? 'Locked' : 'Open' ?> · Threads: <?= $totalThreads ?? count($threads) ?> · Board ID: <?= $board->id ?></td>
-    </tr>
+<?= $renderPartial('partials/info_table.php', [
+    'title' => 'Board: ' . $board->name,
+    'fields' => [
+        'Description' => $e($board->description),
+        'Location' => 'Community: ' . $e($community->name) . ' · Category: ' . $e($category->name) . ' · Slug: ' . $e($board->slug),
+        'Status' => ($board->isLocked ? 'Locked' : 'Open') . ' · Threads: ' . ($totalThreads ?? count($threads)) . ' · Board ID: ' . $board->id,
+    ],
+]) ?>
     <?php if (!empty($canModerate ?? false)): ?>
         <tr>
             <td class="table-heading">Admin</td>
@@ -71,26 +60,12 @@ use Fred\Domain\Community\Community;
         <?php endforeach; ?>
     <?php endif; ?>
     <?php if (!empty($pagination) && ($pagination['totalPages'] ?? 1) > 1): ?>
-        <?php
-        $page = (int) ($pagination['page'] ?? 1);
-        $totalPages = (int) ($pagination['totalPages'] ?? 1);
-        $base = '/c/' . $e($community->slug) . '/b/' . $e($board->slug);
-        ?>
-        <tr>
-            <td colspan="2" class="pagination">
-                <?php if ($page > 1): ?>
-                    <a class="button" href="<?= $base ?>?page=<?= $page - 1 ?>">Prev</a>
-                <?php else: ?>
-                    <span class="muted">Prev</span>
-                <?php endif; ?>
-                <span class="muted">Page <?= $page ?> of <?= $totalPages ?></span>
-                <?php if ($page < $totalPages): ?>
-                    <a class="button" href="<?= $base ?>?page=<?= $page + 1 ?>">Next</a>
-                <?php else: ?>
-                    <span class="muted">Next</span>
-                <?php endif; ?>
-            </td>
-        </tr>
+        <?= $renderPartial('partials/pagination.php', [
+            'page' => (int) ($pagination['page'] ?? 1),
+            'totalPages' => (int) ($pagination['totalPages'] ?? 1),
+            'baseUrl' => '/c/' . $e($community->slug) . '/b/' . $e($board->slug),
+            'isTable' => true,
+        ]) ?>
     <?php endif; ?>
     <tr>
         <td colspan="2">

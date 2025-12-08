@@ -2,15 +2,10 @@
 /** @var \Fred\Domain\Community\Community $community */
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var array<int, string> $signatureErrors */
+/** @var callable(string, array): string $renderPartial */
 /** @var callable(string, int): string $e */
 ?>
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th>Edit signature</th>
-    </tr>
-    <tr>
-        <td>
-            <?= $renderPartial('partials/errors.php', ['errors' => $signatureErrors ?? []]) ?>
+<?= $renderPartial('partials/form_section_header.php', ['title' => 'Edit signature', 'errors' => $signatureErrors ?? [], 'infoText' => null]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/signature" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">

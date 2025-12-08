@@ -12,14 +12,11 @@ use Fred\Domain\Community\Community;
 
 ?>
 
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th>Edit signature</th>
-    </tr>
-    <tr>
-        <td>
-            <div class="info-line">Use BBCode to format your signature. Keep it short and friendly.</div>
-            <?= $renderPartial('partials/errors.php', ['errors' => $errors]) ?>
+<?= $renderPartial('partials/form_section_header.php', [
+    'title' => 'Edit signature',
+    'errors' => $errors,
+    'infoText' => 'Use BBCode to format your signature. Keep it short and friendly.'
+]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/signature" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">

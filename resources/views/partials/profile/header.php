@@ -3,6 +3,7 @@
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var \Fred\Domain\Community\Community $community */
 /** @var callable(string, int): string $e */
+/** @var callable(string, array): string $renderPartial */
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
@@ -19,11 +20,7 @@
     <tr>
         <td class="table-heading">Avatar</td>
         <td>
-            <?php if (!empty($profile?->avatarPath ?? '')): ?>
-                <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="Avatar" style="max-width: 120px; max-height: 120px;">
-            <?php else: ?>
-                <span class="muted">No avatar set.</span>
-            <?php endif; ?>
+            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile]) ?>
         </td>
     </tr>
     <tr>

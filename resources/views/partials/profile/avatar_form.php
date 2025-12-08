@@ -3,25 +3,16 @@
 /** @var \Fred\Domain\Auth\Profile|null $profile */
 /** @var array<int, string> $avatarErrors */
 /** @var callable(string, int): string $e */
+/** @var callable(string, array): string $renderPartial */
 ?>
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th>Avatar</th>
-    </tr>
-    <tr>
-        <td>
-            <?= $renderPartial('partials/errors.php', ['errors' => $avatarErrors ?? []]) ?>
+<?= $renderPartial('partials/form_section_header.php', ['title' => 'Avatar', 'errors' => $avatarErrors ?? [], 'infoText' => null]) ?>
             <form method="post" action="/c/<?= $e($community->slug) ?>/settings/avatar" enctype="multipart/form-data" novalidate>
                 <?= $renderPartial('partials/csrf.php') ?>
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120">Current avatar</td>
                         <td>
-                            <?php if (!empty($profile?->avatarPath ?? '')): ?>
-                                <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="Avatar" style="max-width: 120px; max-height: 120px;">
-                            <?php else: ?>
-                                <span class="muted">No avatar set.</span>
-                            <?php endif; ?>
+                            <?= $renderPartial('partials/avatar_display.php', ['profile' => $profile]) ?>
                         </td>
                     </tr>
                     <tr>

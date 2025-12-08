@@ -4,6 +4,7 @@
 /** @var CurrentUser $currentUser*/
 /** @var array<int, array<int, Board>> $boardsByCategory */
 /** @var callable(string, int): string $e */
+/** @var callable(string, array): string $renderPartial */
 /** @var bool $canModerate */
 
 use Fred\Application\Auth\CurrentUser;
@@ -13,22 +14,14 @@ use Fred\Domain\Community\Community;
 
 ?>
 
-<table class="section-table" cellpadding="0" cellspacing="0">
-    <tr>
-        <th colspan="2"><?= $e($community->name) ?></th>
-    </tr>
-    <tr>
-        <td class="table-heading">Description</td>
-        <td><?= $e($community->description) ?></td>
-    </tr>
-    <tr>
-        <td class="table-heading">Slug</td>
-        <td><?= $e($community->slug) ?></td>
-    </tr>
-    <tr>
-        <td class="table-heading">Stats</td>
-        <td>Categories: <?= count($categories) ?> · Boards: <?= array_sum(array_map('count', $boardsByCategory)) ?></td>
-    </tr>
+<?= $renderPartial('partials/info_table.php', [
+    'title' => $community->name,
+    'fields' => [
+        'Description' => $e($community->description),
+        'Slug' => $e($community->slug),
+        'Stats' => 'Categories: ' . count($categories) . ' · Boards: ' . array_sum(array_map('count', $boardsByCategory)),
+    ],
+]) ?>
     <?php if (!empty($canModerate ?? false)): ?>
         <tr>
             <td class="table-heading">Admin</td>
