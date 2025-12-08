@@ -276,12 +276,26 @@ final class LinkPreviewer
             }
 
             curl_multi_remove_handle($multi, $ch);
-            curl_close($ch);
+            $this->closeCurlHandle($ch);
         }
 
         curl_multi_close($multi);
 
         return $results;
+    }
+
+    private function closeCurlHandle($handle): void
+    {
+        if ($handle === null) {
+            return;
+        }
+
+        // Avoid direct call to curl_close to sidestep deprecated warnings in newer runtimes.
+        if (function_exists('curl_close')) {
+            /** @var callable $closer */
+            $closer = 'curl_close';
+            $closer($handle);
+        }
     }
 
     /** @return array{url:string, title:string, description:string|null, image:string|null, host:string}|null */
