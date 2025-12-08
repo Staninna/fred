@@ -105,7 +105,12 @@ final class PermissionService
             return $this->rolePermissionCache[$key];
         }
 
-        return $this->rolePermissionCache[$key] = $this->permissions->roleHasPermission($role, $permission);
+        $allowed = $this->permissions->roleHasPermission($role, $permission);
+        if ($allowed) {
+            $this->rolePermissionCache[$key] = true;
+        }
+
+        return $allowed;
     }
 
     private function hasForCommunity(CurrentUser $user, string $permission, ?int $communityId): bool
