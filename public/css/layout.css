@@ -45,6 +45,10 @@ a:active {
     color: var(--link);
 }
 
+a[href*="/u/"] {
+    font-weight: 500;
+}
+
 .page-frame {
     width: 1040px;
     margin: 0 auto;
@@ -454,13 +458,17 @@ pre {
 }
 
 .mention-suggestions {
-    margin-top: 4px;
-    border: 1px solid var(--border);
-    background: #ffffff;
-    padding: 4px;
-    max-width: 480px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    position: absolute;
+    z-index: 100;
+    margin-top: 2px;
+    border: 2px solid var(--border-strong);
+    background: var(--panel);
+    padding: 0;
+    min-width: 240px;
+    max-width: 360px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     display: block;
+    font-size: 12px;
 }
 
 .mention-suggestions[hidden] {
@@ -471,15 +479,26 @@ pre {
     display: block;
     width: 100%;
     text-align: left;
-    margin: 2px 0;
-    padding: 4px 6px;
-    background: #eef1f6;
-    border: 1px solid var(--border);
+    margin: 0;
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--text);
 }
 
-.mention-suggestion:hover {
-    background: #dfe6f2;
+.mention-suggestion:last-child {
+    border-bottom: none;
+}
+
+.mention-suggestion:hover,
+.mention-suggestion:focus {
+    background: var(--accent);
+    color: var(--text);
+    outline: none;
 }
 
 @media (max-width: 1100px) {
