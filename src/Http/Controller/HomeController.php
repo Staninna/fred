@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class HomeController
@@ -24,19 +25,14 @@ final readonly class HomeController
     {
         $navSections = $this->communityHelper->navForCommunity();
 
-        $body = $this->view->render('pages/home.php', [
-            'pageTitle' => 'Fred Forum Engine',
-            'activePath' => $request->path,
-            'navSections' => $navSections,
-            'environment' => $this->config->environment,
-            'baseUrl' => $this->config->baseUrl,
-            'currentUser' => $this->auth->currentUser(),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Fred Forum Engine')
+            ->set('activePath', $request->path)
+            ->set('navSections', $navSections)
+            ->set('environment', $this->config->environment)
+            ->set('baseUrl', $this->config->baseUrl)
+            ->set('currentUser', $this->auth->currentUser());
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/home.php', $ctx);
     }
 }

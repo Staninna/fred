@@ -11,6 +11,7 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class BoardController
@@ -56,40 +57,34 @@ final readonly class BoardController
 
         $structure = $this->communityHelper->structureForCommunity($community);
         $threads = $this->threads->listByBoardIdPaginated($board->id, $perPage, $offset);
-
         $currentUser = $this->auth->currentUser();
 
-        $body = $this->view->render('pages/board/show.php', [
-            'pageTitle' => $board->name,
-            'community' => $community,
-            'board' => $board,
-            'category' => $category,
-            'threads' => $threads,
-            'totalThreads' => $totalThreads,
-            'pagination' => [
+        $ctx = ViewContext::make()
+            ->set('pageTitle', $board->name)
+            ->set('community', $community)
+            ->set('board', $board)
+            ->set('category', $category)
+            ->set('threads', $threads)
+            ->set('totalThreads', $totalThreads)
+            ->set('pagination', [
                 'page' => $page,
                 'perPage' => $perPage,
                 'totalPages' => $totalPages,
-            ],
-            'environment' => $this->config->environment,
-            'currentUser' => $currentUser,
-            'currentCommunity' => $community,
-            'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
-            'canCreateThread' => $this->permissions->canCreateThread($currentUser),
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+            ])
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
+            ->set('canCreateThread', $this->permissions->canCreateThread($currentUser))
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
-            ),
-            'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/board/show.php', $ctx);
     }
 
     private function notFound(Request $request): Response

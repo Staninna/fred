@@ -10,6 +10,7 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\CommunityRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -29,26 +30,27 @@ final readonly class CommunityController
     public function index(Request $request, array $errors = [], array $old = []): Response
     {
         $communities = $this->communities->all();
+        $currentUser = $this->auth->currentUser();
 
-        $body = $this->view->render('pages/community/index.php', [
-            'pageTitle' => 'Communities',
-            'communities' => $communities,
-            'errors' => $errors,
-            'old' => $old,
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(null, [], [], $communities),
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser()),
-            'canCreateCommunity' => $this->permissions->canCreateCommunity($this->auth->currentUser()),
-            'currentCommunity' => null,
-            'customCss' => '',
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Communities')
+            ->set('communities', $communities)
+            ->set('errors', $errors)
+            ->set('old', $old)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(null, [], [], $communities))
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('canModerate', $this->permissions->canModerate($currentUser))
+            ->set('canCreateCommunity', $this->permissions->canCreateCommunity($currentUser))
+            ->set('currentCommunity', null)
+            ->set('customCss', '');
 
-        return new Response(
+        return Response::view(
+            $this->view,
+            'pages/community/index.php',
+            $ctx,
             status: $errors === [] ? 200 : 422,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
         );
     }
 
@@ -104,31 +106,27 @@ final readonly class CommunityController
 
         $structure = $this->communityHelper->structureForCommunity($community);
         $allCommunities = $this->communities->all();
+        $currentUser = $this->auth->currentUser();
 
-        $body = $this->view->render('pages/community/show.php', [
-            'pageTitle' => $community->name,
-            'community' => $community,
-            'categories' => $structure['categories'],
-            'boardsByCategory' => $structure['boardsByCategory'],
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser(), $community->id),
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+        $ctx = ViewContext::make()
+            ->set('pageTitle', $community->name)
+            ->set('community', $community)
+            ->set('categories', $structure['categories'])
+            ->set('boardsByCategory', $structure['boardsByCategory'])
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
                 $allCommunities,
-            ),
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/community/show.php', $ctx);
     }
 
     public function about(Request $request): Response
@@ -139,29 +137,25 @@ final readonly class CommunityController
         }
 
         $structure = $this->communityHelper->structureForCommunity($community);
-        $body = $this->view->render('pages/community/about.php', [
-            'pageTitle' => $community->name . ' · About',
-            'community' => $community,
-            'categories' => $structure['categories'],
-            'boardsByCategory' => $structure['boardsByCategory'],
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+
+        $ctx = ViewContext::make()
+            ->set('pageTitle', $community->name . ' · About')
+            ->set('community', $community)
+            ->set('categories', $structure['categories'])
+            ->set('boardsByCategory', $structure['boardsByCategory'])
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
                 $this->communities->all(),
-            ),
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/community/about.php', $ctx);
     }
 
     private function notFound(Request $request): Response

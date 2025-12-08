@@ -19,6 +19,7 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ReportRepository;
 use Fred\Infrastructure\Database\AttachmentRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class ModerationController
@@ -118,25 +119,25 @@ final readonly class ModerationController
                 return $this->notFound($request);
             }
             $structure = $this->communityHelper->structureForCommunity($community);
-            $body = $this->view->render('pages/moderation/edit_post.php', [
-                'pageTitle' => 'Edit post',
-                'community' => $community,
-                'post' => $post,
-                'currentUser' => $this->auth->currentUser(),
-                'environment' => $this->config->environment,
-                'activePath' => $request->path,
-                'errors' => [],
-                'currentCommunity' => $community,
-                'page' => (int) ($request->query['page'] ?? 1),
-                'navSections' => $this->communityHelper->navSections(
+
+            $ctx = ViewContext::make()
+                ->set('pageTitle', 'Edit post')
+                ->set('community', $community)
+                ->set('post', $post)
+                ->set('currentUser', $this->auth->currentUser())
+                ->set('environment', $this->config->environment)
+                ->set('activePath', $request->path)
+                ->set('errors', [])
+                ->set('currentCommunity', $community)
+                ->set('page', (int) ($request->query['page'] ?? 1))
+                ->set('navSections', $this->communityHelper->navSections(
                     $community,
                     $structure['categories'],
                     $structure['boardsByCategory'],
-                ),
-                'customCss' => trim((string) ($community->customCss ?? '')),
-            ]);
+                ))
+                ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-            return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+            return Response::view($this->view, 'pages/moderation/edit_post.php', $ctx);
         }
 
         if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
@@ -250,20 +251,21 @@ final readonly class ModerationController
 
         $bans = $this->bans->listAll();
         $usernames = $this->users->listUsernames();
-        $body = $this->view->render('pages/moderation/bans.php', [
-            'pageTitle' => 'Bans',
-            'bans' => $bans,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'errors' => [],
-            'old' => [],
-            'navSections' => $this->communityHelper->navForCommunity($community),
-            'usernames' => $usernames,
-        ]);
 
-        return new Response(200, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Bans')
+            ->set('bans', $bans)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('errors', [])
+            ->set('old', [])
+            ->set('navSections', $this->communityHelper->navForCommunity($community))
+            ->set('usernames', $usernames)
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
+
+        return Response::view($this->view, 'pages/moderation/bans.php', $ctx);
     }
 
     public function createBan(Request $request): Response
@@ -312,24 +314,25 @@ final readonly class ModerationController
 
         $bans = $this->bans->listAll();
         $usernames = $this->users->listUsernames();
-        $body = $this->view->render('pages/moderation/bans.php', [
-            'pageTitle' => 'Bans',
-            'bans' => $bans,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'errors' => $errors,
-            'old' => [
+
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Bans')
+            ->set('bans', $bans)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('errors', $errors)
+            ->set('old', [
                 'username' => $username,
                 'reason' => $reason,
                 'expires_at' => $expires,
-            ],
-            'navSections' => $this->communityHelper->navForCommunity($community),
-            'usernames' => $usernames,
-        ]);
+            ])
+            ->set('navSections', $this->communityHelper->navForCommunity($community))
+            ->set('usernames', $usernames)
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(422, ['Content-Type' => 'text/html; charset=utf-8'], $body);
+        return Response::view($this->view, 'pages/moderation/bans.php', $ctx, status: 422);
     }
 
     public function deleteBan(Request $request): Response

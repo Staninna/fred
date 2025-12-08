@@ -16,6 +16,7 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -258,27 +259,22 @@ final readonly class ProfileController
         $status = ($profileErrors !== [] || $signatureErrors !== [] || $avatarErrors !== []) ? 422 : 200;
         $currentUser = $this->auth->currentUser();
 
-        $body = $this->view->render('pages/profile/show.php', [
-            'pageTitle' => $user->displayName,
-            'community' => $community,
-            'user' => $user,
-            'profile' => $profile,
-            'profileErrors' => $profileErrors,
-            'signatureErrors' => $signatureErrors,
-            'avatarErrors' => $avatarErrors,
-            'oldProfile' => $oldProfile,
-            'environment' => $this->config->environment,
-            'currentUser' => $currentUser,
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', $user->displayName)
+            ->set('community', $community)
+            ->set('user', $user)
+            ->set('profile', $profile)
+            ->set('profileErrors', $profileErrors)
+            ->set('signatureErrors', $signatureErrors)
+            ->set('avatarErrors', $avatarErrors)
+            ->set('oldProfile', $oldProfile)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: $status,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/profile/show.php', $ctx, status: $status);
     }
 
     private function notFound(Request $request): Response

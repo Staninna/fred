@@ -10,6 +10,7 @@ use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function ceil;
@@ -64,35 +65,30 @@ final readonly class MentionController
 
         $structure = $this->communityHelper->structureForCommunity($community);
 
-        $body = $this->view->render('pages/mentions/index.php', [
-            'pageTitle' => 'Mentions',
-            'community' => $community,
-            'notifications' => $notifications,
-            'unreadCount' => $unreadCount,
-            'totalCount' => $total,
-            'pagination' => [
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Mentions')
+            ->set('community', $community)
+            ->set('notifications', $notifications)
+            ->set('unreadCount', $unreadCount)
+            ->set('totalCount', $total)
+            ->set('pagination', [
                 'page' => $page,
                 'totalPages' => $totalPages,
-            ],
-            'postsPerPage' => self::THREAD_POSTS_PER_PAGE,
-            'mentionUnreadCount' => $unreadCount,
-            'environment' => $this->config->environment,
-            'currentUser' => $currentUser,
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+            ])
+            ->set('postsPerPage', self::THREAD_POSTS_PER_PAGE)
+            ->set('mentionUnreadCount', $unreadCount)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
-            ),
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/mentions/index.php', $ctx);
     }
 
     public function markRead(Request $request): Response

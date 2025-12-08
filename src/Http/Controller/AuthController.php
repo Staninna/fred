@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 final readonly class AuthController
@@ -133,43 +134,33 @@ final readonly class AuthController
 
     private function renderLogin(Request $request, array $errors, array $old = [], int $status = 200): Response
     {
-        $body = $this->view->render('pages/auth/login.php', [
-            'pageTitle' => 'Sign in',
-            'errors' => $errors,
-            'old' => $old,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navForCommunity(),
-            'currentCommunity' => null,
-            'customCss' => '',
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Sign in')
+            ->set('errors', $errors)
+            ->set('old', $old)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navForCommunity())
+            ->set('currentCommunity', null)
+            ->set('customCss', '');
 
-        return new Response(
-            status: $status,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/auth/login.php', $ctx, status: $status);
     }
 
     private function renderRegister(Request $request, array $errors, array $old = [], int $status = 200): Response
     {
-        $body = $this->view->render('pages/auth/register.php', [
-            'pageTitle' => 'Create account',
-            'errors' => $errors,
-            'old' => $old,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navForCommunity(),
-            'currentCommunity' => null,
-            'customCss' => '',
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Create account')
+            ->set('errors', $errors)
+            ->set('old', $old)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navForCommunity())
+            ->set('currentCommunity', null)
+            ->set('customCss', '');
 
-        return new Response(
-            status: $status,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/auth/register.php', $ctx, status: $status);
     }
 }

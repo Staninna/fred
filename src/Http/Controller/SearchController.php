@@ -11,6 +11,7 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -84,34 +85,36 @@ final readonly class SearchController
             }
         }
 
-        $body = $this->view->render('pages/search/results.php', [
-            'pageTitle' => 'Search',
-            'community' => $community,
-            'query' => $query,
-            'boardFilter' => $boardFilter,
-            'userFilter' => $userFilter,
-            'threads' => $threads,
-            'posts' => $posts,
-            'boards' => $structure['boards'],
-            'errors' => $errors,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'canModerate' => $this->permissions->canModerate($this->auth->currentUser(), $community->id),
-            'activePath' => $request->path,
-            'usernames' => $usernames,
-            'navSections' => $this->communityHelper->navSections(
+        $currentUser = $this->auth->currentUser();
+
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Search')
+            ->set('community', $community)
+            ->set('query', $query)
+            ->set('boardFilter', $boardFilter)
+            ->set('userFilter', $userFilter)
+            ->set('threads', $threads)
+            ->set('posts', $posts)
+            ->set('boards', $structure['boards'])
+            ->set('errors', $errors)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
+            ->set('activePath', $request->path)
+            ->set('usernames', $usernames)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
-            ),
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
+        return Response::view(
+            $this->view,
+            'pages/search/results.php',
+            $ctx,
             status: $errors === [] ? 200 : 422,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
         );
     }
 

@@ -16,6 +16,7 @@ use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ReportRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 
 use function trim;
@@ -53,26 +54,26 @@ final readonly class AdminController
         $moderators = $this->communityModerators->listByCommunity($community->id);
         $usernames = $this->users->listUsernames();
 
-        $body = $this->view->render('pages/community/admin/structure.php', [
-            'pageTitle' => 'Admin · ' . $community->name,
-            'community' => $community,
-            'categories' => $structure['categories'],
-            'boardsByCategory' => $structure['boardsByCategory'],
-            'moderators' => $moderators,
-            'usernames' => $usernames,
-            'errors' => $errors,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->adminNav($community, 'structure'),
-            'customCss' => trim((string) ($community->customCss ?? '')),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Admin · ' . $community->name)
+            ->set('community', $community)
+            ->set('categories', $structure['categories'])
+            ->set('boardsByCategory', $structure['boardsByCategory'])
+            ->set('moderators', $moderators)
+            ->set('usernames', $usernames)
+            ->set('errors', $errors)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->adminNav($community, 'structure'))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
+        return Response::view(
+            $this->view,
+            'pages/community/admin/structure.php',
+            $ctx,
             status: $errors === [] ? 200 : 422,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
         );
     }
 
@@ -87,23 +88,24 @@ final readonly class AdminController
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
 
-        $body = $this->view->render('pages/community/admin/settings.php', [
-            'pageTitle' => 'Settings · ' . $community->name,
-            'community' => $community,
-            'errors' => $errors,
-            'old' => $old,
-            'saved' => isset($request->query['saved']),
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->adminNav($community, 'settings'),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Settings · ' . $community->name)
+            ->set('community', $community)
+            ->set('errors', $errors)
+            ->set('old', $old)
+            ->set('saved', isset($request->query['saved']))
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->adminNav($community, 'settings'))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
+        return Response::view(
+            $this->view,
+            'pages/community/admin/settings.php',
+            $ctx,
             status: $errors === [] ? 200 : 422,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
         );
     }
 
@@ -533,23 +535,19 @@ final readonly class AdminController
 
         $reports = $this->reports->listWithContext($community->id, $statusFilter);
 
-        $body = $this->view->render('pages/community/admin/reports.php', [
-            'pageTitle' => 'Reports · ' . $community->name,
-            'community' => $community,
-            'reports' => $reports,
-            'status' => $status,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->adminNav($community, 'reports'),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Reports · ' . $community->name)
+            ->set('community', $community)
+            ->set('reports', $reports)
+            ->set('status', $status)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->adminNav($community, 'reports'))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/community/admin/reports.php', $ctx);
     }
 
     public function resolveReport(Request $request): Response
@@ -590,24 +588,20 @@ final readonly class AdminController
 
         $users = $this->users->search($query, $role !== '' ? $role : null, 100);
 
-        $body = $this->view->render('pages/community/admin/users.php', [
-            'pageTitle' => 'Users · ' . $community->name,
-            'community' => $community,
-            'users' => $users,
-            'query' => $query,
-            'role' => $role,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->adminNav($community, 'users'),
-        ]);
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'Users · ' . $community->name)
+            ->set('community', $community)
+            ->set('users', $users)
+            ->set('query', $query)
+            ->set('role', $role)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->adminNav($community, 'users'))
+            ->set('customCss', trim((string) ($community->customCss ?? '')));
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/community/admin/users.php', $ctx);
     }
 
     private function notFound(Request $request): Response

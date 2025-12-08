@@ -23,6 +23,7 @@ use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 use PDO;
 use Throwable;
@@ -106,55 +107,50 @@ final readonly class ThreadController
         $reportNotice = isset($request->query['reported']) ? 'Thank you. A moderator will review this post.' : null;
         $reportError = isset($request->query['report_error']) ? 'Report could not be submitted. Reason is required.' : null;
 
-        $body = $this->view->render('pages/thread/show.php', [
-            'pageTitle' => $thread->title,
-            'community' => $community,
-            'board' => $board,
-            'category' => $category,
-            'thread' => $thread,
-            'posts' => $posts,
-            'profilesByUserId' => $profilesByUser,
-            'attachmentsByPost' => $attachmentsByPost,
-            'reactionsByPost' => $reactionsByPost,
-            'reactionUsersByPost' => $reactionUsersByPost,
-            'linkPreviewsByPost' => $linkPreviewsByPost,
-            'userReactions' => $userReactions,
-            'emoticons' => $this->emoticons->all(),
-            'emoticonMap' => $this->emoticons->urlsByCode(),
-            'emoticonVersion' => $this->emoticons->versionSuffix(),
-            'totalPosts' => $totalPosts,
-            'pagination' => [
+        $ctx = ViewContext::make()
+            ->set('pageTitle', $thread->title)
+            ->set('community', $community)
+            ->set('board', $board)
+            ->set('category', $category)
+            ->set('thread', $thread)
+            ->set('posts', $posts)
+            ->set('profilesByUserId', $profilesByUser)
+            ->set('attachmentsByPost', $attachmentsByPost)
+            ->set('reactionsByPost', $reactionsByPost)
+            ->set('reactionUsersByPost', $reactionUsersByPost)
+            ->set('linkPreviewsByPost', $linkPreviewsByPost)
+            ->set('userReactions', $userReactions)
+            ->set('emoticons', $this->emoticons->all())
+            ->set('emoticonMap', $this->emoticons->urlsByCode())
+            ->set('emoticonVersion', $this->emoticons->versionSuffix())
+            ->set('totalPosts', $totalPosts)
+            ->set('pagination', [
                 'page' => $page,
                 'perPage' => $perPage,
                 'totalPages' => $totalPages,
-            ],
-            'environment' => $this->config->environment,
-            'currentUser' => $currentUser,
-            'currentCommunity' => $community,
-            'canModerate' => $this->permissions->canModerate($currentUser, $community->id),
-            'canLockThread' => $this->permissions->canLockThread($currentUser, $community->id),
-            'canStickyThread' => $this->permissions->canStickyThread($currentUser, $community->id),
-            'canMoveThread' => $this->permissions->canMoveThread($currentUser, $community->id),
-            'canEditAnyPost' => $this->permissions->canEditAnyPost($currentUser, $community->id),
-            'canDeleteAnyPost' => $this->permissions->canDeleteAnyPost($currentUser, $community->id),
-            'canBanUsers' => $this->permissions->canBan($currentUser, $community->id),
-            'allBoards' => $structure['boards'],
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+            ])
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $currentUser)
+            ->set('currentCommunity', $community)
+            ->set('canModerate', $this->permissions->canModerate($currentUser, $community->id))
+            ->set('canLockThread', $this->permissions->canLockThread($currentUser, $community->id))
+            ->set('canStickyThread', $this->permissions->canStickyThread($currentUser, $community->id))
+            ->set('canMoveThread', $this->permissions->canMoveThread($currentUser, $community->id))
+            ->set('canEditAnyPost', $this->permissions->canEditAnyPost($currentUser, $community->id))
+            ->set('canDeleteAnyPost', $this->permissions->canDeleteAnyPost($currentUser, $community->id))
+            ->set('canBanUsers', $this->permissions->canBan($currentUser, $community->id))
+            ->set('allBoards', $structure['boards'])
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
-            ),
-            'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
-            'reportNotice' => $reportNotice,
-            'reportError' => $reportError,
-        ]);
+            ))
+            ->set('customCss', trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')))
+            ->set('reportNotice', $reportNotice)
+            ->set('reportError', $reportError);
 
-        return new Response(
-            status: 200,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/thread/show.php', $ctx);
     }
 
     public function create(Request $request): Response
@@ -320,29 +316,24 @@ final readonly class ThreadController
     ): Response {
         $structure = $this->communityHelper->structureForCommunity($community);
 
-        $body = $this->view->render('pages/thread/create.php', [
-            'pageTitle' => 'New thread',
-            'community' => $community,
-            'board' => $board,
-            'errors' => $errors,
-            'old' => $old,
-            'environment' => $this->config->environment,
-            'currentUser' => $this->auth->currentUser(),
-            'currentCommunity' => $community,
-            'activePath' => $request->path,
-            'navSections' => $this->communityHelper->navSections(
+        $ctx = ViewContext::make()
+            ->set('pageTitle', 'New thread')
+            ->set('community', $community)
+            ->set('board', $board)
+            ->set('errors', $errors)
+            ->set('old', $old)
+            ->set('environment', $this->config->environment)
+            ->set('currentUser', $this->auth->currentUser())
+            ->set('currentCommunity', $community)
+            ->set('activePath', $request->path)
+            ->set('navSections', $this->communityHelper->navSections(
                 $community,
                 $structure['categories'],
                 $structure['boardsByCategory'],
-            ),
-            'customCss' => trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')),
-        ]);
+            ))
+            ->set('customCss', trim(($community->customCss ?? '') . "\n" . ($board->customCss ?? '')));
 
-        return new Response(
-            status: $status,
-            headers: ['Content-Type' => 'text/html; charset=utf-8'],
-            body: $body,
-        );
+        return Response::view($this->view, 'pages/thread/create.php', $ctx, status: $status);
     }
 
     /**
