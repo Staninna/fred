@@ -321,6 +321,65 @@ textarea {
     line-height: 1.5;
 }
 
+.post-body .bb-quote {
+    border-left: 3px solid var(--border-strong);
+    background: #f2f4f9;
+    padding: 8px 10px;
+    margin: 8px 0;
+}
+
+pre.bb-code {
+    background: #0f1a2a;
+    color: #f2f7ff;
+    border: 1px solid var(--border-strong);
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 3px;
+    overflow-x: auto;
+    line-height: 1.45;
+    font-size: 12px;
+}
+
+pre.bb-code code {
+    color: inherit;
+    font-family: "Courier New", monospace;
+}
+
+.bb-image {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 10px 0;
+    padding: 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #f8f9fb;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset;
+}
+
+.bb-image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 3px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+}
+
+.bb-spoiler {
+    background: #0f1a2a;
+    color: #0f1a2a;
+    padding: 0 3px;
+    border-radius: 2px;
+    transition: background 120ms ease, color 120ms ease;
+    cursor: pointer;
+}
+
+.bb-spoiler:hover,
+.bb-spoiler:focus {
+    background: #ffe9a8;
+    color: var(--text);
+}
+
 .post-table tr:target td {
     background: #fff3c4;
     border-color: #cc9f2f;
