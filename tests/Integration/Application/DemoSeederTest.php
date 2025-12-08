@@ -17,6 +17,8 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Application\Content\EmoticonSet;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
+use Fred\Application\Content\MentionService;
 use Fred\Infrastructure\Config\AppConfig;
 use Tests\TestCase;
 
@@ -36,10 +38,12 @@ final class DemoSeederTest extends TestCase
             basePath: $this->basePath(),
         );
         $emoticons = new EmoticonSet($config);
+        $mentionRepo = new MentionNotificationRepository($pdo);
+        $userRepo = new UserRepository($pdo);
 
         $seeder = new DemoSeeder(
             roles: new RoleRepository($pdo),
-            users: new UserRepository($pdo),
+            users: $userRepo,
             communities: new CommunityRepository($pdo),
             categories: new CategoryRepository($pdo),
             boards: new BoardRepository($pdo),
@@ -48,6 +52,7 @@ final class DemoSeederTest extends TestCase
             profiles: new ProfileRepository($pdo),
             communityModerators: new CommunityModeratorRepository($pdo),
             reactions: new ReactionRepository($pdo),
+            mentions: new MentionService($userRepo, $mentionRepo),
             faker: $faker,
             config: $config,
             boardCount: 4,

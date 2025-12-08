@@ -17,6 +17,7 @@ use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Infrastructure\Database\ReactionRepository;
+use Fred\Application\Content\MentionService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Infrastructure\Config\AppConfig;
 use Random\RandomException;
@@ -34,6 +35,7 @@ final readonly class DemoSeeder
         private ProfileRepository $profiles,
         private CommunityModeratorRepository $communityModerators,
         private ReactionRepository $reactions,
+        private MentionService $mentions,
         private Generator $faker,
         private AppConfig $config,
         private int $boardCount = 4,
@@ -300,6 +302,7 @@ final readonly class DemoSeeder
                     timestamp: $timestamp - random_int(0, 20_000),
                 );
 
+                $this->mentions->notifyFromText($communityId, $post->id, $postAuthor->id, $body);
                 $this->seedReactionsForPost($communityId, $post->id, $users);
             }
         }
@@ -390,11 +393,17 @@ final readonly class DemoSeeder
             return "[b]Welcome[/b] to the demo!\n\n"
                 . "Try replying with BBCode like [i]italics[/i], [code]print \"hi\";[/code], or [url=https://example.com]links[/url].\n"
                 . "[quote]You can also nest quotes and codes[/quote]\n"
-                . 'Jump to this post with >>1.';
+                . 'Jump to this post with >>1 and mention @mod for help.';
         }
 
         if ($boardSlug === 'general' && $threadIndex === 0 && $postIndex === 1) {
             return "Quoting works too:\n>>1\nWhat's your favorite retro machine?";
+        }
+
+        if ($boardSlug === 'general' && $threadIndex === 0 && $postIndex === 2) {
+            return "Check this map of our next meetup spot: https://maps.google.com/?q=Eiffel+Tower\n"
+                . "And a playlist I'm looping: https://www.youtube.com/watch?v=dQw4w9WgXcQ\n"
+                . "Also pinging @stan and @user to chime in.";
         }
 
         if ($boardSlug === 'trading-post') {

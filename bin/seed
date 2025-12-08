@@ -15,11 +15,13 @@ use Fred\Infrastructure\Database\RoleRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\UserRepository;
+use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Env\DotenvLoader;
 use Fred\Application\Seed\CustomThemeSeeder;
 use Fred\Application\Seed\ProgressTracker;
 use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Application\Content\EmoticonSet;
+use Fred\Application\Content\MentionService;
 use Faker\Factory as FakerFactory;
 
 $autoload = __DIR__ . '/../vendor/autoload.php';
@@ -36,8 +38,8 @@ $faker = FakerFactory::create();
 $faker->seed(1234);
 
 $boardCount = (int) ($argv[1] ?? 4);
-$threadsPerBoard = (int) ($argv[2] ?? 40);
-$postsPerThread = (int) ($argv[3] ?? 40);
+$threadsPerBoard = (int) ($argv[2] ?? 30);
+$postsPerThread = (int) ($argv[3] ?? 30);
 $userCount = (int) ($argv[4] ?? 50);
 
 $progress = new ProgressTracker(static function (string $message): void {
@@ -54,6 +56,7 @@ $seeder = new DemoSeeder(
     posts: new PostRepository($pdo),
     profiles: new ProfileRepository($pdo),
     communityModerators: new CommunityModeratorRepository($pdo),
+    mentions: new MentionService(new UserRepository($pdo), new MentionNotificationRepository($pdo)),
     faker: $faker,
     config: $config,
     reactions: new ReactionRepository($pdo),
