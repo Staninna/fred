@@ -12,7 +12,6 @@ use DOMXPath;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
-use function filemtime;
 
 use const FILTER_FLAG_NO_PRIV_RANGE;
 use const FILTER_FLAG_NO_RES_RANGE;
@@ -105,12 +104,13 @@ final class LinkPreviewer
             }
 
             if ($metadata !== null) {
-                @file_put_contents($cachePath, (string) json_encode($metadata, JSON_PRETTY_PRINT));
+                $cacheData = $metadata + ['cached_at' => time()];
+                @file_put_contents($cachePath, (string) json_encode($cacheData, JSON_PRETTY_PRINT));
                 $previews[] = $metadata;
                 continue;
             }
 
-            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url], JSON_PRETTY_PRINT));
+            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url, 'cached_at' => time()], JSON_PRETTY_PRINT));
         }
 
         return $previews;
@@ -142,27 +142,34 @@ final class LinkPreviewer
         $cachePath = $this->cacheDir . '/' . $cacheKey . '.json';
 
         if (file_exists($cachePath)) {
-            $age = time() - filemtime($cachePath);
             $cached = json_decode((string) file_get_contents($cachePath), true);
 
             if (is_array($cached) && ($cached['failed'] ?? false) === true) {
+                $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
+                $age = time() - $cachedAt;
                 if ($age < $this->failedTtlSeconds) {
                     return null;
                 }
-            } elseif (is_array($cached) && isset($cached['url'], $cached['title']) && $age < $this->ttlSeconds) {
-                return $cached;
+            } elseif (is_array($cached) && isset($cached['url'], $cached['title'])) {
+                $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
+                $age = time() - $cachedAt;
+                if ($age < $this->ttlSeconds) {
+                    // Return cached data without the cached_at field
+                    return array_diff_key($cached, ['cached_at' => true]);
+                }
             }
         }
 
         $metadata = $this->fetchMetadata($url);
 
         if ($metadata === null) {
-            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url], JSON_PRETTY_PRINT));
+            @file_put_contents($cachePath, (string) json_encode(['failed' => true, 'url' => $url, 'cached_at' => time()], JSON_PRETTY_PRINT));
 
             return null;
         }
 
-        @file_put_contents($cachePath, (string) json_encode($metadata, JSON_PRETTY_PRINT));
+        $cacheData = $metadata + ['cached_at' => time()];
+        @file_put_contents($cachePath, (string) json_encode($cacheData, JSON_PRETTY_PRINT));
 
         return $metadata;
     }
@@ -372,10 +379,11 @@ final class LinkPreviewer
             return ['status' => 'miss', 'path' => $cachePath];
         }
 
-        $age = time() - filemtime($cachePath);
         $cached = json_decode((string) file_get_contents($cachePath), true);
 
         if (is_array($cached) && ($cached['failed'] ?? false) === true) {
+            $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
+            $age = time() - $cachedAt;
             if ($age < $this->failedTtlSeconds) {
                 return ['status' => 'failed_recent', 'path' => $cachePath];
             }
@@ -383,8 +391,14 @@ final class LinkPreviewer
             return ['status' => 'miss', 'path' => $cachePath];
         }
 
-        if (is_array($cached) && isset($cached['url'], $cached['title']) && $age < $this->ttlSeconds) {
-            return ['status' => 'hit', 'data' => $cached, 'path' => $cachePath];
+        if (is_array($cached) && isset($cached['url'], $cached['title'])) {
+            $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
+            $age = time() - $cachedAt;
+            if ($age < $this->ttlSeconds) {
+                // Return cached data without the cached_at field
+                $data = array_diff_key($cached, ['cached_at' => true]);
+                return ['status' => 'hit', 'data' => $data, 'path' => $cachePath];
+            }
         }
 
         return ['status' => 'miss', 'path' => $cachePath];

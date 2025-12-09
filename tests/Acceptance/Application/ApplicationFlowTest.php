@@ -315,6 +315,7 @@ final class ApplicationFlowTest extends TestCase
                 'description' => 'A concise preview description.',
                 'image' => null,
                 'host' => 'example.com',
+                'cached_at' => time(),
             ], JSON_PRETTY_PRINT),
         );
         $this->assertNotFalse($previewWritten);
