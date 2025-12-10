@@ -18,6 +18,7 @@
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 /** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
 /** @var array<int, string[]> $linkPreviewUrlsByPost */
+/** @var array<int, string> $validatedBodyParsed */
 /** @var callable $renderPartial */
 
 use Fred\Domain\Auth\Profile;
@@ -66,9 +67,9 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                 </td>
                 <td class="body-cell">
                     <div class="post-body">
-                        <?= $post->bodyParsed !== null
+                        <?= $validatedBodyParsed[$post->id] ?? ($post->bodyParsed !== null
                             ? $post->bodyParsed
-                            : nl2br($e($post->bodyRaw)) ?>
+                            : nl2br($e($post->bodyRaw))) ?>
                     </div>
                     <?php if ($canDeleteAnyPost): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">

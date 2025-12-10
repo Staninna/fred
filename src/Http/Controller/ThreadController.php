@@ -15,6 +15,7 @@ use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\CreateThreadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\PostReferenceValidator;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -62,6 +63,7 @@ final readonly class ThreadController extends Controller
         private MentionNotificationRepository $mentionNotifications,
         private EmoticonSet $emoticons,
         private CreateThreadService $createThreadService,
+        private PostReferenceValidator $postReferenceValidator,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);
     }
@@ -94,6 +96,22 @@ final readonly class ThreadController extends Controller
 
         $postIds = array_map(static fn ($p) => $p->id, $posts);
         $authorIds = array_unique(array_map(static fn (Post $p) => $p->authorId, $posts));
+
+        // Build a map of post ID to page number for all posts in the thread
+        $allThreadPosts = $this->posts->listByThreadId($thread->id);
+        $postIdToPageNumber = [];
+        foreach ($allThreadPosts as $index => $threadPost) {
+            $postPageNumber = (int) floor($index / $perPage) + 1;
+            $postIdToPageNumber[$threadPost->id] = $postPageNumber;
+        }
+
+        // Validate post references in each post's body with correct page numbers
+        $validatedBodyParsed = [];
+        foreach ($posts as $post) {
+            if ($post->bodyParsed !== null) {
+                $validatedBodyParsed[$post->id] = $this->postReferenceValidator->validate($post->bodyParsed, $postIdToPageNumber);
+            }
+        }
 
         $attachmentsByPost = $this->attachments->listByPostIds($postIds);
         $reactionsByPost = $this->reactions->listByPostIds($postIds);
@@ -137,6 +155,7 @@ final readonly class ThreadController extends Controller
             ->set('category', $category)
             ->set('thread', $thread)
             ->set('posts', $posts)
+            ->set('validatedBodyParsed', $validatedBodyParsed)
             ->set('usersById', $usersById)
             ->set('profilesByUserId', $profilesByUser)
             ->set('attachmentsByPost', $attachmentsByPost)

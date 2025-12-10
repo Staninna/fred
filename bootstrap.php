@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\LinkPreviewer;
+use Fred\Application\Content\PostReferenceValidator;
 use Fred\Application\Security\CsrfGuard;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -48,6 +49,7 @@ return (static function (): array {
     $container->addShared(FileLogger::class, static fn () => new FileLogger($container->get(AppConfig::class)->logsPath . '/app.log'));
     $container->addShared(NullLogger::class, static fn () => new NullLogger());
     $container->addShared(BbcodeParser::class, static fn () => new BbcodeParser());
+    $container->addShared(PostReferenceValidator::class, static fn () => new PostReferenceValidator());
     $container->addShared(LinkPreviewer::class, static fn () => new LinkPreviewer($container->get(AppConfig::class)));
     $container->addShared(ViewRenderer::class, static fn () => new ViewRenderer(
         viewPath: $container->get('basePath') . '/resources/views',
