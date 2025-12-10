@@ -65,8 +65,8 @@ return (static function (): array {
 
     $config = $container->get(AppConfig::class);
     
-    // Only configure and start session for web requests (not CLI)
-    if (PHP_SAPI !== 'cli') {
+    // Only configure and start session for web requests (not CLI or PHPDBG)
+    if (!in_array(PHP_SAPI, ['cli', 'phpdbg'], true)) {
         $cookieSecure = str_starts_with($config->baseUrl, 'https://');
         session_set_cookie_params([
             'lifetime' => 0,

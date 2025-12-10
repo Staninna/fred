@@ -177,22 +177,33 @@ final class Router
     {
         $lines = [];
         $routes = [];
-        $methods = ['GET', 'POST'];
+        // Dynamically determine all registered HTTP methods
+        $methods = array_unique(array_merge(
+            array_keys($this->staticRoutes),
+            array_keys($this->dynamicRoutes)
+        ));
+        sort($methods);
 
         // Gather all routes for pretty printing
         foreach ($methods as $method) {
             foreach ($this->staticRoutes[$method] ?? [] as $path => $route) {
+                $middlewareCount = count($route['middleware']);
+                $middlewareInfo = $middlewareCount > 0 ? " [{$middlewareCount} middleware]" : '';
                 $routes[] = [
                     'method' => $method,
                     'path' => $path,
                     'handler' => $this->stringifyHandler($route['handler']),
+                    'middlewareInfo' => $middlewareInfo,
                 ];
             }
             foreach ($this->dynamicRoutes[$method] ?? [] as $route) {
+                $middlewareCount = count($route['middleware']);
+                $middlewareInfo = $middlewareCount > 0 ? " [{$middlewareCount} middleware]" : '';
                 $routes[] = [
                     'method' => $method,
                     'path' => $route['path'],
                     'handler' => $this->stringifyHandler($route['handler']),
+                    'middlewareInfo' => $middlewareInfo,
                 ];
             }
         }
@@ -203,7 +214,7 @@ final class Router
         $handlerWidth = 7;
         foreach ($routes as $r) {
             $methodWidth = max($methodWidth, strlen($r['method']));
-            $pathWidth = max($pathWidth, strlen($r['path']));
+            $pathWidth = max($pathWidth, strlen($r['path']) + strlen($r['middlewareInfo']));
             $handlerWidth = max($handlerWidth, strlen($r['handler']));
         }
 
@@ -223,10 +234,11 @@ final class Router
         $lines[] = '├' . str_repeat('─', $methodWidth+2) . '┼' . str_repeat('─', $pathWidth+2) . '┼' . str_repeat('─', $handlerWidth+2) . '┤';
 
         foreach ($routes as $r) {
+            $pathDisplay = $r['path'] . $r['middlewareInfo'];
             $lines[] = sprintf(
                 "│ %s%-{$methodWidth}s%s │ %-{$pathWidth}s │ %s%-{$handlerWidth}s%s │",
                 $colorMethod, $r['method'], $colorReset,
-                $r['path'],
+                $pathDisplay,
                 $colorHandler, $r['handler'], $colorReset
             );
         }
