@@ -13,6 +13,7 @@ use Fred\Application\Content\EditPostService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
 use Fred\Application\Content\MentionService;
+use Fred\Application\Content\PostReferenceValidator;
 use Fred\Application\Content\ThreadStateService;
 use Fred\Application\Content\UploadService;
 use Fred\Http\Controller\AdminController;
@@ -239,6 +240,7 @@ final class HttpRoutesTest extends TestCase
             $mentionNotificationRepository,
             $emoticons,
             $createThreadService,
+            new PostReferenceValidator(),
         );
         $postController = new PostController(
             $view,
