@@ -25,8 +25,6 @@ final class CommunityContext
 {
     /** @var array<string, Community> */
     private array $communityCache = [];
-    /** @var array<int, Board> */
-    private array $boardCache = [];
     /** @var array<int, array{categories: Category[], boards: Board[], boardsByCategory: array<int, Board[]>}> */
     private array $structureCache = [];
     /** @var Community[]|null */
