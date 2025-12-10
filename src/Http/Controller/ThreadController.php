@@ -12,10 +12,9 @@ use function explode;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\CreateThreadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
-use Fred\Application\Content\MentionService;
-use Fred\Application\Content\UploadService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -38,20 +37,19 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 use function is_array;
 use function json_encode;
-
-use PDO;
-use Throwable;
+use RuntimeException;
+use function str_contains;
 
 use function trim;
 
-final readonly class ThreadController
+final readonly class ThreadController extends Controller
 {
     public function __construct(
-        private ViewRenderer $view,
-        private AppConfig $config,
-        private AuthService $auth,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
         private PermissionService $permissions,
-        private CommunityContext $communityContext,
         private CategoryRepository $categories,
         private BoardRepository $boards,
         private ThreadRepository $threads,
@@ -60,14 +58,13 @@ final readonly class ThreadController
         private LinkPreviewer $linkPreviewer,
         private UserRepository $users,
         private ProfileRepository $profiles,
-        private UploadService $uploads,
         private AttachmentRepository $attachments,
         private ReactionRepository $reactions,
         private MentionNotificationRepository $mentionNotifications,
         private EmoticonSet $emoticons,
-        private MentionService $mentions,
-        private PDO $pdo,
+        private CreateThreadService $createThreadService,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function show(Request $request): Response
@@ -246,135 +243,57 @@ final readonly class ThreadController
 
     public function store(Request $request): Response
     {
-        $ctxRequest = $request->context();
-        $community = $ctxRequest->community;
-        $board = $ctxRequest->board;
+        $context = $request->context();
+        $community = $context->community;
+        $board = $context->board;
 
         if (!$community instanceof Community || !$board instanceof Board) {
             return $this->notFound($request, 'Required attributes missing in ThreadController::store');
         }
 
-        $currentUser = $ctxRequest->currentUser ?? $this->auth->currentUser();
-
-        if (!$this->permissions->canCreateThread($currentUser)) {
-            return $this->renderCreate(
-                $request,
-                $community,
-                $board,
-                ['You do not have permission to create threads.'],
-                [
-                    'title' => $request->body['title'] ?? '',
-                    'body' => $request->body['body'] ?? '',
-                ],
-                403,
-            );
-        }
-
-        if ($board->isLocked) {
-            return $this->renderCreate($request, $community, $board, ['Board is locked.'], [
-                'title' => $request->body['title'] ?? '',
-                'body' => $request->body['body'] ?? '',
-            ], 403);
-        }
+        $currentUser = $context->currentUser ?? $this->auth->currentUser();
 
         $title = trim((string) ($request->body['title'] ?? ''));
         $bodyText = trim((string) ($request->body['body'] ?? ''));
         $attachmentFile = $request->files['attachment'] ?? null;
 
-        $errors = [];
+        try {
+            $result = $this->createThreadService->create(
+                currentUser: $currentUser,
+                community: $community,
+                board: $board,
+                title: $title,
+                bodyText: $bodyText,
+                attachmentFile: is_array($attachmentFile) ? $attachmentFile : null,
+            );
 
-        if ($title === '') {
-            $errors[] = 'Title is required.';
-        }
+            return Response::redirect('/c/' . $community->slug . '/t/' . $result['thread']->id);
+        } catch (RuntimeException $e) {
+            $message = $e->getMessage();
+            $status = 422;
 
-        if ($bodyText === '') {
-            $errors[] = 'Body is required.';
-        }
+            if ($message === 'User cannot create threads') {
+                $errors = ['You do not have permission to create threads.'];
+                $status = 403;
+            } elseif ($message === 'Board is locked') {
+                $errors = ['Board is locked.'];
+                $status = 403;
+            } elseif ($message === 'Title is required') {
+                $errors = ['Title is required.'];
+            } elseif ($message === 'Body is required') {
+                $errors = ['Body is required.'];
+            } elseif (str_contains($message, 'Attachment error')) {
+                $errors = [$message];
+            } else {
+                $errors = ['Could not create thread. Please try again.'];
+                $status = 500;
+            }
 
-        if ($errors !== []) {
             return $this->renderCreate($request, $community, $board, $errors, [
                 'title' => $title,
                 'body' => $bodyText,
-            ], 422);
+            ], $status);
         }
-
-        $attachmentPath = null;
-
-        try {
-            $this->pdo->beginTransaction();
-
-            if (is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-                $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
-            }
-
-            $timestamp = time();
-            $thread = $this->threads->create(
-                communityId: $community->id,
-                boardId: $board->id,
-                title: $title,
-                authorId: $currentUser->id ?? 0,
-                isSticky: false,
-                isLocked: false,
-                isAnnouncement: false,
-                timestamp: $timestamp,
-            );
-
-            $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
-
-            $post = $this->posts->create(
-                communityId: $community->id,
-                threadId: $thread->id,
-                authorId: $currentUser->id ?? 0,
-                bodyRaw: $bodyText,
-                bodyParsed: $this->parser->parse($bodyText, $community->slug),
-                signatureSnapshot: $profile?->signatureParsed,
-                timestamp: $timestamp,
-            );
-
-            if ($attachmentPath !== null) {
-                $this->attachments->create(
-                    communityId: $community->id,
-                    postId: $post->id,
-                    userId: $currentUser->id ?? 0,
-                    path: $attachmentPath,
-                    originalName: (string) ($attachmentFile['name'] ?? ''),
-                    mimeType: (string) ($attachmentFile['type'] ?? ''),
-                    sizeBytes: (int) ($attachmentFile['size'] ?? 0),
-                    createdAt: $timestamp,
-                );
-            }
-
-            $this->mentions->notifyFromText(
-                communityId: $community->id,
-                postId: $post->id,
-                authorId: $currentUser->id ?? 0,
-                bodyRaw: $bodyText,
-            );
-
-            $this->pdo->commit();
-        } catch (Throwable $exception) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-
-            if ($attachmentPath !== null) {
-                $this->uploads->delete($attachmentPath);
-            }
-
-            return $this->renderCreate(
-                $request,
-                $community,
-                $board,
-                ['Could not create thread. Please try again.'],
-                [
-                    'title' => $title,
-                    'body' => $bodyText,
-                ],
-                500,
-            );
-        }
-
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
     private function renderCreate(
@@ -404,16 +323,7 @@ final readonly class ThreadController
         return Response::view($this->view, 'pages/thread/create.php', $ctx, status: $status);
     }
 
-    private function notFound(Request $request, ?string $context = null): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
-            request: $request,
-            context: $context,
-        );
-    }
+
 
     private function structureForCommunity(Community $community): array
     {
