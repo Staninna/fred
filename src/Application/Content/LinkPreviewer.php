@@ -147,12 +147,14 @@ final class LinkPreviewer
             if (is_array($cached) && ($cached['failed'] ?? false) === true) {
                 $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
                 $age = time() - $cachedAt;
+
                 if ($age < $this->failedTtlSeconds) {
                     return null;
                 }
             } elseif (is_array($cached) && isset($cached['url'], $cached['title'])) {
                 $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
                 $age = time() - $cachedAt;
+
                 if ($age < $this->ttlSeconds) {
                     // Return cached data without the cached_at field
                     return array_diff_key($cached, ['cached_at' => true]);
@@ -384,6 +386,7 @@ final class LinkPreviewer
         if (is_array($cached) && ($cached['failed'] ?? false) === true) {
             $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
             $age = time() - $cachedAt;
+
             if ($age < $this->failedTtlSeconds) {
                 return ['status' => 'failed_recent', 'path' => $cachePath];
             }
@@ -394,9 +397,11 @@ final class LinkPreviewer
         if (is_array($cached) && isset($cached['url'], $cached['title'])) {
             $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
             $age = time() - $cachedAt;
+
             if ($age < $this->ttlSeconds) {
                 // Return cached data without the cached_at field
                 $data = array_diff_key($cached, ['cached_at' => true]);
+
                 return ['status' => 'hit', 'data' => $data, 'path' => $cachePath];
             }
         }
