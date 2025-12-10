@@ -7,9 +7,13 @@ namespace Tests\Acceptance\Application;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\CreateReplyService;
+use Fred\Application\Content\CreateThreadService;
+use Fred\Application\Content\EditPostService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
 use Fred\Application\Content\MentionService;
+use Fred\Application\Content\ThreadStateService;
 use Fred\Application\Content\UploadService;
 use Fred\Http\Controller\AdminController;
 use Fred\Http\Controller\AuthController;
@@ -197,8 +201,8 @@ final class HttpRoutesTest extends TestCase
             $view,
             $config,
             $authService,
-            $permissionService,
             $communityContext,
+            $permissionService,
             $categoryRepository,
             $boardRepository,
             $threadRepository,
@@ -207,44 +211,38 @@ final class HttpRoutesTest extends TestCase
             new LinkPreviewer($config),
             $userRepository,
             $profileRepository,
-            $uploadService,
             $attachmentRepository,
             new ReactionRepository($pdo),
             new MentionNotificationRepository($pdo),
             new EmoticonSet($config),
-            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
-            $pdo
+            new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo)), $pdo),
         );
         $postController = new PostController(
-            $authService,
             $view,
             $config,
-            $threadRepository,
-            $postRepository,
-            new BbcodeParser(),
-            $profileRepository,
-            $permissionService,
-            $uploadService,
-            $attachmentRepository,
-            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
+            $authService,
+            $communityContext,
+            new CreateReplyService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo))),
         );
         $moderationController = new ModerationController(
             $view,
             $config,
             $authService,
-            $permissionService,
             $communityContext,
+            $permissionService,
             $threadRepository,
             $postRepository,
-            new BbcodeParser(), // Missing
-            $userRepository, // Missing
-            new BanRepository($pdo), // Missing
-            $boardRepository, // Missing
-            $categoryRepository, // Missing
+            new BbcodeParser(),
+            $userRepository,
+            new BanRepository($pdo),
+            $boardRepository,
+            $categoryRepository,
             $reportRepository,
             $attachmentRepository,
             $uploadService,
             new MentionService($userRepository, new MentionNotificationRepository($pdo)),
+            new ThreadStateService($permissionService, $threadRepository),
+            new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, new MentionNotificationRepository($pdo))),
         );
 
         $router->get('/', [$communityController, 'index']);

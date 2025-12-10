@@ -43,7 +43,7 @@ final readonly class PostController extends Controller
             return $this->notFound($request, 'Required attributes missing in PostController::store');
         }
 
-        $currentUser = $context->currentUser ?? $request->attribute('currentUser');
+        $currentUser = $context->currentUser ?? $this->auth->currentUser();
 
         if ($board->isLocked) {
             return new Response(

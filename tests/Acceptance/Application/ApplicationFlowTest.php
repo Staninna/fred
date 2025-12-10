@@ -7,9 +7,13 @@ namespace Tests\Acceptance\Application;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\CreateReplyService;
+use Fred\Application\Content\CreateThreadService;
+use Fred\Application\Content\EditPostService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
 use Fred\Application\Content\MentionService;
+use Fred\Application\Content\ThreadStateService;
 use Fred\Application\Content\UploadService;
 use Fred\Application\Search\SearchService;
 use Fred\Application\Security\CsrfGuard;
@@ -593,8 +597,8 @@ final class ApplicationFlowTest extends TestCase
             $view,
             $config,
             $authService,
-            $permissionService,
             $communityContext,
+            $permissionService,
             $categoryRepository,
             $boardRepository,
             $threadRepository,
@@ -603,20 +607,18 @@ final class ApplicationFlowTest extends TestCase
             $linkPreviewer,
             $userRepository,
             $profileRepository,
-            $uploadService,
             $attachmentRepository,
             $reactionRepository,
             $mentionNotificationRepository,
             $emoticonSet,
-            $mentionService,
-            $pdo
+            new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, $mentionNotificationRepository), $pdo),
         );
-        $postController = new PostController($authService, $view, $config, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $permissionService, $uploadService, $attachmentRepository, $mentionService);
-        $moderationController = new ModerationController($view, $config, $authService, $permissionService, $communityContext, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, $mentionService);
+        $postController = new PostController($view, $config, $authService, $communityContext, new CreateReplyService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, $mentionNotificationRepository)));
+        $moderationController = new ModerationController($view, $config, $authService, $communityContext, $permissionService, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new MentionService($userRepository, $mentionNotificationRepository), new ThreadStateService($permissionService, $threadRepository), new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, $mentionNotificationRepository)));
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
         $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
         $uploadController = new UploadController($config);
-        $reactionController = new ReactionController($authService, $config, $view, $threadRepository, $postRepository, $reactionRepository, $emoticonSet);
+        $reactionController = new ReactionController($view, $config, $authService, $communityContext, $threadRepository, $postRepository, $reactionRepository, $emoticonSet);
         $mentionController = new MentionController($authService, $config, $view, $communityContext, $mentionNotificationRepository, $userRepository, $boardRepository, $categoryRepository);
 
         $authRequired = static function (Request $request, callable $next) use ($authService): Response {
