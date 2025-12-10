@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Application\Content\AddReactionService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
@@ -16,6 +17,7 @@ use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
+use RuntimeException;
 
 final readonly class ReactionController extends Controller
 {
@@ -28,6 +30,7 @@ final readonly class ReactionController extends Controller
         private PostRepository $posts,
         private ReactionRepository $reactions,
         private EmoticonSet $emoticons,
+        private AddReactionService $addReactionService,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);
     }
@@ -50,36 +53,27 @@ final readonly class ReactionController extends Controller
             return Response::redirect('/login');
         }
 
-        $userId = (int) $currentUser->id;
-
         $postId = (int) $post->id;
-
-        if ($thread->isLocked || $board->isLocked) {
-            $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
-
-            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . '#post-' . $postId);
-        }
-
-        $emoticon = strtolower((string) ($request->body['emoticon'] ?? ''));
         $remove = isset($request->body['remove']) && (string) $request->body['remove'] === '1';
         $pageSuffix = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
 
         if ($remove) {
-            $this->reactions->removeUserReaction($postId, $userId);
+            try {
+                $this->addReactionService->remove($currentUser, $postId);
+            } catch (RuntimeException $e) {
+                // Silently handle - user not logged in handled above
+            }
 
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageSuffix . $postId);
         }
 
-        if ($emoticon === '' || !$this->emoticons->isAllowed($emoticon)) {
-            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageSuffix . $postId);
-        }
+        $emoticon = (string) ($request->body['emoticon'] ?? '');
 
-        $this->reactions->setUserReaction(
-            communityId: $community->id,
-            postId: $postId,
-            userId: $userId,
-            emoticon: $emoticon,
-        );
+        try {
+            $this->addReactionService->add($currentUser, $community->id, $thread, $board, $postId, $emoticon);
+        } catch (RuntimeException $e) {
+            // Invalid emoticon or locked thread/board - silently redirect
+        }
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageSuffix . $postId);
     }
