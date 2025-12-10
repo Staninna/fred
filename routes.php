@@ -15,14 +15,6 @@ use Fred\Http\Controller\ReactionController;
 use Fred\Http\Controller\SearchController;
 use Fred\Http\Controller\ThreadController;
 use Fred\Http\Controller\UploadController;
-use Fred\Http\Middleware\EnrichViewContextMiddleware;
-use Fred\Http\Middleware\InjectCurrentUserMiddleware;
-use Fred\Http\Middleware\PermissionMiddleware;
-use Fred\Http\Middleware\RequireAuthMiddleware;
-use Fred\Http\Middleware\ResolveBoardMiddleware;
-use Fred\Http\Middleware\ResolveCommunityMiddleware;
-use Fred\Http\Middleware\ResolvePostMiddleware;
-use Fred\Http\Middleware\ResolveThreadMiddleware;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
@@ -31,8 +23,8 @@ use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
 
 return static function (Router $router, Container $container): void {
-    $router->addGlobalMiddleware($container->get(InjectCurrentUserMiddleware::class));
-    $router->addGlobalMiddleware($container->get(EnrichViewContextMiddleware::class));
+    $router->addGlobalMiddleware('currentUser');
+    $router->addGlobalMiddleware('view.enrich');
 
     $communityController = $container->get(CommunityController::class);
     $boardController = $container->get(BoardController::class);
@@ -46,12 +38,6 @@ return static function (Router $router, Container $container): void {
     $profileController = $container->get(ProfileController::class);
     $searchController = $container->get(SearchController::class);
     $uploadController = $container->get(UploadController::class);
-    $authRequired = $container->get(RequireAuthMiddleware::class);
-    $permissions = $container->get(PermissionMiddleware::class);
-    $communityContext = $container->get(ResolveCommunityMiddleware::class);
-    $boardContext = $container->get(ResolveBoardMiddleware::class);
-    $threadContext = $container->get(ResolveThreadMiddleware::class);
-    $postContext = $container->get(ResolvePostMiddleware::class);
 
     $router->get('/', [$communityController, 'index']);
     $router->post('/communities', [$communityController, 'store']);
@@ -70,15 +56,10 @@ return static function (Router $router, Container $container): void {
         $postController,
         $adminController,
         $profileController,
-        $authRequired,
         $moderationController,
         $searchController,
         $reactionController,
         $mentionController,
-        $boardContext,
-        $threadContext,
-        $postContext,
-        $permissions
     ) {
         $router->get('/', [$communityController, 'show']);
         $router->get('/about', [$communityController, 'about']);
@@ -91,55 +72,47 @@ return static function (Router $router, Container $container): void {
             $router->post('/signature', [$profileController, 'updateSignature']);
             $router->get('/avatar', [$profileController, 'editAvatar']);
             $router->post('/avatar', [$profileController, 'updateAvatar']);
-        }, [$authRequired]);
+        }, ['auth']);
 
         $router->group('/b/{board}', function (Router $router) use (
             $boardController,
             $threadController,
-            $authRequired,
-            $boardContext
         ) {
-            $router->get('/', [$boardController, 'show'], [$boardContext]);
+            $router->get('/', [$boardController, 'show'], ['ctx.board']);
 
             $router->group('', function (Router $router) use ($threadController) {
                 $router->get('/thread/new', [$threadController, 'create']);
                 $router->post('/thread', [$threadController, 'store']);
-            }, [$authRequired, $boardContext]);
+            }, ['auth', 'ctx.board']);
         });
 
         $router->group('/t/{thread}', function (Router $router) use (
             $threadController,
             $postController,
             $moderationController,
-            $authRequired,
-            $threadContext,
-            $permissions
         ) {
-            $router->get('/', [$threadController, 'show'], [$threadContext]);
-            $router->get('/previews', [$threadController, 'previews'], [$threadContext]);
+            $router->get('/', [$threadController, 'show'], ['ctx.thread']);
+            $router->get('/previews', [$threadController, 'previews'], ['ctx.thread']);
 
-            $router->post('/reply', [$postController, 'store'], [$authRequired, $threadContext, $permissions->check('canReply')]);
-            $router->post('/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
-            $router->post('/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
-            $router->post('/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-            $router->post('/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-            $router->post('/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-            $router->post('/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-            $router->post('/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext, $permissions->check('canMoveThread')]);
+            $router->post('/reply', [$postController, 'store'], ['auth', 'ctx.thread', 'perm.canReply']);
+            $router->post('/lock', [$moderationController, 'lockThread'], ['auth', 'ctx.thread', 'perm.canLockThread']);
+            $router->post('/unlock', [$moderationController, 'unlockThread'], ['auth', 'ctx.thread', 'perm.canLockThread']);
+            $router->post('/sticky', [$moderationController, 'stickyThread'], ['auth', 'ctx.thread', 'perm.canStickyThread']);
+            $router->post('/unsticky', [$moderationController, 'unstickyThread'], ['auth', 'ctx.thread', 'perm.canStickyThread']);
+            $router->post('/announce', [$moderationController, 'announceThread'], ['auth', 'ctx.thread', 'perm.canStickyThread']);
+            $router->post('/unannounce', [$moderationController, 'unannounceThread'], ['auth', 'ctx.thread', 'perm.canStickyThread']);
+            $router->post('/move', [$moderationController, 'moveThread'], ['auth', 'ctx.thread', 'perm.canMoveThread']);
         });
 
         $router->group('/p/{post}', function (Router $router) use (
             $moderationController,
             $reactionController,
-            $authRequired,
-            $postContext,
-            $permissions
         ) {
-            $router->get('/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
-            $router->post('/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext, $permissions->check('canDeleteAnyPost')]);
-            $router->post('/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
-            $router->post('/report', [$moderationController, 'reportPost'], [$authRequired, $postContext]);
-            $router->post('/react', [$reactionController, 'add'], [$authRequired, $postContext]);
+            $router->get('/edit', [$moderationController, 'editPost'], ['auth', 'ctx.post', 'perm.canEditAnyPost']);
+            $router->post('/delete', [$moderationController, 'deletePost'], ['auth', 'ctx.post', 'perm.canDeleteAnyPost']);
+            $router->post('/edit', [$moderationController, 'editPost'], ['auth', 'ctx.post', 'perm.canEditAnyPost']);
+            $router->post('/report', [$moderationController, 'reportPost'], ['auth', 'ctx.post']);
+            $router->post('/react', [$reactionController, 'add'], ['auth', 'ctx.post']);
         });
 
         $router->group('/mentions', function (Router $router) use ($mentionController) {
@@ -147,7 +120,7 @@ return static function (Router $router, Container $container): void {
             $router->post('/read', [$mentionController, 'markRead']);
             $router->post('/{mention}/read', [$mentionController, 'markOneRead']);
             $router->get('/suggest', [$mentionController, 'suggest']);
-        }, [$authRequired]);
+        }, ['auth']);
 
         $router->get('/search', [$searchController, 'search']);
 
@@ -155,7 +128,7 @@ return static function (Router $router, Container $container): void {
             $router->get('/', [$moderationController, 'listBans']);
             $router->post('/', [$moderationController, 'createBan']);
             $router->post('/{ban}/delete', [$moderationController, 'deleteBan']);
-        }, [$authRequired, $permissions->check('canBan')]);
+        }, ['auth', 'perm.canBan']);
 
         $router->group('/admin', function (Router $router) use ($adminController) {
             $router->get('/structure', [$adminController, 'structure']);
@@ -175,8 +148,8 @@ return static function (Router $router, Container $container): void {
             $router->get('/settings', [$adminController, 'settings']);
             $router->post('/settings', [$adminController, 'updateSettings']);
             $router->get('/users', [$adminController, 'users']);
-        }, [$authRequired, $permissions->check('canModerate')]);
-    }, [$communityContext]);
+        }, ['auth', 'perm.canModerate']);
+    }, ['ctx.community']);
 
     $router->setNotFoundHandler(function (Request $request) use ($container) {
         $view = $container->get(ViewRenderer::class);

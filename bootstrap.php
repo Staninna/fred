@@ -9,7 +9,16 @@ use Fred\Application\Security\CsrfGuard;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Http\Routing\Router;
+use Fred\Http\Routing\MiddlewareRegistry;
 use Fred\Http\Navigation\NavigationTracker;
+use Fred\Http\Middleware\InjectCurrentUserMiddleware;
+use Fred\Http\Middleware\EnrichViewContextMiddleware;
+use Fred\Http\Middleware\RequireAuthMiddleware;
+use Fred\Http\Middleware\ResolveCommunityMiddleware;
+use Fred\Http\Middleware\ResolveBoardMiddleware;
+use Fred\Http\Middleware\ResolveThreadMiddleware;
+use Fred\Http\Middleware\ResolvePostMiddleware;
+use Fred\Http\Middleware\PermissionMiddleware;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Config\ConfigLoader;
 use Fred\Infrastructure\Database\ConnectionFactory;
@@ -49,7 +58,11 @@ return (static function (): array {
         ],
     ));
     $container->addShared(NavigationTracker::class, static fn () => new NavigationTracker());
-    $container->addShared(Router::class, static fn () => new Router($container->get('basePath') . '/public'));
+    $container->addShared(MiddlewareRegistry::class, static fn () => new MiddlewareRegistry());
+    $container->addShared(Router::class, static fn () => new Router(
+        $container->get('basePath') . '/public',
+        $container->get(MiddlewareRegistry::class)->resolver(),
+    ));
 
     $config = $container->get(AppConfig::class);
     $cookieSecure = str_starts_with($config->baseUrl, 'https://');
@@ -71,6 +84,25 @@ return (static function (): array {
     $router = $container->get(Router::class);
     $csrf = $container->get(CsrfGuard::class);
     $navigationTracker = $container->get(NavigationTracker::class);
+
+    $registry = $container->get(MiddlewareRegistry::class);
+    $registry->register('currentUser', $container->get(InjectCurrentUserMiddleware::class));
+    $registry->register('view.enrich', $container->get(EnrichViewContextMiddleware::class));
+    $registry->register('auth', $container->get(RequireAuthMiddleware::class));
+    $registry->register('ctx.community', $container->get(ResolveCommunityMiddleware::class));
+    $registry->register('ctx.board', $container->get(ResolveBoardMiddleware::class));
+    $registry->register('ctx.thread', $container->get(ResolveThreadMiddleware::class));
+    $registry->register('ctx.post', $container->get(ResolvePostMiddleware::class));
+
+    $permissionMiddleware = $container->get(PermissionMiddleware::class);
+    $registry->register('perm.canReply', $permissionMiddleware->check('canReply'));
+    $registry->register('perm.canLockThread', $permissionMiddleware->check('canLockThread'));
+    $registry->register('perm.canStickyThread', $permissionMiddleware->check('canStickyThread'));
+    $registry->register('perm.canMoveThread', $permissionMiddleware->check('canMoveThread'));
+    $registry->register('perm.canEditAnyPost', $permissionMiddleware->check('canEditAnyPost'));
+    $registry->register('perm.canDeleteAnyPost', $permissionMiddleware->check('canDeleteAnyPost'));
+    $registry->register('perm.canBan', $permissionMiddleware->check('canBan'));
+    $registry->register('perm.canModerate', $permissionMiddleware->check('canModerate'));
 
     $dispatch = static function () use ($container, $router, $csrf, $navigationTracker): void {
         $request = Request::fromGlobals();

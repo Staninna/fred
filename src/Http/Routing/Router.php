@@ -15,6 +15,7 @@ use Fred\Http\Response;
 use function in_array;
 use function is_array;
 use function is_file;
+use function is_callable;
 use function pathinfo;
 
 use const PATHINFO_EXTENSION;
@@ -25,6 +26,7 @@ use function realpath;
 use function rtrim;
 
 use RuntimeException;
+use Closure;
 
 use function str_contains;
 use function str_starts_with;
@@ -32,10 +34,10 @@ use function strtolower;
 
 final class Router
 {
-    /** @var array<string, array<string, array{handler: callable, middleware: array<int, callable>}>> */
+    /** @var array<string, array<string, array{handler: callable, middleware: array<int, callable|string>}>> */
     private array $staticRoutes = [];
 
-    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable>}>> */
+    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable|string>}>> */
     private array $dynamicRoutes = [];
 
     private readonly ?string $publicPath;
@@ -46,32 +48,45 @@ final class Router
     /** @var string[] */
     private array $groupPrefixStack = [];
 
-    /** @var array<int, array<int, callable>> */
+    /** @var array<int, array<int, callable|string>> */
     private array $groupMiddlewareStack = [];
 
-    /** @var array<int, callable> */
+    /** @var array<int, callable|string> */
     private array $globalMiddleware = [];
 
-    public function __construct(?string $publicPath = null)
+    /** @var null|callable(string):callable */
+    private readonly ?Closure $middlewareResolver;
+
+    public function __construct(?string $publicPath = null, ?callable $middlewareResolver = null)
     {
         $this->publicPath = $publicPath === null ? null : rtrim($publicPath, '/\\');
+        $this->middlewareResolver = $middlewareResolver !== null ? Closure::fromCallable($middlewareResolver) : null;
     }
 
-    public function addGlobalMiddleware(callable $middleware): void
+    public function addGlobalMiddleware(callable|string $middleware): void
     {
         $this->globalMiddleware[] = $middleware;
     }
 
+    /**
+     * @param array<int, callable|string> $middleware
+     */
     public function get(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('GET', $path, $handler, $middleware);
     }
 
+    /**
+     * @param array<int, callable|string> $middleware
+     */
     public function post(string $path, callable $handler, array $middleware = []): void
     {
         $this->addRoute('POST', $path, $handler, $middleware);
     }
 
+    /**
+     * @param array<int, callable|string> $middleware
+     */
     public function group(string $prefix, callable $callback, array $middleware = []): void
     {
         $this->groupPrefixStack[] = $prefix;
@@ -135,6 +150,9 @@ final class Router
         ];
     }
 
+    /**
+     * @param array<int, callable|string> $middleware
+     */
     private function addRoute(string $method, string $path, callable $handler, array $middleware = []): void
     {
         $fullPath = $this->applyGroupPrefix($path);
@@ -228,6 +246,10 @@ final class Router
         return $combined;
     }
 
+    /**
+     * @param array<int, callable|string> $routeMiddleware
+     * @return array<int, callable|string>
+     */
     private function gatherGroupMiddleware(array $routeMiddleware): array
     {
         $merged = [];
@@ -240,12 +262,13 @@ final class Router
     }
 
     /**
-     * @param array<int, callable> $middleware
+      * @param array<int, callable|string> $middleware
      */
     private function runMiddleware(Request $request, callable $handler, array $middleware): Response
     {
-        $allMiddleware = array_merge($this->globalMiddleware, $middleware);
-        $pipeline = array_reverse($allMiddleware);
+          $allMiddleware = array_merge($this->globalMiddleware, $middleware);
+          $resolvedMiddleware = array_map(fn ($mw) => $this->resolveMiddleware($mw), $allMiddleware);
+          $pipeline = array_reverse($resolvedMiddleware);
         $next = static fn (Request $incoming) => $handler($incoming);
 
         foreach ($pipeline as $layer) {
@@ -260,6 +283,25 @@ final class Router
         }
 
         return $result;
+    }
+
+    private function resolveMiddleware(callable|string $middleware): callable
+    {
+        if (is_callable($middleware)) {
+            return $middleware;
+        }
+
+        if ($this->middlewareResolver !== null) {
+            $resolved = ($this->middlewareResolver)($middleware);
+
+            if (!is_callable($resolved)) {
+                throw new RuntimeException('Middleware resolver must return a callable for alias: ' . $middleware);
+            }
+
+            return $resolved;
+        }
+
+        throw new RuntimeException('No middleware resolver configured for alias: ' . $middleware);
     }
 
     private function tryServeStatic(Request $request): ?Response
