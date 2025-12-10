@@ -5,42 +5,31 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
-use Fred\Application\Auth\PermissionService;
-use Fred\Application\Content\BbcodeParser;
-use Fred\Application\Content\MentionService;
-use Fred\Application\Content\UploadService;
+use Fred\Application\Content\CreateReplyService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\AttachmentRepository;
-use Fred\Infrastructure\Database\PostRepository;
-use Fred\Infrastructure\Database\ProfileRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
-
-use function is_array;
-
+use RuntimeException;
 use Throwable;
 
+use function is_array;
 use function trim;
+use function str_contains;
 
-final readonly class PostController
+final readonly class PostController extends Controller
 {
     public function __construct(
-        private AuthService $auth,
-        private ViewRenderer $view,
-        private AppConfig $config,
-        private ThreadRepository $threads,
-        private PostRepository $posts,
-        private BbcodeParser $parser,
-        private ProfileRepository $profiles,
-        private PermissionService $permissions,
-        private UploadService $uploads,
-        private AttachmentRepository $attachments,
-        private MentionService $mentions,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
+        private CreateReplyService $createReplyService,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function store(Request $request): Response
@@ -56,15 +45,7 @@ final readonly class PostController
 
         $currentUser = $context->currentUser ?? $request->attribute('currentUser');
 
-        if (!$this->permissions->canReply($currentUser)) {
-            return new Response(
-                status: 403,
-                headers: ['Content-Type' => 'text/html; charset=utf-8'],
-                body: 'Forbidden',
-            );
-        }
-
-        if ($thread->isLocked || $board->isLocked) {
+        if ($board->isLocked) {
             return new Response(
                 status: 403,
                 headers: ['Content-Type' => 'text/html; charset=utf-8'],
@@ -80,67 +61,43 @@ final readonly class PostController
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
         }
 
-        $attachmentFile = $request->files['attachment'] ?? null;
-        $attachmentPath = null;
+        try {
+            $attachmentFile = $request->files['attachment'] ?? null;
+            $result = $this->createReplyService->create(
+                currentUser: $currentUser,
+                community: $community,
+                thread: $thread,
+                bodyText: $bodyText,
+                attachmentFile: is_array($attachmentFile) ? $attachmentFile : null,
+            );
 
-        if (is_array($attachmentFile) && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
-            try {
-                $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
-            } catch (Throwable $exception) {
+            $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
+
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $result['post']->id);
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() === 'User cannot reply') {
+                return $this->forbidden();
+            }
+
+            if (str_contains($e->getMessage(), 'Attachment error')) {
                 return new Response(
                     status: 422,
                     headers: ['Content-Type' => 'text/plain; charset=utf-8'],
-                    body: 'Attachment error: ' . $exception->getMessage(),
+                    body: $e->getMessage(),
                 );
             }
+
+            if ($e->getMessage() === 'Thread is locked') {
+                return new Response(
+                    status: 403,
+                    headers: ['Content-Type' => 'text/html; charset=utf-8'],
+                    body: 'Thread is locked.',
+                );
+            }
+
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
         }
-
-        $profile = $currentUser->id !== null ? $this->profiles->findByUserAndCommunity($currentUser->id, $community->id) : null;
-        $bodyParsed = $this->parser->parse($bodyText, $community->slug);
-        $timestamp = time();
-        $createdPost = $this->posts->create(
-            communityId: $community->id,
-            threadId: $thread->id,
-            authorId: $currentUser->id ?? 0,
-            bodyRaw: $bodyText,
-            bodyParsed: $bodyParsed,
-            signatureSnapshot: $profile?->signatureParsed,
-            timestamp: $timestamp,
-        );
-
-        $this->mentions->notifyFromText(
-            communityId: $community->id,
-            postId: $createdPost->id,
-            authorId: $currentUser->id ?? 0,
-            bodyRaw: $bodyText,
-        );
-
-        if ($attachmentPath !== null) {
-            $this->attachments->create(
-                communityId: $community->id,
-                postId: $createdPost->id,
-                userId: $currentUser->id ?? 0,
-                path: $attachmentPath,
-                originalName: (string) ($attachmentFile['name'] ?? ''),
-                mimeType: (string) ($attachmentFile['type'] ?? ''),
-                sizeBytes: (int) ($attachmentFile['size'] ?? 0),
-                createdAt: $timestamp,
-            );
-        }
-
-        $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
-
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $createdPost->id);
     }
 
-    private function notFound(Request $request, ?string $context = null): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
-            request: $request,
-            context: $context,
-        );
-    }
+
 }

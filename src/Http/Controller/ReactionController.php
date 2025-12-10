@@ -8,6 +8,7 @@ use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
+use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
@@ -16,17 +17,19 @@ use Fred\Infrastructure\Database\ReactionRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 
-final readonly class ReactionController
+final readonly class ReactionController extends Controller
 {
     public function __construct(
-        private AuthService $auth,
-        private AppConfig $config,
-        private ViewRenderer $view,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private ReactionRepository $reactions,
         private EmoticonSet $emoticons,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function add(Request $request): Response
@@ -81,14 +84,5 @@ final readonly class ReactionController
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageSuffix . $postId);
     }
 
-    private function notFound(Request $request, ?string $context = null): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
-            request: $request,
-            context: $context,
-        );
-    }
+
 }

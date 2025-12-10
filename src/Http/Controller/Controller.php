@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
+use Fred\Domain\Community\Community;
+use Fred\Domain\Forum\Thread;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
@@ -30,5 +32,32 @@ abstract readonly class Controller
             request: $request,
             context: $context,
         );
+    }
+
+    protected function forbidden(): Response
+    {
+        return new Response(
+            status: 403,
+            headers: ['Content-Type' => 'text/plain; charset=utf-8'],
+            body: 'Forbidden',
+        );
+    }
+
+    protected function redirectToThread(Community $community, Thread $thread, ?int $page = null, ?string $anchor = null): Response
+    {
+        $url = '/c/' . $community->slug . '/t/' . $thread->id;
+        if ($page !== null) {
+            $url .= '?page=' . $page;
+        }
+        if ($anchor !== null) {
+            $url .= ($page !== null ? '#' : '?#') . $anchor;
+        }
+        return Response::redirect($url);
+    }
+
+    protected function redirectBack(Request $request, string $fallback = '/'): Response
+    {
+        $referer = $request->header('referer');
+        return Response::redirect($referer ?? $fallback);
     }
 }
