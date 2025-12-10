@@ -7,10 +7,15 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\DeletePostService;
 use Fred\Application\Content\EditPostService;
 use Fred\Application\Content\MentionService;
+use Fred\Application\Content\MoveThreadService;
+use Fred\Application\Content\ReportPostService;
 use Fred\Application\Content\ThreadStateService;
 use Fred\Application\Content\UploadService;
+use Fred\Application\Moderation\CreateBanService;
+use Fred\Application\Moderation\DeleteBanService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Domain\Forum\Post as ForumPost;
@@ -32,6 +37,7 @@ use Fred\Infrastructure\View\ViewRenderer;
 use RuntimeException;
 
 use function strlen;
+use function trim;
 
 final readonly class ModerationController extends Controller
 {
@@ -54,6 +60,11 @@ final readonly class ModerationController extends Controller
         private MentionService $mentions,
         private ThreadStateService $threadStateService,
         private EditPostService $editPostService,
+        private DeletePostService $deletePostService,
+        private MoveThreadService $moveThreadService,
+        private ReportPostService $reportPostService,
+        private CreateBanService $createBanService,
+        private DeleteBanService $deleteBanService,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);
     }
@@ -99,17 +110,11 @@ final readonly class ModerationController extends Controller
             return $this->notFound($request, 'Required attributes missing in ModerationController::deletePost');
         }
 
-        if (!$this->permissions->canDeleteAnyPost($this->auth->currentUser(), $community->id)) {
+        try {
+            $this->deletePostService->delete($this->auth->currentUser(), $community, $post);
+        } catch (RuntimeException $e) {
             return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
         }
-
-        $attachments = $this->attachments->listByPostId($post->id);
-
-        foreach ($attachments as $attachment) {
-            $this->uploads->delete($attachment->path);
-        }
-
-        $this->posts->delete($post->id);
 
         $page = isset($request->query['page']) ? '?page=' . (int) $request->query['page'] : '';
 
@@ -181,10 +186,6 @@ final readonly class ModerationController extends Controller
             return $this->notFound($request, 'Required attributes missing in ModerationController::moveThread');
         }
 
-        if (!$this->permissions->canMoveThread($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
-        }
-
         $targetBoardSlug = (string) ($request->body['target_board'] ?? '');
         $targetBoard = $this->communityContext->resolveBoard($community, $targetBoardSlug);
 
@@ -192,7 +193,11 @@ final readonly class ModerationController extends Controller
             return $this->notFound($request, 'Target board not found: ' . $targetBoardSlug);
         }
 
-        $this->threads->moveToBoard($thread->id, $targetBoard->id);
+        try {
+            $this->moveThreadService->move($this->auth->currentUser(), $community, $thread->id, $targetBoard->id);
+        } catch (RuntimeException $e) {
+            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        }
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
@@ -209,26 +214,16 @@ final readonly class ModerationController extends Controller
         }
 
         $currentUser = $this->auth->currentUser();
-
         $reason = trim((string) ($request->body['reason'] ?? ''));
-
-        if ($reason === '' || strlen($reason) > 500) {
-            $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
-
-            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?report_error=1' . $page . '#post-' . $post->id);
-        }
-
-        $this->reports->create(
-            communityId: $community->id,
-            postId: $post->id,
-            reporterId: $currentUser->id ?? 0,
-            reason: $reason,
-            timestamp: time(),
-        );
-
         $page = isset($request->body['page']) ? '&page=' . (int) $request->body['page'] : '';
 
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?reported=1' . $page . '#post-' . $post->id);
+        try {
+            $this->reportPostService->report($currentUser, $community->id, $post->id, $reason);
+
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?reported=1' . $page . '#post-' . $post->id);
+        } catch (RuntimeException $e) {
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . '?report_error=1' . $page . '#post-' . $post->id);
+        }
     }
 
     public function listBans(Request $request): Response
@@ -280,35 +275,12 @@ final readonly class ModerationController extends Controller
 
         $errors = [];
 
-        if ($username === '') {
-            $errors[] = 'Username is required.';
-        }
-
-        if ($reason === '') {
-            $errors[] = 'Reason is required.';
-        }
-
-        $expiresAt = null;
-
-        if ($expires !== '') {
-            $expiresAt = strtotime($expires) ?: null;
-        }
-
-        $user = $username !== '' ? $this->users->findByUsername($username) : null;
-
-        if ($user === null) {
-            $errors[] = 'User not found.';
-        }
-
-        if ($errors === []) {
-            $this->bans->create(
-                userId: $user->id,
-                reason: $reason,
-                expiresAt: $expiresAt,
-                timestamp: time(),
-            );
+        try {
+            $this->createBanService->create($username, $reason, $expires !== '' ? $expires : null);
 
             return Response::redirect('/c/' . $community->slug . '/admin/bans');
+        } catch (RuntimeException $e) {
+            $errors[] = $e->getMessage();
         }
 
         $bans = $this->bans->listAll();
@@ -348,8 +320,10 @@ final readonly class ModerationController extends Controller
 
         $banId = (int) ($request->params['ban'] ?? 0);
 
-        if ($banId > 0) {
-            $this->bans->delete($banId);
+        try {
+            $this->deleteBanService->delete($banId);
+        } catch (RuntimeException $e) {
+            // Silently ignore - ban may not exist or invalid ID
         }
 
         return Response::redirect('/c/' . $community->slug . '/admin/bans');
