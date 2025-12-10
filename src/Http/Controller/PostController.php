@@ -13,12 +13,13 @@ use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\View\ViewRenderer;
-use RuntimeException;
-use Throwable;
 
 use function is_array;
-use function trim;
+
+use RuntimeException;
+
 use function str_contains;
+use function trim;
 
 final readonly class PostController extends Controller
 {

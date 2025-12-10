@@ -6,7 +6,6 @@ namespace Fred\Application\Content;
 
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\PostRepository;
-use RuntimeException;
 use Throwable;
 
 final readonly class AttachmentCleanupHelper
@@ -43,7 +42,6 @@ final readonly class AttachmentCleanupHelper
     }
 
     /**
-     * @param array $attachments
      */
     private function deleteAttachments(array $attachments): void
     {

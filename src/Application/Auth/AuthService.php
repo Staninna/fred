@@ -205,6 +205,7 @@ final class AuthService
         $this->sessionSet(self::SESSION_PERMISSIONS_KEY, $permissions);
 
         $moderatedCommunities = [];
+
         if ($user->roleSlug === 'moderator' && $user->id !== null) {
             $moderatedCommunities = $this->users->getModeratedCommunityIds($user->id);
         }

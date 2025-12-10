@@ -6,7 +6,6 @@ namespace Fred\Application\Content;
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Application\Auth\PermissionService;
-use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\ThreadRepository;

@@ -37,9 +37,10 @@ use Fred\Infrastructure\View\ViewRenderer;
 
 use function is_array;
 use function json_encode;
-use RuntimeException;
-use function str_contains;
 
+use RuntimeException;
+
+use function str_contains;
 use function trim;
 
 final readonly class ThreadController extends Controller

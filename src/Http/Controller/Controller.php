@@ -46,18 +46,22 @@ abstract readonly class Controller
     protected function redirectToThread(Community $community, Thread $thread, ?int $page = null, ?string $anchor = null): Response
     {
         $url = '/c/' . $community->slug . '/t/' . $thread->id;
+
         if ($page !== null) {
             $url .= '?page=' . $page;
         }
+
         if ($anchor !== null) {
             $url .= ($page !== null ? '#' : '?#') . $anchor;
         }
+
         return Response::redirect($url);
     }
 
     protected function redirectBack(Request $request, string $fallback = '/'): Response
     {
         $referer = $request->header('referer');
+
         return Response::redirect($referer ?? $fallback);
     }
 }

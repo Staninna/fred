@@ -7,9 +7,11 @@ namespace Fred\Application\Admin;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Infrastructure\Database\BoardRepository;
-use RuntimeException;
 
 use function preg_replace;
+
+use RuntimeException;
+
 use function strlen;
 use function strtolower;
 use function trim;

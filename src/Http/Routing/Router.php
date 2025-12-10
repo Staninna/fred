@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Http\Routing;
 
+use Closure;
+
 use const DIRECTORY_SEPARATOR;
 
 use function file_get_contents;
@@ -14,21 +16,22 @@ use Fred\Http\Response;
 
 use function in_array;
 use function is_array;
-use function is_file;
 use function is_callable;
+use function is_file;
 use function pathinfo;
 
 use const PATHINFO_EXTENSION;
 
 use function preg_match;
 use function preg_replace_callback;
+
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+
 use function realpath;
 use function rtrim;
 
 use RuntimeException;
-use Closure;
 
 use function str_contains;
 use function str_starts_with;
@@ -144,11 +147,11 @@ final class Router
 
         if ($this->notFoundHandler !== null) {
             $response = ($this->notFoundHandler)($request);
-            
+
             if (!$response instanceof Response) {
                 throw new RuntimeException('Not found handler must return a Response.');
             }
-            
+
             return $response;
         }
 
@@ -170,8 +173,7 @@ final class Router
     /**
      * Dump route map for diagnostics.
      * Returns a human-readable list of all registered routes.
-     * 
-     * @return string
+     *
      */
     public function dumpRouteMap(): string
     {
@@ -195,6 +197,7 @@ final class Router
                     'middlewareInfo' => $middlewareInfo,
                 ];
             }
+
             foreach ($this->dynamicRoutes[$method] ?? [] as $route) {
                 $middlewareCount = count($route['middleware']);
                 $middlewareInfo = $middlewareCount > 0 ? " [{$middlewareCount} middleware]" : '';
@@ -215,7 +218,8 @@ final class Router
         }
 
         $lines[] = '';
-        $lines[] = sprintf('Total: %d static, %d dynamic routes',
+        $lines[] = sprintf(
+            'Total: %d static, %d dynamic routes',
             count($this->staticRoutes['GET'] ?? []) + count($this->staticRoutes['POST'] ?? []),
             count($this->dynamicRoutes['GET'] ?? []) + count($this->dynamicRoutes['POST'] ?? [])
         );
@@ -339,9 +343,9 @@ final class Router
      */
     private function runMiddleware(Request $request, callable $handler, array $middleware): Response
     {
-          $allMiddleware = array_merge($this->globalMiddleware, $middleware);
-          $resolvedMiddleware = array_map(fn ($mw) => $this->resolveMiddleware($mw), $allMiddleware);
-          $pipeline = array_reverse($resolvedMiddleware);
+        $allMiddleware = array_merge($this->globalMiddleware, $middleware);
+        $resolvedMiddleware = array_map(fn ($mw) => $this->resolveMiddleware($mw), $allMiddleware);
+        $pipeline = array_reverse($resolvedMiddleware);
         $next = static fn (Request $incoming) => $handler($incoming);
 
         foreach ($pipeline as $layer) {

@@ -34,7 +34,6 @@ final readonly class CreateReplyService
     }
 
     /**
-     * @param array<string, mixed> $files
      * @return array{post: Post, attachmentPath: ?string}
      */
     public function create(

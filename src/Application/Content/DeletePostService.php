@@ -11,8 +11,6 @@ use Fred\Domain\Forum\Post;
 use Fred\Infrastructure\Database\PostRepository;
 use RuntimeException;
 
-use function time;
-
 final readonly class DeletePostService
 {
     public function __construct(

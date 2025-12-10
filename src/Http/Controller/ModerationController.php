@@ -36,7 +36,6 @@ use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
 use RuntimeException;
 
-use function strlen;
 use function trim;
 
 final readonly class ModerationController extends Controller
@@ -169,10 +168,12 @@ final readonly class ModerationController extends Controller
             }
             // Body is required or other error - just redirect without error
             $pageStr = $page > 1 ? '?page=' . $page : '';
+
             return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageStr);
         }
 
         $pageStr = $page > 1 ? '?page=' . $page . '#post-' : '?#post-';
+
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageStr . $post->id);
     }
 

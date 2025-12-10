@@ -9,8 +9,6 @@ use function is_array;
 use function parse_url;
 use function trim;
 
-use Fred\Http\RequestContext;
-
 final readonly class Request
 {
     public function __construct(
