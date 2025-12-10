@@ -112,8 +112,20 @@ final readonly class ThreadController
         foreach ($posts as $post) {
             $urls = $this->linkPreviewer->extractUrls($post->bodyRaw ?? '', 3);
 
-            if ($urls !== []) {
-                $linkPreviewUrlsByPost[$post->id] = $urls;
+            if ($urls === []) {
+                continue;
+            }
+
+            $linkPreviewUrlsByPost[$post->id] = $urls;
+
+            foreach ($urls as $url) {
+                $preview = $this->linkPreviewer->previewForUrl($url);
+
+                if ($preview === null) {
+                    continue;
+                }
+
+                $linkPreviewsByPost[$post->id][] = $preview;
             }
         }
         $currentUser = $this->auth->currentUser();
