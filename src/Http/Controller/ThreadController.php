@@ -118,14 +118,12 @@ final readonly class ThreadController
 
             $linkPreviewUrlsByPost[$post->id] = $urls;
 
-            foreach ($urls as $url) {
-                $preview = $this->linkPreviewer->previewForUrl($url);
+            // For the initial thread render, we only want to use already-cached
+            // previews so that we don't block the response on new network calls.
+            $cachedPreviews = $this->linkPreviewer->previewsFromCacheForUrls($urls);
 
-                if ($preview === null) {
-                    continue;
-                }
-
-                $linkPreviewsByPost[$post->id][] = $preview;
+            if ($cachedPreviews !== []) {
+                $linkPreviewsByPost[$post->id] = $cachedPreviews;
             }
         }
         $currentUser = $this->auth->currentUser();

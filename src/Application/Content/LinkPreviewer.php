@@ -129,7 +129,14 @@ final class LinkPreviewer
         return array_slice(array_unique($matches[0] ?? []), 0, $limit);
     }
 
-    /** @return array{url:string, title:string, description:string|null, image:string|null, host:string}|null */
+    /**
+     * Get a preview for a single URL, using cache and performing a network fetch on cache miss.
+     *
+     * This is suitable for on-demand preview generation (e.g. JSON endpoints), not for
+     * initial page render where we want to avoid blocking on network calls.
+     *
+     * @return array{url:string, title:string, description:string|null, image:string|null, host:string}|null
+     */
     public function previewForUrl(string $url): ?array
     {
         $url = trim($url);
@@ -174,6 +181,37 @@ final class LinkPreviewer
         @file_put_contents($cachePath, (string) json_encode($cacheData, JSON_PRETTY_PRINT));
 
         return $metadata;
+    }
+
+    /**
+     * Return previews only from cache for the given URLs.
+     *
+     * This helper is intentionally cache-only: it will never perform network
+     * requests or update the cache. It is meant for initial page render where
+     * we want to use already-fetched previews without blocking the response.
+     *
+     * @param array<int, string> $urls
+     * @return array<int, array{url:string, title:string, description:string|null, image:string|null, host:string}>
+     */
+    public function previewsFromCacheForUrls(array $urls): array
+    {
+        $previews = [];
+
+        foreach ($urls as $url) {
+            $url = trim($url);
+
+            if ($url === '' || !$this->isSafeUrl($url)) {
+                continue;
+            }
+
+            $cacheCheck = $this->cachedPreview($url);
+
+            if ($cacheCheck['status'] === 'hit' && isset($cacheCheck['data'])) {
+                $previews[] = $cacheCheck['data'];
+            }
+        }
+
+        return $previews;
     }
 
     private function isSafeUrl(string $url): bool
