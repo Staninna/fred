@@ -31,10 +31,11 @@ final readonly class ReactionController
 
     public function add(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $post = $request->attribute('post');
-        $thread = $request->attribute('thread');
-        $board = $request->attribute('board');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $post = $ctxRequest->post;
+        $thread = $ctxRequest->thread;
+        $board = $ctxRequest->board;
 
         if (!$community instanceof Community || $post === null || $thread === null || !$board instanceof Board) {
             return $this->notFound($request, 'Required attributes missing in ReactionController::add');

@@ -62,8 +62,15 @@ final readonly class ResolvePostMiddleware
             return $this->notFound($request, 'Category mismatch for board: ' . $board->name);
         }
 
+        $context = $request->context()
+            ->withPost($post)
+            ->withThread($thread)
+            ->withBoard($board)
+            ->withCategory($category);
+
         return $next(
             $request
+                ->withContext($context)
                 ->withAttribute('post', $post)
                 ->withAttribute('thread', $thread)
                 ->withAttribute('board', $board)

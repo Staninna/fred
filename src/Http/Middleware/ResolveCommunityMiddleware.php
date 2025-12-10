@@ -32,8 +32,13 @@ final readonly class ResolveCommunityMiddleware
 
         $this->view->share('currentCommunity', $community);
         $this->view->share('navSections', $this->communityContext->navForCommunity($community));
+        $context = $request->context()->withCommunity($community);
 
-        return $next($request->withAttribute('community', $community));
+        return $next(
+            $request
+                ->withContext($context)
+                ->withAttribute('community', $community),
+        );
     }
 
     protected function view(): ViewRenderer

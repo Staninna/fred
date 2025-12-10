@@ -36,12 +36,13 @@ final readonly class BoardController extends Controller
 
     public function show(Request $request): Response
     {
-        /** @var Community $community */
-        $community = $request->attribute('community');
-        /** @var Board $board */
-        $board = $request->attribute('board');
-        /** @var Category $category */
-        $category = $request->attribute('category');
+        $ctxRequest = $request->context();
+        /** @var Community|null $community */
+        $community = $ctxRequest->community;
+        /** @var Board|null $board */
+        $board = $ctxRequest->board;
+        /** @var Category|null $category */
+        $category = $ctxRequest->category;
 
         $page = (int) ($request->query['page'] ?? 1);
         $page = max($page, 1);

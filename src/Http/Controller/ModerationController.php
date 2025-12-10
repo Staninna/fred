@@ -84,9 +84,10 @@ final readonly class ModerationController
 
     public function deletePost(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $post = $request->attribute('post');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $post = $ctxRequest->post;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::deletePost');
@@ -111,9 +112,10 @@ final readonly class ModerationController
 
     public function editPost(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $post = $request->attribute('post');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $post = $ctxRequest->post;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::editPost');
@@ -178,8 +180,9 @@ final readonly class ModerationController
 
     public function moveThread(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::moveThread');
@@ -203,9 +206,10 @@ final readonly class ModerationController
 
     public function reportPost(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $post = $request->attribute('post');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $post = $ctxRequest->post;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::reportPost');
@@ -236,7 +240,7 @@ final readonly class ModerationController
 
     public function listBans(Request $request): Response
     {
-        $community = $request->attribute('community');
+        $community = $request->context()->community;
 
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::listBans');
@@ -267,7 +271,7 @@ final readonly class ModerationController
 
     public function createBan(Request $request): Response
     {
-        $community = $request->attribute('community');
+        $community = $request->context()->community;
 
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::createBan');
@@ -339,7 +343,7 @@ final readonly class ModerationController
 
     public function deleteBan(Request $request): Response
     {
-        $community = $request->attribute('community');
+        $community = $request->context()->community;
 
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in ModerationController::deleteBan');
@@ -360,8 +364,9 @@ final readonly class ModerationController
 
     private function toggleLock(Request $request, bool $lock): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleLock');
@@ -378,8 +383,9 @@ final readonly class ModerationController
 
     private function toggleSticky(Request $request, bool $sticky): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleSticky');
@@ -396,8 +402,9 @@ final readonly class ModerationController
 
     private function toggleAnnouncement(Request $request, bool $announcement): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleAnnouncement');

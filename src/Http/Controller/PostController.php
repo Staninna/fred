@@ -45,15 +45,16 @@ final readonly class PostController
 
     public function store(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
-        $board = $request->attribute('board');
+        $context = $request->context();
+        $community = $context->community;
+        $thread = $context->thread;
+        $board = $context->board;
 
         if (!$community instanceof Community || $thread === null || !$board instanceof Board) {
             return $this->notFound($request, 'Required attributes missing in PostController::store');
         }
 
-        $currentUser = $request->attribute('currentUser');
+        $currentUser = $context->currentUser ?? $request->attribute('currentUser');
 
         if (!$this->permissions->canReply($currentUser)) {
             return new Response(

@@ -46,8 +46,13 @@ final readonly class ResolveBoardMiddleware
             return $this->notFound($request, 'Category mismatch for board: ' . $board->name);
         }
 
+        $context = $request->context()
+            ->withBoard($board)
+            ->withCategory($category);
+
         return $next(
             $request
+                ->withContext($context)
                 ->withAttribute('board', $board)
                 ->withAttribute('category', $category),
         );

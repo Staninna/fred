@@ -72,10 +72,11 @@ final readonly class ThreadController
 
     public function show(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
-        $board = $request->attribute('board');
-        $category = $request->attribute('category');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
+        $board = $ctxRequest->board;
+        $category = $ctxRequest->category;
 
         if (!$community instanceof Community || $thread === null || !$board instanceof Board || !$category instanceof Category) {
             return $this->notFound($request, 'Required attributes missing in ThreadController::show');
@@ -126,7 +127,7 @@ final readonly class ThreadController
                 $linkPreviewsByPost[$post->id] = $cachedPreviews;
             }
         }
-        $currentUser = $this->auth->currentUser();
+        $currentUser = $ctxRequest->currentUser ?? $this->auth->currentUser();
         $userReactions = !$currentUser->isGuest()
             ? $this->reactions->listUserReactions($postIds, $currentUser->id ?? 0)
             : [];
@@ -181,8 +182,9 @@ final readonly class ThreadController
 
     public function previews(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $thread = $request->attribute('thread');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || $thread === null) {
             return new Response(400, ['Content-Type' => 'application/json'], json_encode(['error' => 'Invalid context']));
@@ -225,14 +227,15 @@ final readonly class ThreadController
 
     public function create(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $board = $request->attribute('board');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $board = $ctxRequest->board;
 
         if (!$community instanceof Community || !$board instanceof Board) {
             return $this->notFound($request, 'Required attributes missing in ThreadController::create');
         }
 
-        $currentUser = $this->auth->currentUser();
+        $currentUser = $ctxRequest->currentUser ?? $this->auth->currentUser();
 
         if (!$this->permissions->canCreateThread($currentUser)) {
             return $this->renderCreate($request, $community, $board, ['You do not have permission to create threads.'], [], 403);
@@ -243,14 +246,15 @@ final readonly class ThreadController
 
     public function store(Request $request): Response
     {
-        $community = $request->attribute('community');
-        $board = $request->attribute('board');
+        $ctxRequest = $request->context();
+        $community = $ctxRequest->community;
+        $board = $ctxRequest->board;
 
         if (!$community instanceof Community || !$board instanceof Board) {
             return $this->notFound($request, 'Required attributes missing in ThreadController::store');
         }
 
-        $currentUser = $this->auth->currentUser();
+        $currentUser = $ctxRequest->currentUser ?? $this->auth->currentUser();
 
         if (!$this->permissions->canCreateThread($currentUser)) {
             return $this->renderCreate(

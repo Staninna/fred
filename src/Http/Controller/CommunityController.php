@@ -101,7 +101,7 @@ final readonly class CommunityController extends Controller
 
     public function show(Request $request): Response
     {
-        $community = $request->attribute('community');
+        $community = $request->context()->community;
 
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in CommunityController::show');
@@ -131,7 +131,7 @@ final readonly class CommunityController extends Controller
 
     public function about(Request $request): Response
     {
-        $community = $request->attribute('community');
+        $community = $request->context()->community;
 
         if (!$community instanceof Community) {
             return $this->notFound($request, 'Community attribute missing in CommunityController::about');
