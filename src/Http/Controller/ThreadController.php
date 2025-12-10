@@ -11,7 +11,6 @@ use function explode;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
-use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\CreateThreadService;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\LinkPreviewer;
@@ -31,7 +30,6 @@ use Fred\Infrastructure\Database\MentionNotificationRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ReactionRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
@@ -100,6 +98,7 @@ final readonly class ThreadController extends Controller
         // Build a map of post ID to page number for all posts in the thread
         $allThreadPosts = $this->posts->listByThreadId($thread->id);
         $postIdToPageNumber = [];
+
         foreach ($allThreadPosts as $index => $threadPost) {
             $postPageNumber = (int) floor($index / $perPage) + 1;
             $postIdToPageNumber[$threadPost->id] = $postPageNumber;
@@ -107,6 +106,7 @@ final readonly class ThreadController extends Controller
 
         // Validate post references in each post's body with correct page numbers
         $validatedBodyParsed = [];
+
         foreach ($posts as $post) {
             if ($post->bodyParsed !== null) {
                 $validatedBodyParsed[$post->id] = $this->postReferenceValidator->validate($post->bodyParsed, $postIdToPageNumber);

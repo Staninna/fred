@@ -98,4 +98,3 @@ final class PostReferenceValidatorTest extends TestCase
         $this->assertStringContainsString('<a class="quote-link" href="#post-1">&gt;&gt;1</a>', $output);
     }
 }
-

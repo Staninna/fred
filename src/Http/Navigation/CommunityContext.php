@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Fred\Http\Navigation;
 
-use function array_values;
 use function ctype_digit;
 
 use Fred\Domain\Community\Board;

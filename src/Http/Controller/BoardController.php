@@ -13,8 +13,6 @@ use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\BoardRepository;
-use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;

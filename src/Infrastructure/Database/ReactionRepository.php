@@ -94,7 +94,7 @@ final readonly class ReactionRepository
         return $value === false ? null : (string) $value;
     }
 
-        /**
+    /**
      * @param int[] $postIds
      * @return array<int, string>
      */

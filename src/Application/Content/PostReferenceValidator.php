@@ -29,10 +29,10 @@ final readonly class PostReferenceValidator
                 }
 
                 $pageNumber = $postIdToPageNumber[$postId];
-                
+
                 // Generate link with page number if needed
                 $pageParam = $pageNumber > 1 ? '?page=' . $pageNumber : '';
-                
+
                 return '<a class="quote-link" href="' . $pageParam . '#post-' . $postId . '">' . $text . '</a>';
             },
             $parsedHtml

@@ -6,16 +6,12 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Content\AddReactionService;
-use Fred\Application\Content\EmoticonSet;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Navigation\CommunityContext;
 use Fred\Http\Request;
 use Fred\Http\Response;
 use Fred\Infrastructure\Config\AppConfig;
-use Fred\Infrastructure\Database\PostRepository;
-use Fred\Infrastructure\Database\ReactionRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\View\ViewRenderer;
 use RuntimeException;
 

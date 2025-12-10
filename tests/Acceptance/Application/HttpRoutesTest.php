@@ -39,7 +39,6 @@ use Fred\Infrastructure\Database\CategoryRepository;
 use Fred\Infrastructure\Database\CommunityModeratorRepository;
 use Fred\Infrastructure\Database\CommunityRepository;
 use Fred\Infrastructure\Database\MentionNotificationRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
 use Fred\Infrastructure\Database\ReactionRepository;

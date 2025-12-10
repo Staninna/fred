@@ -14,6 +14,7 @@ final class MigrationRunnerTest extends TestCase
         $pdo = $this->makeMigratedPdo();
 
         $stmt = $pdo->query('SELECT COUNT(*) FROM migrations');
+
         if ($stmt === false) {
             $this->fail('Query failed');
         }
@@ -31,6 +32,7 @@ final class MigrationRunnerTest extends TestCase
         $runner->run();
 
         $stmt = $pdo->query('SELECT COUNT(*) FROM migrations');
+
         if ($stmt === false) {
             $this->fail('Query failed');
         }

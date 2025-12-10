@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Fred\Http;
 
 use function function_exists;
-use function is_array;
 use function parse_url;
 use function trim;
 

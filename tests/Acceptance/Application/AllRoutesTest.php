@@ -413,6 +413,7 @@ final class AllRoutesTest extends TestCase
             timestamp: time()
         );
         $statement = $pdo->query('SELECT * FROM bans ORDER BY id DESC LIMIT 1');
+
         if ($statement === false) {
             throw new \RuntimeException('Failed to fetch ban');
         }
