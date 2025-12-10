@@ -501,6 +501,7 @@ final readonly class AdminController
             if ($memberRole !== null) {
                 $this->users->updateRole($user->id, $memberRole->id);
                 $user = $this->users->findById($user->id) ?? $user;
+                $this->auth->flushPermissionCache($user->id);
             }
         }
 
@@ -517,6 +518,7 @@ final readonly class AdminController
 
         if ($errors === [] && $user !== null) {
             $this->communityModerators->assign($community->id, $user->id, time());
+            $this->auth->flushPermissionCache($user->id);
 
             return Response::redirect('/c/' . $community->slug . '/admin/structure');
         }
@@ -546,6 +548,7 @@ final readonly class AdminController
 
         if ($userId > 0) {
             $this->communityModerators->remove($community->id, $userId);
+            $this->auth->flushPermissionCache($userId);
         }
 
         return Response::redirect('/c/' . $community->slug . '/admin/structure');
