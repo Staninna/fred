@@ -243,6 +243,11 @@ final class HttpRoutesTest extends TestCase
             new MentionService($userRepository, new MentionNotificationRepository($pdo)),
             new ThreadStateService($permissionService, $threadRepository),
             new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, new MentionNotificationRepository($pdo))),
+            new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository)),
+            new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository),
+            new \Fred\Application\Content\ReportPostService($reportRepository),
+            new \Fred\Application\Moderation\CreateBanService($userRepository, new BanRepository($pdo)),
+            new \Fred\Application\Moderation\DeleteBanService(new BanRepository($pdo)),
         );
 
         $router->get('/', [$communityController, 'index']);
