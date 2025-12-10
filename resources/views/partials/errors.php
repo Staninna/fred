@@ -4,7 +4,7 @@
 /** @var string|null $success */
 /** @var string|null $idPrefix */
 
-$idPrefix = $idPrefix === null || $idPrefix === '' ? 'form' : $idPrefix;
+$idPrefix = ($idPrefix ?? '') === '' ? 'form' : $idPrefix;
 $errorId = $idPrefix . '-errors';
 $successId = $idPrefix . '-success';
 

@@ -4,6 +4,7 @@
 /** @var array<int, string> $profileErrors */
 /** @var array<string, string> $oldProfile */
 /** @var callable $e */
+/** @var callable $renderPartial */
 /** @var string|null $success */
 
 use Fred\Domain\Auth\Profile;
@@ -12,7 +13,7 @@ use Fred\Domain\Community\Community;
 $messageIdPrefix = 'profile-settings';
 $messageTargets = [];
 
-if (!empty($profileErrors ?? [])) {
+if (!empty($profileErrors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
 
@@ -28,7 +29,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
     <tr>
         <td>
             <?= $renderPartial('partials/errors.php', [
-                'errors' => $profileErrors ?? [],
+                'errors' => $profileErrors,
                 'success' => $success ?? null,
                 'idPrefix' => $messageIdPrefix,
                 'renderPartial' => $renderPartial,
@@ -38,15 +39,15 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="bio">Bio</label></td>
-                        <td><textarea id="bio" name="bio" rows="3"<?= $messageAria ?>><?= $e($oldProfile['bio'] ?? $profile?->bio ?? '') ?></textarea></td>
+                        <td><textarea id="bio" name="bio" rows="3"<?= $messageAria ?>><?= $e($oldProfile['bio'] ?? ($profile ? $profile->bio : '')) ?></textarea></td>
                     </tr>
                     <tr>
                         <td><label for="location">Location</label></td>
-                        <td><input id="location" name="location" type="text" value="<?= $e($oldProfile['location'] ?? $profile?->location ?? '') ?>"<?= $messageAria ?>></td>
+                        <td><input id="location" name="location" type="text" value="<?= $e($oldProfile['location'] ?? ($profile ? $profile->location : '')) ?>"<?= $messageAria ?>></td>
                     </tr>
                     <tr>
                         <td><label for="website">Website</label></td>
-                        <td><input id="website" name="website" type="url" value="<?= $e($oldProfile['website'] ?? $profile?->website ?? '') ?>"<?= $messageAria ?>></td>
+                        <td><input id="website" name="website" type="url" value="<?= $e($oldProfile['website'] ?? ($profile ? $profile->website : '')) ?>"<?= $messageAria ?>></td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Save profile</button>

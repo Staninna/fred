@@ -9,7 +9,7 @@
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
-        <th><?= $e($title ?? 'Form') ?></th>
+        <th><?= $e($title) ?></th>
     </tr>
     <tr>
         <td>
@@ -17,7 +17,7 @@
                 <div class="info-line"><?= $e($infoText) ?></div>
             <?php endif; ?>
             <?= $renderPartial('partials/errors.php', [
-                'errors' => $errors ?? [],
+                'errors' => $errors,
                 'success' => $success ?? null,
                 'idPrefix' => $idPrefix ?? 'form-section',
                 'renderPartial' => $renderPartial,

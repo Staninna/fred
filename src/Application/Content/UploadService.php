@@ -83,7 +83,7 @@ final class UploadService
 
         $tmpPath = $file['tmp_name'] ?? '';
 
-        if (!is_file($tmpPath ?? '')) {
+        if (!is_file($tmpPath)) {
             throw new RuntimeException('Temporary upload missing.');
         }
 

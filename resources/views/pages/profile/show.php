@@ -2,7 +2,7 @@
 /** @var User $user */
 /** @var Profile|null $profile */
 /** @var Community $community */
-/** @var CurrentUser|null $currentUser */
+/** @var CurrentUser $currentUser */
 /** @var callable $renderPartial */
 /** @var callable $e */
 /** @var array<int, string> $profileErrors */
@@ -24,12 +24,12 @@ use Fred\Domain\Community\Community;
     'renderPartial' => $renderPartial,
 ]) ?>
 
-<?php if (($currentUser?->id ?? null) === $user->id): ?>
+<?php if ($currentUser->id === $user->id): ?>
     <?= $renderPartial('partials/profile/edit_profile_form.php', [
         'community' => $community,
         'profile' => $profile,
-        'profileErrors' => $profileErrors ?? [],
-        'oldProfile' => $oldProfile ?? [],
+        'profileErrors' => $profileErrors,
+        'oldProfile' => $oldProfile,
         'e' => $e,
         'renderPartial' => $renderPartial,
     ]) ?>
@@ -37,7 +37,7 @@ use Fred\Domain\Community\Community;
     <?= $renderPartial('partials/profile/signature_form.php', [
         'community' => $community,
         'profile' => $profile,
-        'signatureErrors' => $signatureErrors ?? [],
+        'signatureErrors' => $signatureErrors,
         'e' => $e,
         'renderPartial' => $renderPartial,
     ]) ?>
@@ -45,7 +45,7 @@ use Fred\Domain\Community\Community;
     <?= $renderPartial('partials/profile/avatar_form.php', [
         'community' => $community,
         'profile' => $profile,
-        'avatarErrors' => $avatarErrors ?? [],
+        'avatarErrors' => $avatarErrors,
         'e' => $e,
         'renderPartial' => $renderPartial,
     ]) ?>

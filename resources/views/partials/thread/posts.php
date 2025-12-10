@@ -27,7 +27,7 @@ use Fred\Domain\Forum\Post;
 ?>
 
 <?php
-$emoticonVersion = $emoticonVersion ?? '';
+$emoticonVersion = $emoticonVersion;
 $resolvedEmoticons = [];
 $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $emoticonMap, $emoticonVersion): string {
     $normalized = strtolower($code);
@@ -55,7 +55,7 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
             <tr id="post-<?= $post->id ?>">
                 <td class="author-cell">
                     <?php $profile = $profilesByUserId[$post->authorId] ?? null; ?>
-                    <?php if (!empty($profile?->avatarPath ?? '')): ?>
+                    <?php if ($profile && $profile->avatarPath): ?>
                         <div class="author-avatar">
                             <img src="/uploads/<?= $e($profile->avatarPath) ?>" alt="<?= $e($post->authorName) ?> avatar" style="max-width: 64px; max-height: 64px;">
                         </div>
@@ -70,20 +70,20 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                             ? $post->bodyParsed
                             : nl2br($e($post->bodyRaw)) ?>
                     </div>
-                    <?php if (!empty($canDeleteAnyPost ?? false)): ?>
+                    <?php if ($canDeleteAnyPost): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/delete">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                            <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
+                            <input type="hidden" name="page" value="<?= $page ?>">
                             <button class="button" type="submit">Delete</button>
                         </form>
                     <?php endif; ?>
-                    <?php if (!empty($canEditAnyPost ?? false)): ?>
-                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit?page=<?= $page ?? 1 ?>">Edit</a>
+                    <?php if ($canEditAnyPost): ?>
+                        <a class="button" href="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/edit?page=<?= $page ?>">Edit</a>
                     <?php endif; ?>
-                    <?php if (!empty($canReport ?? false) && ($currentUserId ?? null) !== $post->authorId): ?>
+                    <?php if ($canReport && ($currentUserId ?? null) !== $post->authorId): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/report">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                            <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
+                            <input type="hidden" name="page" value="<?= $page ?>">
                             <label class="small" for="report_reason_<?= $post->id ?>">Report reason</label>
                             <input id="report_reason_<?= $post->id ?>" name="reason" type="text" maxlength="200" required placeholder="Spam, abuse...">
                             <button class="button" type="submit">Report</button>
@@ -104,12 +104,12 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                                 <?php $reactionUrl = $resolveEmoticonUrl($reactionCode); ?>
                                 <?php $who = $reactionUsers[$reactionCode] ?? ['names' => [], 'extra' => 0]; ?>
                                 <?php $tooltip = $who['names'] === [] ? '' : implode(', ', $who['names']); ?>
-                                <?php if (($who['extra'] ?? 0) > 0) {
+                                <?php if ($who['extra'] > 0) {
                                     $tooltip .= ' +' . (int) $who['extra'] . ' more';
                                 } ?>
                                 <form class="inline-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
                                     <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                                    <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
+                                    <input type="hidden" name="page" value="<?= $page ?>">
                                     <?php if ($userReaction !== null && $userReaction === $reactionCode): ?>
                                         <input type="hidden" name="remove" value="1">
                                     <?php endif; ?>
@@ -142,12 +142,12 @@ $resolveEmoticonUrl = static function (string $code) use (&$resolvedEmoticons, $
                             <div class="small muted" data-preview-notice>Fetching link preview...</div>
                         </div>
                     <?php endif; ?>
-                    <?php if (!empty($canReact ?? false)): ?>
+                    <?php if ($canReact): ?>
                         <details class="reaction-picker">
                             <summary class="small">Add reaction</summary>
                             <form class="reaction-form" method="post" action="/c/<?= $e($communitySlug) ?>/p/<?= $post->id ?>/react">
                                 <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
-                                <input type="hidden" name="page" value="<?= $page ?? 1 ?>">
+                                <input type="hidden" name="page" value="<?= $page ?>">
                                 <div class="reaction-grid">
                                     <?php foreach ($emoticons as $emoticon): ?>
                                         <button class="reaction-btn<?= ($userReaction === $emoticon['code']) ? ' active' : '' ?>" type="submit" name="emoticon" value="<?= $e($emoticon['code']) ?>">

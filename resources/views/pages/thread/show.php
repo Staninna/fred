@@ -57,15 +57,15 @@ use Fred\Domain\Forum\Post;
         <td class="table-heading">Started</td>
         <td><?= date('Y-m-d H:i', $thread->createdAt) ?> · Posts: <?= $totalPosts ?? count($posts) ?> <?= $thread->isLocked ? '· Locked' : '' ?></td>
     </tr>
-    <?php if (!empty($canModerate ?? false)): ?>
+    <?php if ($canModerate): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a>
-                <?php if (!empty($canBanUsers ?? false)): ?>
+                <?php if ($canBanUsers): ?>
                     <a class="button" href="/c/<?= $e($community->slug) ?>/admin/bans">Manage bans</a>
                 <?php endif; ?>
-                <?php if (!empty($canMoveThread ?? false)): ?>
+                <?php if ($canMoveThread): ?>
                     <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/move">
                         <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
                         <label for="target_board" class="small">Move to:</label>
@@ -85,7 +85,7 @@ use Fred\Domain\Forum\Post;
                         <button class="button" type="submit">Move</button>
                     </form>
                 <?php endif; ?>
-                <?php if (!empty($canLockThread ?? false)): ?>
+                <?php if ($canLockThread): ?>
                     <?php if ($thread->isLocked): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unlock">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
@@ -98,7 +98,7 @@ use Fred\Domain\Forum\Post;
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
-                <?php if (!empty($canStickyThread ?? false)): ?>
+                <?php if ($canStickyThread): ?>
                     <?php if ($thread->isSticky): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unsticky">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
@@ -111,7 +111,7 @@ use Fred\Domain\Forum\Post;
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
-                <?php if (!empty($canModerate ?? false)): ?>
+                <?php if ($canModerate): ?>
                     <?php if ($thread->isAnnouncement): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unannounce">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
@@ -132,10 +132,10 @@ use Fred\Domain\Forum\Post;
 <div id="post-list">
     <?= $renderPartial('partials/thread/posts.php', [
         'posts' => $posts,
-        'canEditAnyPost' => $canEditAnyPost ?? false,
-        'canDeleteAnyPost' => $canDeleteAnyPost ?? false,
+        'canEditAnyPost' => $canEditAnyPost,
+        'canDeleteAnyPost' => $canDeleteAnyPost,
         'communitySlug' => $community->slug,
-        'profilesByUserId' => $profilesByUserId ?? [],
+        'profilesByUserId' => $profilesByUserId,
         'attachmentsByPost' => $attachmentsByPost ?? [],
         'canReport' => !($currentUser?->isGuest() ?? true),
         'currentUserId' => $currentUser?->id,
@@ -145,8 +145,8 @@ use Fred\Domain\Forum\Post;
         'canReact' => ($currentUser ?? null) !== null && !$currentUser->isGuest() && !$thread->isLocked && !$board->isLocked,
         'reactionsByPost' => $reactionsByPost ?? [],
         'reactionUsersByPost' => $reactionUsersByPost ?? [],
-        'linkPreviewsByPost' => $linkPreviewsByPost ?? [],
-        'linkPreviewUrlsByPost' => $linkPreviewUrlsByPost ?? [],
+        'linkPreviewsByPost' => $linkPreviewsByPost,
+        'linkPreviewUrlsByPost' => $linkPreviewUrlsByPost,
         'renderPartial' => $renderPartial,
         'emoticons' => $emoticons ?? [],
         'emoticonMap' => $emoticonMap ?? [],
@@ -155,11 +155,11 @@ use Fred\Domain\Forum\Post;
     ]) ?>
 </div>
 
-<?php $postsNeedingPreviews = array_keys(array_diff_key($linkPreviewUrlsByPost ?? [], $linkPreviewsByPost ?? [])); ?>
+<?php $postsNeedingPreviews = array_keys(array_diff_key($linkPreviewUrlsByPost, $linkPreviewsByPost)); ?>
 <?php if ($postsNeedingPreviews !== []): ?>
     <script>
     (() => {
-        const postIds = <?= json_encode(array_values($postsNeedingPreviews)) ?>;
+        const postIds = <?= json_encode($postsNeedingPreviews) ?>;
         if (!postIds.length) {
             return;
         }

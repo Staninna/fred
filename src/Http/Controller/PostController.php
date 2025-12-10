@@ -64,12 +64,16 @@ final readonly class PostController extends Controller
 
         try {
             $attachmentFile = $request->files['attachment'] ?? null;
+            if (!is_array($attachmentFile)) {
+                $attachmentFile = null;
+            }
+            /** @var array{name: string, type: string, tmp_name: string, error: int, size: int}|null $attachmentFile */
             $result = $this->createReplyService->create(
                 currentUser: $currentUser,
                 community: $community,
                 thread: $thread,
                 bodyText: $bodyText,
-                attachmentFile: is_array($attachmentFile) ? $attachmentFile : null,
+                attachmentFile: $attachmentFile,
             );
 
             $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';

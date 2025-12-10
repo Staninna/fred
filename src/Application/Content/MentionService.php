@@ -64,7 +64,7 @@ final readonly class MentionService
 
         $normalized = [];
 
-        foreach ($matches[1] ?? [] as $rawHandle) {
+        foreach ($matches[1] as $rawHandle) {
             $trimmed = rtrim($rawHandle, '.,;:!');
 
             if ($trimmed === '') {

@@ -1,3 +1,9 @@
+<?php
+/** @var callable $e */
+/** @var string|null $errorMessage */
+/** @var string|null $errorTrace */
+/** @var string|null $environment */
+?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
         <th>Server error</th>

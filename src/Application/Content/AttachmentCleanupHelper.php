@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Application\Content;
 
+use Fred\Domain\Forum\Attachment;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Throwable;
@@ -42,6 +43,7 @@ final readonly class AttachmentCleanupHelper
     }
 
     /**
+     * @param Attachment[] $attachments
      */
     private function deleteAttachments(array $attachments): void
     {

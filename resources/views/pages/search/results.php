@@ -45,7 +45,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="q">Query</label></td>
-                        <td><input id="q" name="q" type="text" value="<?= $e($query ?? '') ?>" required<?= $messageAria ?>></td>
+                        <td><input id="q" name="q" type="text" value="<?= $e($query) ?>" required<?= $messageAria ?>></td>
                     </tr>
                     <tr>
                         <td><label for="board">Board</label></td>
@@ -57,7 +57,7 @@ echo $renderPartial('partials/select.php', [
     'id' => 'board',
     'placeholder' => 'All boards',
     'options' => $boardOptions,
-    'selected' => $boardFilter?->slug ?? '',
+    'selected' => $boardFilter ? $boardFilter->slug : '',
     'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
 ]);
 ?>
@@ -73,7 +73,7 @@ echo $renderPartial('partials/select.php', [
     'id' => 'user',
     'placeholder' => 'All users',
     'options' => $userOptions,
-    'selected' => $userFilter?->username ?? '',
+    'selected' => $userFilter ? $userFilter->username : '',
     'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
 ]);
 ?>

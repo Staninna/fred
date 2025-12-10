@@ -10,13 +10,13 @@
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 
-$name = $board?->name ?? '';
-$slug = $board?->slug ?? '';
-$description = $board?->description ?? '';
-$position = $board?->position ?? 0;
-$isLocked = $board?->isLocked ?? false;
-$customCss = $board?->customCss ?? '';
-$selectedCategoryId = $board?->categoryId ?? ($categories[0]->id ?? '');
+$name = $board ? $board->name : '';
+$slug = $board ? $board->slug : '';
+$description = $board ? $board->description : '';
+$position = $board ? $board->position : 0;
+$isLocked = $board ? $board->isLocked : false;
+$customCss = $board ? $board->customCss : '';
+$selectedCategoryId = $board ? $board->categoryId : ($categories[0]->id ?? '');
 ?>
 <form method="post" action="<?= $e($action) ?>" novalidate>
     <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">

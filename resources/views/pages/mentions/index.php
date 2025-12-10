@@ -27,7 +27,7 @@ use Fred\Domain\Forum\MentionNotification;
             <?php if ($unreadCount > 0): ?>
                 <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/mentions/read">
                     <?= $renderPartial('partials/csrf.php') ?>
-                    <input type="hidden" name="page" value="<?= (int) ($pagination['page'] ?? 1) ?>">
+                    <input type="hidden" name="page" value="<?= (int) $pagination['page'] ?>">
                     <button class="button" type="submit">Mark all read</button>
                 </form>
             <?php endif; ?>
@@ -44,7 +44,7 @@ use Fred\Domain\Forum\MentionNotification;
         </tr>
         <?php foreach ($notifications as $notification): ?>
             <?php
-            $page = (int) ceil(($notification->postPosition ?? 1) / ($postsPerPage ?? 25));
+            $page = (int) ceil(($notification->postPosition ?? 1) / $postsPerPage);
             $threadUrl = '/c/' . $community->slug . '/t/' . $notification->threadId;
 
             if ($page > 1) {
@@ -73,7 +73,7 @@ use Fred\Domain\Forum\MentionNotification;
                     <?php if ($notification->readAt === null): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/mentions/<?= $notification->id ?>/read" style="margin-left: 4px;">
                             <?= $renderPartial('partials/csrf.php') ?>
-                            <input type="hidden" name="page" value="<?= (int) ($pagination['page'] ?? 1) ?>">
+                            <input type="hidden" name="page" value="<?= (int) $pagination['page'] ?>">
                             <button class="button" type="submit" title="Mark as read">✓</button>
                         </form>
                     <?php endif; ?>
@@ -81,10 +81,10 @@ use Fred\Domain\Forum\MentionNotification;
             </tr>
         <?php endforeach; ?>
     </table>
-    <?php if (($pagination['totalPages'] ?? 1) > 1): ?>
+    <?php if ($pagination['totalPages'] > 1): ?>
         <?= $renderPartial('partials/pagination.php', [
-            'page' => (int) ($pagination['page'] ?? 1),
-            'totalPages' => (int) ($pagination['totalPages'] ?? 1),
+            'page' => (int) $pagination['page'],
+            'totalPages' => (int) $pagination['totalPages'],
             'baseUrl' => '/c/' . $e($community->slug) . '/mentions',
             'isTable' => false,
         ]) ?>

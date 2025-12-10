@@ -10,7 +10,7 @@
 $messageIdPrefix = 'ban-create';
 $messageTargets = [];
 
-if (!empty($errors ?? [])) {
+if (!empty($errors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
 
@@ -27,7 +27,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
     <tr>
         <td colspan="3">
             <?= $renderPartial('partials/errors.php', [
-                'errors' => $errors ?? [],
+                'errors' => $errors,
                 'success' => $success ?? null,
                 'idPrefix' => $messageIdPrefix,
             ]) ?>

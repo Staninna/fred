@@ -11,17 +11,17 @@ use Fred\Domain\Auth\Profile;
     </tr>
     <tr>
         <td class="table-heading">Location</td>
-        <td><?= $e($profile?->location ?? '') ?: 'Not set' ?></td>
+        <td><?= ($profile && $profile->location !== '') ? $e($profile->location) : 'Not set' ?></td>
     </tr>
     <tr>
         <td class="table-heading">Website</td>
         <td>
-            <?php if (($profile?->website ?? '') === ''): ?>
-                Not set
-            <?php else: ?>
+            <?php if ($profile && $profile->website !== ''): ?>
                 <a href="<?= $e($profile->website) ?>" target="_blank" rel="noopener">
                     <?= $e($profile->website) ?>
                 </a>
+            <?php else: ?>
+                Not set
             <?php endif; ?>
         </td>
     </tr>

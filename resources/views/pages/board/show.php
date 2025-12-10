@@ -24,7 +24,7 @@ use Fred\Domain\Community\Community;
         'Status' => ($board->isLocked ? 'Locked' : 'Open') . ' · Threads: ' . ($totalThreads ?? count($threads)) . ' · Board ID: ' . $board->id,
     ],
 ]) ?>
-    <?php if (!empty($canModerate ?? false)): ?>
+    <?php if ($canModerate): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Admin this community</a></td>
@@ -71,7 +71,7 @@ use Fred\Domain\Community\Community;
         <td colspan="2">
             <?php if ($board->isLocked): ?>
                 <span class="muted">Board locked.</span>
-            <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated() && !empty($canCreateThread ?? false)): ?>
+            <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated() && $canCreateThread): ?>
                 <a class="button" href="/c/<?= $e($community->slug) ?>/b/<?= $e($board->slug) ?>/thread/new">New thread</a>
             <?php elseif (($currentUser ?? null) !== null && $currentUser->isAuthenticated()): ?>
                 <span class="muted">You do not have permission to create threads.</span>

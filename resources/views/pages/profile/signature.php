@@ -1,8 +1,8 @@
 <?php
-/** @var Profile|null $profile */
+/** @var Profile $profile */
 /** @var Community $community */
 /** @var array<int, string> $errors */
-/** @var CurrentUser|null $currentUser */
+/** @var CurrentUser $currentUser */
 /** @var callable $renderPartial */
 /** @var callable $e */
 
@@ -24,7 +24,7 @@ use Fred\Domain\Community\Community;
                         <td width="140"><label for="signature">Signature</label></td>
                         <td>
                             <?= $renderPartial('partials/bbcode_toolbar.php', ['targetId' => 'signature']) ?>
-                            <textarea id="signature" name="signature" rows="5"><?= $e($profile?->signatureRaw ?? '') ?></textarea>
+                            <textarea id="signature" name="signature" rows="5"><?= $e($profile->signatureRaw) ?></textarea>
                         </td>
                     </tr>
                     <tr>
@@ -32,7 +32,7 @@ use Fred\Domain\Community\Community;
                     </tr>
                 </table>
                 <button class="button" type="submit">Save signature</button>
-                <a class="button" href="/c/<?= $e($community->slug) ?>/u/<?= $e($currentUser?->username ?? '') ?>">Back to profile</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/u/<?= $e($currentUser->username) ?>">Back to profile</a>
             </form>
         </td>
     </tr>

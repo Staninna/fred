@@ -12,7 +12,7 @@ use Fred\Domain\Community\Community;
 $messageIdPrefix = 'avatar-settings';
 $messageTargets = [];
 
-if (!empty($avatarErrors ?? [])) {
+if (!empty($avatarErrors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
 
@@ -23,7 +23,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
 ?>
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Avatar',
-    'errors' => $avatarErrors ?? [],
+    'errors' => $avatarErrors,
     'success' => $success ?? null,
     'idPrefix' => $messageIdPrefix,
     'infoText' => null,

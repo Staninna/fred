@@ -17,7 +17,6 @@ final readonly class CreateBoardService
 {
     public function __construct(
         private BoardRepository $boards,
-        private CategoryRepository $categories,
         private BoardValidator $validator,
     ) {
     }

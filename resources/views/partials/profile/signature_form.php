@@ -12,7 +12,7 @@ use Fred\Domain\Community\Community;
 $messageIdPrefix = 'signature-settings';
 $messageTargets = [];
 
-if (!empty($signatureErrors ?? [])) {
+if (!empty($signatureErrors)) {
     $messageTargets[] = $messageIdPrefix . '-errors';
 }
 
@@ -23,7 +23,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
 ?>
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Edit signature',
-    'errors' => $signatureErrors ?? [],
+    'errors' => $signatureErrors,
     'success' => $success ?? null,
     'idPrefix' => $messageIdPrefix,
     'infoText' => null,
@@ -34,7 +34,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                 <table class="form-table" cellpadding="0" cellspacing="0">
                     <tr>
                         <td width="120"><label for="signature">Signature</label></td>
-                        <td><textarea id="signature" name="signature" rows="3"<?= $messageAria ?>><?= $e($profile?->signatureRaw ?? '') ?></textarea></td>
+                        <td><textarea id="signature" name="signature" rows="3"<?= $messageAria ?>><?= $e($profile ? $profile->signatureRaw : '') ?></textarea></td>
                     </tr>
                 </table>
                 <button class="button" type="submit">Save signature</button>

@@ -5,8 +5,8 @@
 /** @var bool $showBack */
 ?>
                 </table>
-                <button class="button" type="submit"><?= $e($submitLabel ?? 'Save') ?></button>
-                <?php if ($showBack ?? false): ?>
+                <button class="button" type="submit"><?= $e($submitLabel) ?></button>
+                <?php if ($showBack): ?>
                     <a class="button" href="<?= $e($backUrl ?? '#') ?>">Back</a>
                 <?php endif; ?>
             </form>

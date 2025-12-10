@@ -8,7 +8,7 @@
 /** @var string $textareaLabel */
 /** @var string $bodyValue */
 /** @var bool $includeAttachment */
-/** @var int $page */
+/** @var int|null $page */
 /** @var string|null $messagesDescribedBy */
 /** @var string|null $mentionEndpoint */
 ?>

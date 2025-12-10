@@ -126,7 +126,7 @@ final class LinkPreviewer
         preg_match_all('#https?://[^\s\[\]<>"\']+#i', $text, $matches);
         $limit = max(1, $limit);
 
-        return array_slice(array_unique($matches[0] ?? []), 0, $limit);
+        return array_slice(array_unique($matches[0]), 0, $limit);
     }
 
     /**
@@ -149,6 +149,7 @@ final class LinkPreviewer
         $cachePath = $this->cacheDir . '/' . $cacheKey . '.json';
 
         if (file_exists($cachePath)) {
+            /** @var array{url:string, title:string, description:string|null, image:string|null, host:string, failed?:bool, cached_at?:int}|null $cached */
             $cached = json_decode((string) file_get_contents($cachePath), true);
 
             if (is_array($cached) && ($cached['failed'] ?? false) === true) {
@@ -158,13 +159,19 @@ final class LinkPreviewer
                 if ($age < $this->failedTtlSeconds) {
                     return null;
                 }
-            } elseif (is_array($cached) && isset($cached['url'], $cached['title'])) {
+            } elseif (is_array($cached)) {
                 $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
                 $age = time() - $cachedAt;
 
                 if ($age < $this->ttlSeconds) {
                     // Return cached data without the cached_at field
-                    return array_diff_key($cached, ['cached_at' => true]);
+                    return [
+                        'url' => $cached['url'],
+                        'title' => $cached['title'],
+                        'description' => $cached['description'],
+                        'image' => $cached['image'],
+                        'host' => $cached['host'],
+                    ];
                 }
             }
         }
@@ -339,6 +346,9 @@ final class LinkPreviewer
         return $results;
     }
 
+    /**
+     * @param \CurlHandle|resource|null $handle
+     */
     private function closeCurlHandle($handle): void
     {
         if ($handle === null) {
@@ -402,7 +412,13 @@ final class LinkPreviewer
             return null;
         }
 
-        $text = trim((string) $nodes->item(0)?->textContent);
+        $node = $nodes->item(0);
+
+        if (!$node instanceof \DOMNode) {
+            return null;
+        }
+
+        $text = trim($node->textContent);
 
         return $text === '' ? null : $text;
     }
@@ -419,6 +435,7 @@ final class LinkPreviewer
             return ['status' => 'miss', 'path' => $cachePath];
         }
 
+        /** @var array{url:string, title:string, description:string|null, image:string|null, host:string, failed?:bool, cached_at?:int}|null $cached */
         $cached = json_decode((string) file_get_contents($cachePath), true);
 
         if (is_array($cached) && ($cached['failed'] ?? false) === true) {
@@ -432,13 +449,19 @@ final class LinkPreviewer
             return ['status' => 'miss', 'path' => $cachePath];
         }
 
-        if (is_array($cached) && isset($cached['url'], $cached['title'])) {
+        if (is_array($cached)) {
             $cachedAt = $cached['cached_at'] ?? (int) filemtime($cachePath);
             $age = time() - $cachedAt;
 
             if ($age < $this->ttlSeconds) {
                 // Return cached data without the cached_at field
-                $data = array_diff_key($cached, ['cached_at' => true]);
+                $data = [
+                    'url' => $cached['url'],
+                    'title' => $cached['title'],
+                    'description' => $cached['description'],
+                    'image' => $cached['image'],
+                    'host' => $cached['host'],
+                ];
 
                 return ['status' => 'hit', 'data' => $data, 'path' => $cachePath];
             }

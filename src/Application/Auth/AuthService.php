@@ -158,8 +158,8 @@ final class AuthService
             id: null,
             username: 'guest',
             displayName: 'Guest',
-            role: $guestRole?->slug ?? 'guest',
-            roleName: $guestRole?->name ?? 'Guest',
+            role: $guestRole instanceof \Fred\Domain\Auth\Role ? $guestRole->slug : 'guest',
+            roleName: $guestRole instanceof \Fred\Domain\Auth\Role ? $guestRole->name : 'Guest',
             authenticated: false,
             permissions: [],
             moderatedCommunities: [],
@@ -206,7 +206,7 @@ final class AuthService
 
         $moderatedCommunities = [];
 
-        if ($user->roleSlug === 'moderator' && $user->id !== null) {
+        if ($user->roleSlug === 'moderator') {
             $moderatedCommunities = $this->users->getModeratedCommunityIds($user->id);
         }
         $this->sessionSet(self::SESSION_MODERATED_COMMUNITIES_KEY, $moderatedCommunities);

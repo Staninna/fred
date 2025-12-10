@@ -14,9 +14,9 @@ use Fred\Domain\Community\Community;
     <meta charset="UTF-8">
     <title><?= $e($pageTitle ?? 'Fred Forum') ?></title>
     <link rel="stylesheet" href="/css/layout.css">
-    <?php if (!empty($customCss ?? '')): ?>
+    <?php if (!empty($customCss)): ?>
         <style id="custom-css">
-            <?= $e($customCss ?? '', ENT_NOQUOTES) ?>
+            <?= $e($customCss, ENT_NOQUOTES) ?>
         </style>
     <?php endif; ?>
     <script src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
@@ -61,8 +61,8 @@ use Fred\Domain\Community\Community;
     <tr>
         <td class="footer" colspan="2">
             Fred forum engine · <?= $e($environment ?? 'local') ?>
-            <?php if (!empty($baseUrl ?? '')): ?>
-                · Base URL: <?= $e($baseUrl ?? '') ?>
+            <?php if (!empty($baseUrl)): ?>
+                · Base URL: <?= $e($baseUrl) ?>
             <?php endif; ?>
         </td>
     </tr>

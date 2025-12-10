@@ -1,7 +1,7 @@
 <?php
 /** @var Profile|null $profile */
 /** @var Community $community */
-/** @var CurrentUser|null $currentUser */
+/** @var CurrentUser $currentUser */
 /** @var array<int, string> $errors */
 /** @var callable $renderPartial */
 /** @var callable $e */
@@ -32,7 +32,7 @@ use Fred\Domain\Community\Community;
                     </tr>
                 </table>
                 <button class="button" type="submit">Upload avatar</button>
-                <a class="button" href="/c/<?= $e($community->slug) ?>/u/<?= $e($currentUser?->username ?? '') ?>">Back to profile</a>
+                <a class="button" href="/c/<?= $e($community->slug) ?>/u/<?= $e($currentUser->username) ?>">Back to profile</a>
             </form>
         </td>
     </tr>

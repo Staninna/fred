@@ -22,7 +22,7 @@ use Fred\Domain\Community\Community;
         'Stats' => 'Categories: ' . count($categories) . ' · Boards: ' . array_sum(array_map('count', $boardsByCategory)),
     ],
 ]) ?>
-    <?php if (!empty($canModerate ?? false)): ?>
+    <?php if ($canModerate): ?>
         <tr>
             <td class="table-heading">Admin</td>
             <td><a class="button" href="/c/<?= $e($community->slug) ?>/admin/structure">Manage structure</a></td>

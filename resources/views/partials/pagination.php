@@ -6,7 +6,7 @@
 /** @var callable $e */
 ?>
 <?php if ($totalPages > 1): ?>
-    <?php $containerIsTable = $isTable ?? false; ?>
+    <?php $containerIsTable = $isTable; ?>
     <?php if ($containerIsTable): ?>
         <tr>
             <td colspan="2" class="pagination">

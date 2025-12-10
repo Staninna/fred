@@ -222,7 +222,7 @@ final class HttpRoutesTest extends TestCase
             $config,
             $authService,
             $communityContext,
-            new CreateReplyService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo))),
+            new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo))),
         );
         $moderationController = new ModerationController(
             $view,

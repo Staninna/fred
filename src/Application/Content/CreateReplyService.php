@@ -23,7 +23,6 @@ final readonly class CreateReplyService
 {
     public function __construct(
         private PermissionService $permissions,
-        private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
         private ProfileRepository $profiles,
@@ -34,6 +33,7 @@ final readonly class CreateReplyService
     }
 
     /**
+     * @param array{name: string, type: string, tmp_name: string, error: int, size: int}|null $attachmentFile
      * @return array{post: Post, attachmentPath: ?string}
      */
     public function create(
@@ -59,7 +59,7 @@ final readonly class CreateReplyService
 
         $attachmentPath = null;
 
-        if ($attachmentFile !== null && ($attachmentFile['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        if ($attachmentFile !== null && $attachmentFile['error'] !== UPLOAD_ERR_NO_FILE) {
             try {
                 $attachmentPath = $this->uploads->saveAttachment($attachmentFile);
             } catch (Throwable $exception) {

@@ -49,7 +49,7 @@ if (isset($currentUser, $currentCommunity) && $currentUser->isAuthenticated()) {
                     <ul class="nav-list">
                         <?php foreach ($section['items'] as $item):
                             $label = $e($item['label']);
-                            $href = $item['href'] ?? '#';
+                            $href = $item['href'];
                             $isActive = $activePath !== null && $href !== '#' && $href === $activePath;
                             ?>
                             <li>
