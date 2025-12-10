@@ -37,7 +37,7 @@
         "seed": "php bin/seed",
         "serve": "php -S localhost:8000 -t public public/index.php",
         "test": "phpunit",
-        "phpstan": "phpstan analyse"
+        "phpstan": "phpstan analyse --memory-limit=1G"
     },
     "config": {
         "sort-packages": true
