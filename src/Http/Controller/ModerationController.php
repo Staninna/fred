@@ -7,7 +7,9 @@ namespace Fred\Http\Controller;
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
 use Fred\Application\Content\BbcodeParser;
+use Fred\Application\Content\EditPostService;
 use Fred\Application\Content\MentionService;
+use Fred\Application\Content\ThreadStateService;
 use Fred\Application\Content\UploadService;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
@@ -27,17 +29,18 @@ use Fred\Infrastructure\Database\ThreadRepository;
 use Fred\Infrastructure\Database\UserRepository;
 use Fred\Infrastructure\View\ViewContext;
 use Fred\Infrastructure\View\ViewRenderer;
+use RuntimeException;
 
 use function strlen;
 
-final readonly class ModerationController
+final readonly class ModerationController extends Controller
 {
     public function __construct(
-        private ViewRenderer $view,
-        private AppConfig $config,
-        private AuthService $auth,
+        ViewRenderer $view,
+        AppConfig $config,
+        AuthService $auth,
+        CommunityContext $communityContext,
         private PermissionService $permissions,
-        private CommunityContext $communityContext,
         private ThreadRepository $threads,
         private PostRepository $posts,
         private BbcodeParser $parser,
@@ -49,7 +52,10 @@ final readonly class ModerationController
         private AttachmentRepository $attachments,
         private UploadService $uploads,
         private MentionService $mentions,
+        private ThreadStateService $threadStateService,
+        private EditPostService $editPostService,
     ) {
+        parent::__construct($view, $config, $auth, $communityContext);
     }
 
     public function lockThread(Request $request): Response
@@ -112,10 +118,10 @@ final readonly class ModerationController
 
     public function editPost(Request $request): Response
     {
-        $ctxRequest = $request->context();
-        $community = $ctxRequest->community;
-        $post = $ctxRequest->post;
-        $thread = $ctxRequest->thread;
+        $context = $request->context();
+        $community = $context->community;
+        $post = $context->post;
+        $thread = $context->thread;
 
         if (!$community instanceof Community || !$post instanceof ForumPost || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::editPost');
@@ -123,7 +129,7 @@ final readonly class ModerationController
 
         if ($request->method === 'GET') {
             if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
-                return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+                return $this->forbidden();
             }
             $structure = $this->structureForCommunity($community);
 
@@ -147,35 +153,22 @@ final readonly class ModerationController
             return Response::view($this->view, 'pages/moderation/edit_post.php', $ctx);
         }
 
-        if (!$this->permissions->canEditAnyPost($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
-        }
-
         $bodyRaw = trim((string) ($request->body['body'] ?? ''));
+        $page = isset($request->body['page']) ? (int) $request->body['page'] : 1;
 
-        if ($bodyRaw === '') {
-            $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] : '';
-
-            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page);
+        try {
+            $this->editPostService->edit($this->auth->currentUser(), $community, $post, $bodyRaw);
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() === 'User cannot edit posts') {
+                return $this->forbidden();
+            }
+            // Body is required or other error - just redirect without error
+            $pageStr = $page > 1 ? '?page=' . $page : '';
+            return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageStr);
         }
 
-        $this->posts->updateBody(
-            id: $post->id,
-            raw: $bodyRaw,
-            parsed: $this->parser->parse($bodyRaw, $community->slug),
-            timestamp: time(),
-        );
-
-        $this->mentions->notifyFromText(
-            communityId: $community->id,
-            postId: $post->id,
-            authorId: $this->auth->currentUser()->id ?? $post->authorId,
-            bodyRaw: $bodyRaw,
-        );
-
-        $page = isset($request->body['page']) ? '?page=' . (int) $request->body['page'] . '#post-' : '?#post-';
-
-        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $page . $post->id);
+        $pageStr = $page > 1 ? '?page=' . $page . '#post-' : '?#post-';
+        return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id . $pageStr . $post->id);
     }
 
     public function moveThread(Request $request): Response
@@ -364,71 +357,62 @@ final readonly class ModerationController
 
     private function toggleLock(Request $request, bool $lock): Response
     {
-        $ctxRequest = $request->context();
-        $community = $ctxRequest->community;
-        $thread = $ctxRequest->thread;
+        $context = $request->context();
+        $community = $context->community;
+        $thread = $context->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleLock');
         }
 
-        if (!$this->permissions->canLockThread($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        try {
+            $this->threadStateService->setLock($this->auth->currentUser(), $community, $thread, $lock);
+        } catch (RuntimeException $e) {
+            return $this->forbidden();
         }
-
-        $this->threads->updateLock($thread->id, $lock);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
     private function toggleSticky(Request $request, bool $sticky): Response
     {
-        $ctxRequest = $request->context();
-        $community = $ctxRequest->community;
-        $thread = $ctxRequest->thread;
+        $context = $request->context();
+        $community = $context->community;
+        $thread = $context->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleSticky');
         }
 
-        if (!$this->permissions->canStickyThread($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        try {
+            $this->threadStateService->setSticky($this->auth->currentUser(), $community, $thread, $sticky);
+        } catch (RuntimeException $e) {
+            return $this->forbidden();
         }
-
-        $this->threads->updateSticky($thread->id, $sticky);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
     private function toggleAnnouncement(Request $request, bool $announcement): Response
     {
-        $ctxRequest = $request->context();
-        $community = $ctxRequest->community;
-        $thread = $ctxRequest->thread;
+        $context = $request->context();
+        $community = $context->community;
+        $thread = $context->thread;
 
         if (!$community instanceof Community || !$thread instanceof Thread) {
             return $this->notFound($request, 'Required attributes missing in ModerationController::toggleAnnouncement');
         }
 
-        if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+        try {
+            $this->threadStateService->setAnnouncement($this->auth->currentUser(), $community, $thread, $announcement);
+        } catch (RuntimeException $e) {
+            return $this->forbidden();
         }
-
-        $this->threads->updateAnnouncement($thread->id, $announcement);
 
         return Response::redirect('/c/' . $community->slug . '/t/' . $thread->id);
     }
 
-    private function notFound(Request $request, ?string $context = null): Response
-    {
-        return Response::notFound(
-            view: $this->view,
-            config: $this->config,
-            auth: $this->auth,
-            request: $request,
-            context: $context,
-        );
-    }
+
 
     private function structureForCommunity(Community $community): array
     {
