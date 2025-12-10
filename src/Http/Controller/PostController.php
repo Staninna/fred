@@ -53,7 +53,7 @@ final readonly class PostController
             return $this->notFound($request, 'Required attributes missing in PostController::store');
         }
 
-        $currentUser = $this->auth->currentUser();
+        $currentUser = $request->attribute('currentUser');
 
         if (!$this->permissions->canReply($currentUser)) {
             return new Response(
