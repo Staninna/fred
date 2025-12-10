@@ -53,9 +53,7 @@ final readonly class ThreadController extends Controller
         private PermissionService $permissions,
         private CategoryRepository $categories,
         private BoardRepository $boards,
-        private ThreadRepository $threads,
         private PostRepository $posts,
-        private BbcodeParser $parser,
         private LinkPreviewer $linkPreviewer,
         private UserRepository $users,
         private ProfileRepository $profiles,
@@ -185,14 +183,14 @@ final readonly class ThreadController extends Controller
         $thread = $ctxRequest->thread;
 
         if (!$community instanceof Community || $thread === null) {
-            return new Response(400, ['Content-Type' => 'application/json'], json_encode(['error' => 'Invalid context']));
+            return new Response(400, ['Content-Type' => 'application/json'], (string) json_encode(['error' => 'Invalid context']));
         }
 
         $postsParam = (string) ($request->query['posts'] ?? '');
         $postIds = array_filter(array_map('intval', array_slice(explode(',', $postsParam), 0, 25)), static fn (int $id) => $id > 0);
 
         if ($postIds === []) {
-            return new Response(400, ['Content-Type' => 'application/json'], json_encode(['error' => 'No posts requested']));
+            return new Response(400, ['Content-Type' => 'application/json'], (string) json_encode(['error' => 'No posts requested']));
         }
 
         $previews = [];
@@ -219,7 +217,7 @@ final readonly class ThreadController extends Controller
         return new Response(
             status: 200,
             headers: ['Content-Type' => 'application/json'],
-            body: json_encode(['previews' => $previews]),
+            body: (string) json_encode(['previews' => $previews]),
         );
     }
 
@@ -297,6 +295,10 @@ final readonly class ThreadController extends Controller
         }
     }
 
+    /**
+     * @param string[] $errors
+     * @param array<string, mixed> $old
+     */
     private function renderCreate(
         Request $request,
         Community $community,
@@ -326,6 +328,7 @@ final readonly class ThreadController extends Controller
 
 
 
+    /** @return array{categories: \Fred\Domain\Community\Category[], boards: Board[], boardsByCategory: array<int, array<int, Board>>} */
     private function structureForCommunity(Community $community): array
     {
         $categories = $this->categories->listByCommunityId($community->id);
@@ -338,17 +341,16 @@ final readonly class ThreadController extends Controller
         ];
     }
 
-    /** @param Board[] $boards @return array<int, Board[]> */
+    /**
+     * @param Board[] $boards
+     * @return array<int, array<int, Board>>
+     */
     private function groupBoards(array $boards): array
     {
         $grouped = [];
 
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
         }
 
         return $grouped;

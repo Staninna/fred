@@ -11,6 +11,7 @@ use function rtrim;
 
 final class ConfigLoader
 {
+    /** @param array<string, mixed> $env */
     public static function fromArray(array $env, string $basePath): AppConfig
     {
         $basePath = rtrim($basePath, '/');

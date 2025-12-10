@@ -11,6 +11,8 @@ use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\MentionService;
 use Fred\Domain\Auth\User;
+use Fred\Domain\Community\Category;
+use Fred\Domain\Community\Community;
 use Fred\Infrastructure\Config\AppConfig;
 use Fred\Infrastructure\Database\BoardRepository;
 use Fred\Infrastructure\Database\CategoryRepository;
@@ -56,6 +58,7 @@ final readonly class DemoSeeder
     /**
      * @throws RandomException
      * @throws Throwable
+     * @return array{community_ids: int[], user_ids: int[], board_ids: int[]}
      */
     public function seed(): array
     {
@@ -113,7 +116,7 @@ final readonly class DemoSeeder
         return $this->posts->pdo();
     }
 
-    private function findCategory(int $communityId, string $name): ?object
+    private function findCategory(int $communityId, string $name): ?Category
     {
         foreach ($this->categories->listByCommunityId($communityId) as $category) {
             if (strcasecmp($category->name, $name) === 0) {
@@ -127,14 +130,15 @@ final readonly class DemoSeeder
     private function slugify(string $value): string
     {
         $slug = strtolower(trim($value));
-        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug) ?? '';
-        $slug = trim($slug, '-');
+        $slug = preg_replace('/[^a-z0-9\-]+/', '-', $slug);
+        $slug = trim((string) $slug, '-');
 
         return $slug !== '' ? $slug : 'board-' . uniqid();
     }
 
     /**
      * @throws RandomException
+     * @return User[]
      */
     private function seedUsers(int $memberRoleId, int $moderatorRoleId, int $adminRoleId, int $timestamp): array
     {
@@ -166,6 +170,9 @@ final readonly class DemoSeeder
         return $users;
     }
 
+    /**
+     * @param User[] $users
+     */
     private function assignModerators(int $communityId, array $users, int $timestamp, int $moderatorRoleId): void
     {
         foreach ($users as $user) {
@@ -175,6 +182,9 @@ final readonly class DemoSeeder
         }
     }
 
+    /**
+     * @return Community[]
+     */
     private function seedCommunities(int $timestamp): array
     {
         $communities = [];
@@ -210,9 +220,11 @@ final readonly class DemoSeeder
     }
 
     /**
+     * @param User[] $users
      * @throws RandomException
+     * @return int[]
      */
-    private function seedCommunityContent(object $community, array $users, int $timestamp): array
+    private function seedCommunityContent(Community $community, array $users, int $timestamp): array
     {
         $boardIds = [];
         $categories = [
@@ -238,6 +250,7 @@ final readonly class DemoSeeder
 
     /**
      * @throws RandomException
+     * @return \Fred\Domain\Community\Board[]
      */
     private function seedBoards(int $communityId, int $categoryId, int $timestamp): array
     {
@@ -280,7 +293,7 @@ final readonly class DemoSeeder
                 communityId: $communityId,
                 categoryId: $categoryId,
                 slug: $slug,
-                name: $this->faker->words(2, true),
+                name: implode(' ', (array) $this->faker->words(2)),
                 description: $this->faker->sentence(8),
                 position: count($boards) + 1,
                 isLocked: false,
@@ -293,6 +306,7 @@ final readonly class DemoSeeder
     }
 
     /**
+     * @param User[] $users
      * @throws RandomException
      */
     private function seedThreadsAndPosts(int $communityId, string $communitySlug, int $boardId, string $boardSlug, array $users, int $timestamp): void
@@ -345,7 +359,7 @@ final readonly class DemoSeeder
                     'threadId' => $threadId,
                     'authorId' => $postAuthor->id,
                     'bodyRaw' => $body,
-                    'bodyParsed' => $this->parser()?->parse($body, $communitySlug),
+                    'bodyParsed' => $this->parser()->parse($body, $communitySlug),
                     'signatureSnapshot' => null,
                     'timestamp' => $timestamp - random_int(0, 20_000),
                 ];
@@ -386,7 +400,7 @@ final readonly class DemoSeeder
             }
 
             // Build reactions with actual post ID
-            $codes = $this->emoticons()?->codes() ?? [];
+            $codes = $this->emoticons()->codes();
 
             if ($codes !== []) {
                 $targetCount = $this->weightedReactionCount();
@@ -424,6 +438,10 @@ final readonly class DemoSeeder
         $this->log('Threads/posts seeded for board ' . $boardSlug . ': +' . $toCreate . ' threads');
     }
 
+    /**
+     * @param User[] $users
+     * @return User[]
+     */
     private function extractMentions(string $body, array $users): array
     {
         $mentioned = [];
@@ -518,7 +536,7 @@ final readonly class DemoSeeder
         if ($boardSlug === 'trading-post') {
             $image = 'https://picsum.photos/seed/' . $this->faker->word() . '/640/360';
 
-            return 'Listing item: [b]' . $this->faker->words(3, true) . "[/b]\n"
+            return 'Listing item: [b]' . implode(' ', (array) $this->faker->words(3)) . "[/b]\n"
                 . 'Condition: [i]' . $this->faker->word() . "[/i]\n"
                 . "Specs:\n- CPU: " . $this->faker->word() . "\n- RAM: " . $this->faker->numberBetween(4, 64) . " GB\n- Notes: " . $this->faker->sentence(6) . "\n"
                 . 'Gallery: [img]' . $image . "[/img]\n"
@@ -537,7 +555,7 @@ final readonly class DemoSeeder
 
         // Variety pool for other boards
         $templates = [
-            fn () => 'Show-and-tell: [b]' . $this->faker->words(2, true) . "[/b]\n"
+            fn () => 'Show-and-tell: [b]' . implode(' ', (array) $this->faker->words(2)) . "[/b]\n"
                 . 'Setup photo: [img]https://picsum.photos/seed/' . $this->faker->word() . "/800/450[/img]\n"
                 . "Parts list:\n[list]\n[*]" . $this->faker->word() . "\n[*]" . $this->faker->word() . "\n[*]" . $this->faker->word() . "\n[/list]\n"
                 . 'Benchmarks: [code]fps=' . $this->faker->numberBetween(30, 240) . '[/code]',
@@ -580,7 +598,7 @@ final readonly class DemoSeeder
         return $pick();
     }
 
-    private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp): ?User
+    private function ensureUser(string $username, string $displayName, string $password, int $roleId, int $timestamp): User
     {
         $user = $this->users->findByUsername($username);
 
@@ -597,31 +615,10 @@ final readonly class DemoSeeder
         return $user;
     }
 
-    private function ensureProfilesPerCommunity(array $users, array $communities, int $timestamp): void
-    {
-        foreach ($users as $user) {
-            foreach ($communities as $community) {
-                $existing = $this->profiles->findByUserAndCommunity($user->id, $community->id);
-
-                if ($existing !== null) {
-                    continue;
-                }
-
-                $this->profiles->create(
-                    userId: $user->id,
-                    communityId: $community->id,
-                    bio: '',
-                    location: '',
-                    website: '',
-                    signatureRaw: '',
-                    signatureParsed: '',
-                    avatarPath: '',
-                    timestamp: $timestamp,
-                );
-            }
-        }
-    }
-
+    /**
+     * @param User[] $users
+     * @param Community[] $communities
+     */
     private function ensureProfilesPerCommunityBatch(array $users, array $communities, int $timestamp): void
     {
         $profiles = [];

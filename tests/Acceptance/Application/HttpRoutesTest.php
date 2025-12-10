@@ -122,7 +122,20 @@ final class HttpRoutesTest extends TestCase
     }
 
     /**
-     * @return array{0: Router, 1: array<string, mixed>}
+     * @return array{
+     *     0: Router,
+     *     1: array{
+     *         view: ViewRenderer,
+     *         auth: AuthService,
+     *         config: AppConfig,
+     *         communityContext: CommunityContext,
+     *         community_slug: string,
+     *         board_slug: string,
+     *         thread_id: int,
+     *         thread_title: string,
+     *         post_body: string
+     *     }
+     * }
      */
     private function buildApp(): array
     {
@@ -154,7 +167,7 @@ final class HttpRoutesTest extends TestCase
             roles: $roleRepository,
             bans: new BanRepository($pdo),
         );
-        $permissionService = new PermissionService(new PermissionRepository($pdo), new CommunityModeratorRepository($pdo));
+        $permissionService = new PermissionService();
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
 
         $router = new Router($this->basePath('public'));
@@ -162,7 +175,7 @@ final class HttpRoutesTest extends TestCase
         $boardContext = new ResolveBoardMiddleware($communityContext, $categoryRepository, $view, $config);
         $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view, $config);
         $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view, $config);
-        $authController = new AuthController($view, $config, $authService);
+        $authController = new AuthController($view, $authService);
         $communityController = new CommunityController(
             $view,
             $config,
@@ -170,21 +183,19 @@ final class HttpRoutesTest extends TestCase
             $communityContext,
             $permissionService,
             $communityRepository,
-            $categoryRepository,
-            $boardRepository,
         );
+        $communityModeratorRepository = new CommunityModeratorRepository($pdo);
         $adminController = new AdminController(
             $view,
             $config,
             $authService,
-            $permissionService, // Corrected: should be PermissionService
-            $communityContext,
+            $permissionService,
             $categoryRepository,
             $boardRepository,
             $communityRepository,
-            new CommunityModeratorRepository($pdo), // Missing
-            $userRepository, // Missing
-            $roleRepository, // Missing
+            $communityModeratorRepository,
+            $userRepository,
+            $roleRepository,
             $reportRepository,
         );
         $boardController = new BoardController(
@@ -193,10 +204,24 @@ final class HttpRoutesTest extends TestCase
             $authService,
             $communityContext,
             $permissionService,
-            $boardRepository,
-            $categoryRepository,
             $threadRepository,
         );
+
+        $banRepository = new BanRepository($pdo);
+        $reactionRepository = new ReactionRepository($pdo);
+        $mentionNotificationRepository = new MentionNotificationRepository($pdo);
+        $emoticons = new EmoticonSet($config);
+        $mentionService = new MentionService($userRepository, $mentionNotificationRepository);
+        $createThreadService = new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService, $pdo);
+        $createReplyService = new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService);
+        $threadStateService = new ThreadStateService($permissionService, $threadRepository);
+        $editPostService = new EditPostService($permissionService, $postRepository, new BbcodeParser(), $mentionService);
+        $deletePostService = new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository));
+        $moveThreadService = new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository);
+        $reportPostService = new \Fred\Application\Content\ReportPostService($reportRepository);
+        $createBanService = new \Fred\Application\Moderation\CreateBanService($userRepository, $banRepository);
+        $deleteBanService = new \Fred\Application\Moderation\DeleteBanService($banRepository);
+
         $threadController = new ThreadController(
             $view,
             $config,
@@ -205,24 +230,22 @@ final class HttpRoutesTest extends TestCase
             $permissionService,
             $categoryRepository,
             $boardRepository,
-            $threadRepository,
             $postRepository,
-            new BbcodeParser(),
             new LinkPreviewer($config),
             $userRepository,
             $profileRepository,
             $attachmentRepository,
-            new ReactionRepository($pdo),
-            new MentionNotificationRepository($pdo),
-            new EmoticonSet($config),
-            new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo)), $pdo),
+            $reactionRepository,
+            $mentionNotificationRepository,
+            $emoticons,
+            $createThreadService,
         );
         $postController = new PostController(
             $view,
             $config,
             $authService,
             $communityContext,
-            new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo))),
+            $createReplyService,
         );
         $moderationController = new ModerationController(
             $view,
@@ -230,24 +253,17 @@ final class HttpRoutesTest extends TestCase
             $authService,
             $communityContext,
             $permissionService,
-            $threadRepository,
-            $postRepository,
-            new BbcodeParser(),
             $userRepository,
-            new BanRepository($pdo),
+            $banRepository,
             $boardRepository,
             $categoryRepository,
-            $reportRepository,
-            $attachmentRepository,
-            $uploadService,
-            new MentionService($userRepository, new MentionNotificationRepository($pdo)),
-            new ThreadStateService($permissionService, $threadRepository),
-            new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, new MentionNotificationRepository($pdo))),
-            new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository)),
-            new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository),
-            new \Fred\Application\Content\ReportPostService($reportRepository),
-            new \Fred\Application\Moderation\CreateBanService($userRepository, new BanRepository($pdo)),
-            new \Fred\Application\Moderation\DeleteBanService(new BanRepository($pdo)),
+            $threadStateService,
+            $editPostService,
+            $deletePostService,
+            $moveThreadService,
+            $reportPostService,
+            $createBanService,
+            $deleteBanService,
         );
 
         $router->get('/', [$communityController, 'index']);
@@ -301,6 +317,15 @@ final class HttpRoutesTest extends TestCase
         ]];
     }
 
+    /**
+     * @return array{
+     *     community_slug: string,
+     *     board_slug: string,
+     *     thread_id: int,
+     *     thread_title: string,
+     *     post_body: string
+     * }
+     */
     private function seedForumData(
         CommunityRepository $communities,
         CategoryRepository $categories,
@@ -360,6 +385,14 @@ final class HttpRoutesTest extends TestCase
         ];
     }
 
+    /**
+     * @param array{
+     *     view: ViewRenderer,
+     *     auth: AuthService,
+     *     config: AppConfig,
+     *     communityContext: CommunityContext
+     * } $context
+     */
     private function dispatch(array $context, Request $request, Router $router): Response
     {
         $view = $context['view'];

@@ -111,7 +111,6 @@ use Fred\Domain\Forum\Post;
                         </form>
                     <?php endif; ?>
                 <?php endif; ?>
-                <?php if ($canModerate): ?>
                     <?php if ($thread->isAnnouncement): ?>
                         <form class="inline-form" method="post" action="/c/<?= $e($community->slug) ?>/t/<?= $thread->id ?>/unannounce">
                             <input type="hidden" name="_token" value="<?= $e($csrfToken ?? '') ?>">
@@ -123,7 +122,6 @@ use Fred\Domain\Forum\Post;
                             <button class="button" type="submit">Mark as announcement</button>
                         </form>
                     <?php endif; ?>
-                <?php endif; ?>
             </td>
         </tr>
     <?php endif; ?>

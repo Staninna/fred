@@ -146,6 +146,7 @@ final readonly class BoardRepository
         $statement->execute(['id' => $id]);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Board
     {
         return new Board(

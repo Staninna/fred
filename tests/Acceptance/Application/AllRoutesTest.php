@@ -123,6 +123,9 @@ final class AllRoutesTest extends TestCase
         $this->assertEmpty($errors, "Server errors detected on the following routes:\n" . implode("\n", $errors));
     }
 
+    /**
+     * @return array<string, array{0: string}>
+     */
     public static function roleProvider(): array
     {
         return [
@@ -168,7 +171,7 @@ final class AllRoutesTest extends TestCase
             roles: $roleRepository,
             bans: $banRepository,
         );
-        $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
+        $permissionService = new PermissionService();
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
 
@@ -179,11 +182,18 @@ final class AllRoutesTest extends TestCase
         $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view, $config);
         $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view, $config);
 
-        $authController = new AuthController($view, $config, $authService);
-        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
+        $authController = new AuthController($view, $authService);
+        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository);
         $reportRepository = new ReportRepository($pdo);
-        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
-        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
+        $adminController = new AdminController($view, $config, $authService, $permissionService, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
+        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $threadRepository);
+
+        $reactionRepository = new ReactionRepository($pdo);
+        $mentionNotificationRepository = new MentionNotificationRepository($pdo);
+        $emoticons = new EmoticonSet($config);
+        $mentionService = new MentionService($userRepository, $mentionNotificationRepository);
+        $createThreadService = new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService, $pdo);
+
         $threadController = new ThreadController(
             $view,
             $config,
@@ -192,20 +202,46 @@ final class AllRoutesTest extends TestCase
             $permissionService,
             $categoryRepository,
             $boardRepository,
-            $threadRepository,
             $postRepository,
-            new BbcodeParser(),
             new LinkPreviewer($config),
             $userRepository,
             $profileRepository,
             $attachmentRepository,
-            new ReactionRepository($pdo),
-            new MentionNotificationRepository($pdo),
-            new EmoticonSet($config),
-            new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo)), $pdo),
+            $reactionRepository,
+            $mentionNotificationRepository,
+            $emoticons,
+            $createThreadService,
         );
-        $postController = new PostController($view, $config, $authService, $communityContext, new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, new MentionNotificationRepository($pdo))));
-        $moderationController = new ModerationController($view, $config, $authService, $communityContext, $permissionService, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new MentionService($userRepository, new MentionNotificationRepository($pdo)), new ThreadStateService($permissionService, $threadRepository), new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, new MentionNotificationRepository($pdo))), new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository)), new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository), new \Fred\Application\Content\ReportPostService($reportRepository), new \Fred\Application\Moderation\CreateBanService($userRepository, $banRepository), new \Fred\Application\Moderation\DeleteBanService($banRepository));
+
+        $createReplyService = new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService);
+        $postController = new PostController($view, $config, $authService, $communityContext, $createReplyService);
+
+        $threadStateService = new ThreadStateService($permissionService, $threadRepository);
+        $editPostService = new EditPostService($permissionService, $postRepository, new BbcodeParser(), $mentionService);
+        $deletePostService = new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository));
+        $moveThreadService = new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository);
+        $reportPostService = new \Fred\Application\Content\ReportPostService($reportRepository);
+        $createBanService = new \Fred\Application\Moderation\CreateBanService($userRepository, $banRepository);
+        $deleteBanService = new \Fred\Application\Moderation\DeleteBanService($banRepository);
+
+        $moderationController = new ModerationController(
+            $view,
+            $config,
+            $authService,
+            $communityContext,
+            $permissionService,
+            $userRepository,
+            $banRepository,
+            $boardRepository,
+            $categoryRepository,
+            $threadStateService,
+            $editPostService,
+            $deletePostService,
+            $moveThreadService,
+            $reportPostService,
+            $createBanService,
+            $deleteBanService
+        );
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
         $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
 
@@ -291,6 +327,21 @@ final class AllRoutesTest extends TestCase
         ]];
     }
 
+    /**
+     * @return array{
+     *     community_slug: string,
+     *     board_slug: string,
+     *     thread_id: int,
+     *     post_id: int,
+     *     member_username: string,
+     *     ban_id: int,
+     *     category_id: int,
+     *     guest_id: null,
+     *     member_id: int,
+     *     moderator_id: int,
+     *     admin_id: int
+     * }
+     */
     private function seedForumData(
         PDO $pdo,
         CommunityRepository $communities,
@@ -360,6 +411,9 @@ final class AllRoutesTest extends TestCase
             timestamp: time()
         );
         $statement = $pdo->query('SELECT * FROM bans ORDER BY id DESC LIMIT 1');
+        if ($statement === false) {
+            throw new \RuntimeException('Failed to fetch ban');
+        }
         $ban = (object) $statement->fetch(PDO::FETCH_ASSOC);
 
         return [

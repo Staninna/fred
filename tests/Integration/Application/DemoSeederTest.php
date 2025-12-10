@@ -67,10 +67,10 @@ final class DemoSeederTest extends TestCase
 
         $userStan = (new UserRepository($pdo))->findByUsername('stan');
         $community = (new CommunityRepository($pdo))->findBySlug('demo');
-        $board = (new BoardRepository($pdo))->findBySlug($community?->id ?? 0, 'general');
+        $this->assertNotNull($community);
+        $board = (new BoardRepository($pdo))->findBySlug($community->id, 'general');
 
         $this->assertNotNull($userStan);
-        $this->assertNotNull($community);
         $this->assertNotNull($board);
         $this->assertSame($first['user_ids'], $second['user_ids']);
         $this->assertSame($first['community_ids'], $second['community_ids']);

@@ -32,7 +32,6 @@ final class RepositoryFlowTest extends TestCase
         $this->assertNotNull($memberRole);
 
         $user = $users->create('alice', 'Alice', 'hash', $memberRole->id, time());
-        $this->assertNotNull($user->id);
 
         $community = $communities->create('main', 'Main', 'Desc', null, time());
         $this->assertSame('main', $community->slug);

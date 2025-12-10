@@ -115,6 +115,7 @@ final readonly class AttachmentRepository
         return $row === false ? null : $this->hydrate($row);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Attachment
     {
         return new Attachment(

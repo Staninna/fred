@@ -194,6 +194,7 @@ final readonly class MentionNotificationRepository
         return $grouped;
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): MentionNotification
     {
         return new MentionNotification(

@@ -40,6 +40,14 @@ final class SearchServiceTest extends TestCase
         $this->search = new SearchService($pdo);
     }
 
+    /**
+     * @return array{
+     *     0: \Fred\Domain\Community\Community,
+     *     1: \Fred\Domain\Community\Board,
+     *     2: \Fred\Domain\Forum\Thread,
+     *     3: \Fred\Domain\Auth\User
+     * }
+     */
     private function seed(): array
     {
         $timestamp = time();
@@ -48,6 +56,7 @@ final class SearchServiceTest extends TestCase
         $board = $this->boards->create($community->id, $category->id, 'general', 'General', 'General board', 1, false, null, $timestamp);
 
         $memberRole = $this->roles->findBySlug('member');
+        $this->assertNotNull($memberRole);
         $user = $this->users->create('alice', 'Alice', password_hash('password', PASSWORD_BCRYPT), $memberRole->id, $timestamp);
 
         $thread = $this->threads->create(

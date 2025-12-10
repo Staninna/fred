@@ -8,7 +8,7 @@ use Psr\Log\AbstractLogger;
 
 final class NullLogger extends AbstractLogger
 {
-    public function log($level, $message, array $context = []): void
+    public function log($level, string|\Stringable $message, array $context = []): void
     {
         // no-op
     }

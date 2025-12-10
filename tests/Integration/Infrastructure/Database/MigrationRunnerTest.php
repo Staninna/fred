@@ -13,7 +13,11 @@ final class MigrationRunnerTest extends TestCase
     {
         $pdo = $this->makeMigratedPdo();
 
-        $count = (int) $pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn();
+        $stmt = $pdo->query('SELECT COUNT(*) FROM migrations');
+        if ($stmt === false) {
+            $this->fail('Query failed');
+        }
+        $count = (int) $stmt->fetchColumn();
         $files = glob($this->basePath('migrations') . '/*.php') ?: [];
 
         $this->assertSame(count($files), $count);
@@ -26,7 +30,11 @@ final class MigrationRunnerTest extends TestCase
         $runner = new MigrationRunner($pdo, $this->basePath('migrations'));
         $runner->run();
 
-        $count = (int) $pdo->query('SELECT COUNT(*) FROM migrations')->fetchColumn();
+        $stmt = $pdo->query('SELECT COUNT(*) FROM migrations');
+        if ($stmt === false) {
+            $this->fail('Query failed');
+        }
+        $count = (int) $stmt->fetchColumn();
         $files = glob($this->basePath('migrations') . '/*.php') ?: [];
 
         $this->assertSame(count($files), $count);

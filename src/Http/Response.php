@@ -15,6 +15,7 @@ use function is_array;
 
 final readonly class Response
 {
+    /** @param array<string, string|string[]> $headers */
     public function __construct(
         public int    $status,
         public array  $headers,
@@ -35,6 +36,7 @@ final readonly class Response
         );
     }
 
+    /** @param array<int, array{title: string, items: array<int, array{label: string, href: string}>}>|null $navSections */
     public static function notFound(
         ?ViewRenderer $view = null,
         ?AppConfig $config = null,
@@ -49,7 +51,7 @@ final readonly class Response
 
             $body = $view->render('errors/404.php', [
                 'pageTitle' => 'Page not found',
-                'path' => $request?->path ?? '',
+                'path' => $request !== null ? $request->path : '',
                 'debugContext' => $debugContext,
             ]);
         }

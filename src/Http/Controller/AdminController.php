@@ -34,7 +34,6 @@ final readonly class AdminController
         private AppConfig $config,
         private AuthService $auth,
         private PermissionService $permissions,
-        private CommunityContext $communityContext,
         private CategoryRepository $categories,
         private BoardRepository $boards,
         private CommunityRepository $communities,
@@ -45,6 +44,7 @@ final readonly class AdminController
     ) {
     }
 
+    /** @param string[] $errors */
     public function structure(Request $request, array $errors = []): Response
     {
         $community = $request->attribute('community');
@@ -81,6 +81,10 @@ final readonly class AdminController
         );
     }
 
+    /**
+     * @param string[] $errors
+     * @param array<string, mixed> $old
+     */
     public function settings(Request $request, array $errors = [], array $old = []): Response
     {
         $community = $request->attribute('community');
@@ -637,6 +641,7 @@ final readonly class AdminController
         return Response::view($this->view, 'pages/community/admin/users.php', $ctx);
     }
 
+    /** @return array{categories: \Fred\Domain\Community\Category[], boardsByCategory: array<int, \Fred\Domain\Community\Board[]>} */
     private function structureForCommunity(Community $community): array
     {
         $categories = $this->categories->listByCommunityId($community->id);
@@ -648,17 +653,16 @@ final readonly class AdminController
         ];
     }
 
-    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /**
+     * @param Board[] $boards
+     * @return array<int, array<int, Board>>
+     */
     private function groupBoards(array $boards): array
     {
         $grouped = [];
 
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
         }
 
         return $grouped;
@@ -683,6 +687,7 @@ final readonly class AdminController
         );
     }
 
+    /** @return array<int, array{title: string, items: array<int, array{label: string, href: string}>}> */
     private function adminNav(Community $community, string $active): array
     {
         $links = [

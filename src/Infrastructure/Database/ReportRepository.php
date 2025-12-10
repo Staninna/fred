@@ -147,6 +147,7 @@ SQL;
         }, $rows);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Report
     {
         return new Report(

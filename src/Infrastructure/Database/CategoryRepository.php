@@ -98,6 +98,7 @@ final readonly class CategoryRepository
         $statement->execute(['id' => $id]);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Category
     {
         return new Category(

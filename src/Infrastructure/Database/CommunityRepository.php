@@ -25,6 +25,10 @@ final readonly class CommunityRepository
              ORDER BY name ASC',
         );
 
+        if ($statement === false) {
+            return [];
+        }
+
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
 
         return array_map([$this, 'hydrate'], $rows ?: []);
@@ -99,6 +103,7 @@ final readonly class CommunityRepository
         $statement->execute(['id' => $id]);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Community
     {
         return new Community(

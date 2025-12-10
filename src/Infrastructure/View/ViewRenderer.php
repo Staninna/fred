@@ -67,6 +67,7 @@ final class ViewRenderer
         );
     }
 
+    /** @param array<string, mixed> $data */
     private function renderFile(string $filePath, array $data, string $viewRoot): string
     {
         $data = array_merge($this->sharedData, $data);

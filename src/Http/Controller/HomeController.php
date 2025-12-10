@@ -15,8 +15,6 @@ final readonly class HomeController
 {
     public function __construct(
         private ViewRenderer $view,
-        private AppConfig $config,
-        private AuthService $auth,
     ) {
     }
 

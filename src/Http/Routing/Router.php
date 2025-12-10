@@ -42,7 +42,7 @@ final class Router
     /** @var array<string, array<string, array{handler: callable, middleware: array<int, callable|string>}>> */
     private array $staticRoutes = [];
 
-    /** @var array<string, array<int, array{regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable|string>}>> */
+    /** @var array<string, array<int, array{path: string, regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable|string>}>> */
     private array $dynamicRoutes = [];
 
     private readonly ?string $publicPath;
@@ -59,7 +59,7 @@ final class Router
     /** @var array<int, callable|string> */
     private array $globalMiddleware = [];
 
-    /** @var null|callable(string):callable */
+    /** @var null|Closure(string):callable */
     private readonly ?Closure $middlewareResolver;
 
     private readonly LoggerInterface $logger;
@@ -162,6 +162,9 @@ final class Router
         );
     }
 
+    /**
+     * @return array{static: array<string, array<string, array{handler: callable, middleware: array<int, callable|string>}>>, dynamic: array<string, array<int, array{path: string, regex: string, paramNames: array<int, string>, handler: callable, middleware: array<int, callable|string>}>>}
+     */
     public function getRoutes(): array
     {
         return [
@@ -256,7 +259,7 @@ final class Router
     }
 
     /**
-     * @return array{handler: callable, request: Request, middleware: array<int, callable>}|null
+     * @return array{handler: callable, request: Request, middleware: array<int, callable|string>}|null
      */
     private function matchDynamic(Request $request): ?array
     {

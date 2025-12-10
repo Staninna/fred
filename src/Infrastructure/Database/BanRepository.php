@@ -57,6 +57,10 @@ final readonly class BanRepository
              ORDER BY b.created_at DESC'
         );
 
+        if ($statement === false) {
+            return [];
+        }
+
         return $statement->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 

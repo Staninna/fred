@@ -19,7 +19,6 @@ final readonly class AuthController
 {
     public function __construct(
         private ViewRenderer $view,
-        private AppConfig    $config,
         private AuthService  $auth,
     ) {
     }
@@ -135,6 +134,10 @@ final readonly class AuthController
         return Response::redirect('/');
     }
 
+    /**
+     * @param string[] $errors
+     * @param array<string, mixed> $old
+     */
     private function renderLogin(Request $request, array $errors, array $old = [], int $status = 200): Response
     {
         $ctx = ViewContext::make()
@@ -145,6 +148,10 @@ final readonly class AuthController
         return Response::view($this->view, 'pages/auth/login.php', $ctx, status: $status);
     }
 
+    /**
+     * @param string[] $errors
+     * @param array<string, mixed> $old
+     */
     private function renderRegister(Request $request, array $errors, array $old = [], int $status = 200): Response
     {
         $ctx = ViewContext::make()

@@ -72,9 +72,14 @@ CREATE TABLE IF NOT EXISTS migrations (
 SQL);
     }
 
+    /** @return array<string, bool> */
     private function loadAppliedMigrations(): array
     {
         $statement = $this->pdo->query('SELECT name FROM ' . self::TABLE);
+
+        if ($statement === false) {
+            return [];
+        }
 
         $applied = [];
 
@@ -85,6 +90,7 @@ SQL);
         return $applied;
     }
 
+    /** @return SplFileInfo[] */
     private function discoverMigrations(): array
     {
         $files = glob($this->directory . '/*.php');

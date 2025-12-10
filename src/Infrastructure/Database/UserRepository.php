@@ -153,6 +153,10 @@ final readonly class UserRepository
     {
         $statement = $this->pdo->query('SELECT username FROM users ORDER BY username ASC');
 
+        if ($statement === false) {
+            return [];
+        }
+
         return $statement->fetchAll(PDO::FETCH_COLUMN) ?: [];
     }
 
@@ -236,6 +240,7 @@ SQL;
         return array_map([$this, 'hydrate'], $rows);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): User
     {
         return new User(

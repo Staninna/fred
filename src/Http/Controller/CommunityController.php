@@ -27,12 +27,14 @@ final readonly class CommunityController extends Controller
         CommunityContext $communityContext,
         private PermissionService $permissions,
         private CommunityRepository $communities,
-        private CategoryRepository $categories,
-        private BoardRepository $boards,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);
     }
 
+    /**
+     * @param string[] $errors
+     * @param array<string, mixed> $old
+     */
     public function index(Request $request, array $errors = [], array $old = []): Response
     {
         $communities = $this->communities->all();

@@ -94,7 +94,10 @@ final readonly class ReactionRepository
         return $value === false ? null : (string) $value;
     }
 
-    /** @param int[] $postIds @return array<int, string> */
+        /**
+     * @param int[] $postIds
+     * @return array<int, string>
+     */
     public function listUserReactions(array $postIds, int $userId): array
     {
         if ($postIds === []) {

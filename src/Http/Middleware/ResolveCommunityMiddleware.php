@@ -46,7 +46,7 @@ final readonly class ResolveCommunityMiddleware
         return $this->view;
     }
 
-    protected function config(): ?AppConfig
+    protected function config(): AppConfig
     {
         return $this->config;
     }

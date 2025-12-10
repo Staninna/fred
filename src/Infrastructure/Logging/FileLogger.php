@@ -14,7 +14,7 @@ final class FileLogger extends AbstractLogger
     {
     }
 
-    public function log($level, $message, array $context = []): void
+    public function log($level, string|\Stringable $message, array $context = []): void
     {
         $line = sprintf(
             "[%s] %s: %s %s\n",

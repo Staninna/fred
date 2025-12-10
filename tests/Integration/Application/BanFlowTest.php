@@ -44,6 +44,7 @@ final class BanFlowTest extends TestCase
         $auth->logout();
         $_SESSION = [];
         $user = $this->users->findByUsername('banme');
+        $this->assertNotNull($user);
         $this->bans->create($user->id, 'violation', null, time());
 
         $this->assertFalse($auth->login('banme', 'secret'));

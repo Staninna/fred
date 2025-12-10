@@ -26,10 +26,6 @@ final readonly class ReactionController extends Controller
         AppConfig $config,
         AuthService $auth,
         CommunityContext $communityContext,
-        private ThreadRepository $threads,
-        private PostRepository $posts,
-        private ReactionRepository $reactions,
-        private EmoticonSet $emoticons,
         private AddReactionService $addReactionService,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);

@@ -11,6 +11,7 @@ final class DotenvLoader
     /**
      * Load key/value pairs from a .env style file.
      * Comments and empty lines are ignored; quoted values are unwrapped.
+     * @return array<string, string>
      */
     public static function load(string $path): array
     {

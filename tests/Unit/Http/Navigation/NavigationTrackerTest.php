@@ -16,6 +16,9 @@ final class NavigationTrackerTest extends TestCase
         return new NavigationTracker($maxEntries);
     }
 
+    /**
+     * @param array<string, string|int> $query
+     */
     private function request(string $path, string $method = 'GET', array $query = []): Request
     {
         return new Request(

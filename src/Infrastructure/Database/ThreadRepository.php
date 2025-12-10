@@ -195,6 +195,7 @@ final readonly class ThreadRepository
         ]);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Thread
     {
         return new Thread(

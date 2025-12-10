@@ -173,7 +173,8 @@ final class ApplicationFlowTest extends TestCase
             ],
         ));
         $this->assertSame(302, $threadResponse->status);
-        $threadLocation = $threadResponse->headers['Location'] ?? '';
+        $loc = $threadResponse->headers['Location'] ?? '';
+        $threadLocation = is_array($loc) ? $loc[0] : $loc;
         $this->assertNotSame('', $threadLocation);
 
         preg_match('~/t/(\\d+)~', $threadLocation, $threadMatches);
@@ -190,7 +191,8 @@ final class ApplicationFlowTest extends TestCase
             body: ['body' => 'Member reply', '_token' => $token],
         ));
         $this->assertSame(302, $reply->status);
-        $replyLocation = $reply->headers['Location'] ?? '';
+        $loc = $reply->headers['Location'] ?? '';
+        $replyLocation = is_array($loc) ? $loc[0] : $loc;
         $this->assertStringContainsString('#post-', $replyLocation);
 
         preg_match('~#post-(\\d+)~', $replyLocation, $postMatches);
@@ -230,7 +232,9 @@ final class ApplicationFlowTest extends TestCase
             body: ['_token' => $token],
         ));
         $this->assertSame(302, $lock->status);
-        $this->assertTrue($repos['threads']->findById($threadId)?->isLocked);
+        $thread = $repos['threads']->findById($threadId);
+        $this->assertNotNull($thread);
+        $this->assertTrue($thread->isLocked);
 
         $unlock = $router->dispatch(new Request(
             method: 'POST',
@@ -239,7 +243,9 @@ final class ApplicationFlowTest extends TestCase
             body: ['_token' => $token],
         ));
         $this->assertSame(302, $unlock->status);
-        $this->assertFalse($repos['threads']->findById($threadId)?->isLocked);
+        $thread = $repos['threads']->findById($threadId);
+        $this->assertNotNull($thread);
+        $this->assertFalse($thread->isLocked);
 
         $move = $router->dispatch(new Request(
             method: 'POST',
@@ -248,7 +254,9 @@ final class ApplicationFlowTest extends TestCase
             body: ['target_board' => $context['second_board']->slug, '_token' => $token],
         ));
         $this->assertSame(302, $move->status);
-        $this->assertSame($context['second_board']->id, $repos['threads']->findById($threadId)?->boardId);
+        $thread = $repos['threads']->findById($threadId);
+        $this->assertNotNull($thread);
+        $this->assertSame($context['second_board']->id, $thread->boardId);
 
         $edit = $router->dispatch(new Request(
             method: 'POST',
@@ -257,7 +265,9 @@ final class ApplicationFlowTest extends TestCase
             body: ['body' => 'Updated by moderator', '_token' => $token],
         ));
         $this->assertSame(302, $edit->status);
-        $this->assertSame('Updated by moderator', $repos['posts']->findById($context['post']->id)?->bodyRaw);
+        $post = $repos['posts']->findById($context['post']->id);
+        $this->assertNotNull($post);
+        $this->assertSame('Updated by moderator', $post->bodyRaw);
 
         $delete = $router->dispatch(new Request(
             method: 'POST',
@@ -344,7 +354,8 @@ final class ApplicationFlowTest extends TestCase
             body: ['body' => $body, '_token' => $token],
         ));
         $this->assertSame(302, $reply->status);
-        $replyLocation = $reply->headers['Location'] ?? '';
+        $loc = $reply->headers['Location'] ?? '';
+        $replyLocation = is_array($loc) ? $loc[0] : $loc;
         $this->assertStringContainsString('#post-', $replyLocation);
         preg_match('~#post-(\d+)~', $replyLocation, $postMatches);
         $postId = (int) ($postMatches[1] ?? 0);
@@ -523,8 +534,33 @@ final class ApplicationFlowTest extends TestCase
      * @return array{
      *     router: Router,
      *     auth: AuthService,
-     *     context: array<string, mixed>,
-     *     repos: array<string, object>
+     *     view: ViewRenderer,
+     *     config: AppConfig,
+     *     context: array{
+     *         community: \Fred\Domain\Community\Community,
+     *         board: \Fred\Domain\Community\Board,
+     *         second_board: \Fred\Domain\Community\Board,
+     *         thread: \Fred\Domain\Forum\Thread,
+     *         post: \Fred\Domain\Forum\Post,
+     *         post_body: string,
+     *         users: array<string, \Fred\Domain\Auth\User>
+     *     },
+     *     csrfToken: string,
+     *     emoticons: EmoticonSet,
+     *     communityContext: CommunityContext,
+     *     repos: array{
+     *         users: UserRepository,
+     *         threads: ThreadRepository,
+     *         posts: PostRepository,
+     *         boards: BoardRepository,
+     *         categories: CategoryRepository,
+     *         communities: CommunityRepository,
+     *         bans: BanRepository,
+     *         communityModerators: CommunityModeratorRepository,
+     *         roles: RoleRepository,
+     *         reactions: ReactionRepository,
+     *         mentions: MentionNotificationRepository
+     *     }
      * }
      */
     private function buildApp(): array
@@ -568,7 +604,7 @@ final class ApplicationFlowTest extends TestCase
             roles: $roleRepository,
             bans: $banRepository,
         );
-        $permissionService = new PermissionService($permissionRepository, $communityModeratorRepository);
+        $permissionService = new PermissionService();
         $communityContext = new CommunityContext($communityRepository, $categoryRepository, $boardRepository);
         $searchService = new SearchService($pdo);
         $csrfGuard = new CsrfGuard();
@@ -589,10 +625,12 @@ final class ApplicationFlowTest extends TestCase
         $threadContext = new ResolveThreadMiddleware($boardRepository, $threadRepository, $categoryRepository, $view, $config);
         $postContext = new ResolvePostMiddleware($postRepository, $threadRepository, $boardRepository, $categoryRepository, $view, $config);
 
-        $authController = new AuthController($view, $config, $authService);
-        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository, $categoryRepository, $boardRepository);
-        $adminController = new AdminController($view, $config, $authService, $permissionService, $communityContext, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
-        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $boardRepository, $categoryRepository, $threadRepository);
+        $authController = new AuthController($view, $authService);
+        $communityController = new CommunityController($view, $config, $authService, $communityContext, $permissionService, $communityRepository);
+        $adminController = new AdminController($view, $config, $authService, $permissionService, $categoryRepository, $boardRepository, $communityRepository, $communityModeratorRepository, $userRepository, $roleRepository, $reportRepository);
+        $boardController = new BoardController($view, $config, $authService, $communityContext, $permissionService, $threadRepository);
+        $createThreadService = new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService, $pdo);
+
         $threadController = new ThreadController(
             $view,
             $config,
@@ -601,9 +639,7 @@ final class ApplicationFlowTest extends TestCase
             $permissionService,
             $categoryRepository,
             $boardRepository,
-            $threadRepository,
             $postRepository,
-            new BbcodeParser(),
             $linkPreviewer,
             $userRepository,
             $profileRepository,
@@ -611,14 +647,41 @@ final class ApplicationFlowTest extends TestCase
             $reactionRepository,
             $mentionNotificationRepository,
             $emoticonSet,
-            new CreateThreadService($permissionService, $threadRepository, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, $mentionNotificationRepository), $pdo),
+            $createThreadService,
         );
-        $postController = new PostController($view, $config, $authService, $communityContext, new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, new MentionService($userRepository, $mentionNotificationRepository)));
-        $moderationController = new ModerationController($view, $config, $authService, $communityContext, $permissionService, $threadRepository, $postRepository, new BbcodeParser(), $userRepository, $banRepository, $boardRepository, $categoryRepository, $reportRepository, $attachmentRepository, $uploadService, new MentionService($userRepository, $mentionNotificationRepository), new ThreadStateService($permissionService, $threadRepository), new EditPostService($permissionService, $postRepository, new BbcodeParser(), new MentionService($userRepository, $mentionNotificationRepository)), new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository)), new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository), new \Fred\Application\Content\ReportPostService($reportRepository), new \Fred\Application\Moderation\CreateBanService($userRepository, $banRepository), new \Fred\Application\Moderation\DeleteBanService($banRepository));
+        $createReplyService = new CreateReplyService($permissionService, $postRepository, new BbcodeParser(), $profileRepository, $uploadService, $attachmentRepository, $mentionService);
+        $postController = new PostController($view, $config, $authService, $communityContext, $createReplyService);
+
+        $threadStateService = new ThreadStateService($permissionService, $threadRepository);
+        $editPostService = new EditPostService($permissionService, $postRepository, new BbcodeParser(), $mentionService);
+        $deletePostService = new \Fred\Application\Content\DeletePostService($permissionService, $postRepository, new \Fred\Application\Content\AttachmentCleanupHelper($attachmentRepository, $uploadService, $postRepository));
+        $moveThreadService = new \Fred\Application\Content\MoveThreadService($permissionService, $threadRepository, $boardRepository);
+        $reportPostService = new \Fred\Application\Content\ReportPostService($reportRepository);
+        $createBanService = new \Fred\Application\Moderation\CreateBanService($userRepository, $banRepository);
+        $deleteBanService = new \Fred\Application\Moderation\DeleteBanService($banRepository);
+
+        $moderationController = new ModerationController(
+            $view,
+            $config,
+            $authService,
+            $communityContext,
+            $permissionService,
+            $userRepository,
+            $banRepository,
+            $boardRepository,
+            $categoryRepository,
+            $threadStateService,
+            $editPostService,
+            $deletePostService,
+            $moveThreadService,
+            $reportPostService,
+            $createBanService,
+            $deleteBanService
+        );
         $profileController = new ProfileController($view, $config, $authService, $userRepository, $profileRepository, new BbcodeParser(), $uploadService);
         $searchController = new SearchController($view, $config, $authService, $permissionService, $communityContext, $searchService, $boardRepository, $categoryRepository, $userRepository);
         $uploadController = new UploadController($config);
-        $reactionController = new ReactionController($view, $config, $authService, $communityContext, $threadRepository, $postRepository, $reactionRepository, $emoticonSet, new \Fred\Application\Content\AddReactionService($reactionRepository, $emoticonSet));
+        $reactionController = new ReactionController($view, $config, $authService, $communityContext, new \Fred\Application\Content\AddReactionService($reactionRepository, $emoticonSet));
         $mentionController = new MentionController($authService, $config, $view, $communityContext, $mentionNotificationRepository, $userRepository, $boardRepository, $categoryRepository);
 
         $authRequired = static function (Request $request, callable $next) use ($authService): Response {
@@ -672,7 +735,7 @@ final class ApplicationFlowTest extends TestCase
             }, [$authRequired]);
 
             $router->get('/b/{board}', [$boardController, 'show'], [$boardContext]);
-            $router->group('/b/{board}', function (Router $router) use ($threadController, $authRequired, $csrfProtect, $boardContext) {
+            $router->group('/b/{board}', function (Router $router) use ($threadController, $authRequired, $csrfProtect) {
                 $router->get('/thread/new', [$threadController, 'create']);
                 $router->post('/thread', [$threadController, 'store'], [$authRequired, $csrfProtect]);
             }, [$authRequired, $boardContext]);
@@ -759,7 +822,15 @@ final class ApplicationFlowTest extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     community: \Fred\Domain\Community\Community,
+     *     board: \Fred\Domain\Community\Board,
+     *     second_board: \Fred\Domain\Community\Board,
+     *     thread: \Fred\Domain\Forum\Thread,
+     *     post: \Fred\Domain\Forum\Post,
+     *     post_body: string,
+     *     users: array<string, \Fred\Domain\Auth\User>
+     * }
      */
     private function seedData(
         CommunityRepository $communityRepository,
@@ -846,6 +917,39 @@ final class ApplicationFlowTest extends TestCase
         ];
     }
 
+    /**
+     * @param array{
+     *     router: Router,
+     *     auth: AuthService,
+     *     view: ViewRenderer,
+     *     config: AppConfig,
+     *     context: array{
+     *         community: \Fred\Domain\Community\Community,
+     *         board: \Fred\Domain\Community\Board,
+     *         second_board: \Fred\Domain\Community\Board,
+     *         thread: \Fred\Domain\Forum\Thread,
+     *         post: \Fred\Domain\Forum\Post,
+     *         post_body: string,
+     *         users: array<string, \Fred\Domain\Auth\User>
+     *     },
+     *     csrfToken: string,
+     *     emoticons: EmoticonSet,
+     *     communityContext: CommunityContext,
+     *     repos: array{
+     *         users: UserRepository,
+     *         threads: ThreadRepository,
+     *         posts: PostRepository,
+     *         boards: BoardRepository,
+     *         categories: CategoryRepository,
+     *         communities: CommunityRepository,
+     *         bans: BanRepository,
+     *         communityModerators: CommunityModeratorRepository,
+     *         roles: RoleRepository,
+     *         reactions: ReactionRepository,
+     *         mentions: MentionNotificationRepository
+     *     }
+     * } $app
+     */
     private function dispatch(array $app, Request $request): Response
     {
         $view = $app['view'];
@@ -865,6 +969,39 @@ final class ApplicationFlowTest extends TestCase
         return $app['router']->dispatch($request);
     }
 
+    /**
+     * @param array{
+     *     router: Router,
+     *     auth: AuthService,
+     *     view: ViewRenderer,
+     *     config: AppConfig,
+     *     context: array{
+     *         community: \Fred\Domain\Community\Community,
+     *         board: \Fred\Domain\Community\Board,
+     *         second_board: \Fred\Domain\Community\Board,
+     *         thread: \Fred\Domain\Forum\Thread,
+     *         post: \Fred\Domain\Forum\Post,
+     *         post_body: string,
+     *         users: array<string, \Fred\Domain\Auth\User>
+     *     },
+     *     csrfToken: string,
+     *     emoticons: EmoticonSet,
+     *     communityContext: CommunityContext,
+     *     repos: array{
+     *         users: UserRepository,
+     *         threads: ThreadRepository,
+     *         posts: PostRepository,
+     *         boards: BoardRepository,
+     *         categories: CategoryRepository,
+     *         communities: CommunityRepository,
+     *         bans: BanRepository,
+     *         communityModerators: CommunityModeratorRepository,
+     *         roles: RoleRepository,
+     *         reactions: ReactionRepository,
+     *         mentions: MentionNotificationRepository
+     *     }
+     * } $app
+     */
     private function dispatchWithRefreshedAuth(array $app, Request $request): Response
     {
         $auth = $app['auth'];
@@ -876,6 +1013,39 @@ final class ApplicationFlowTest extends TestCase
         return $this->dispatch($app, $request);
     }
 
+    /**
+     * @param array{
+     *     router: Router,
+     *     auth: AuthService,
+     *     view: ViewRenderer,
+     *     config: AppConfig,
+     *     context: array{
+     *         community: \Fred\Domain\Community\Community,
+     *         board: \Fred\Domain\Community\Board,
+     *         second_board: \Fred\Domain\Community\Board,
+     *         thread: \Fred\Domain\Forum\Thread,
+     *         post: \Fred\Domain\Forum\Post,
+     *         post_body: string,
+     *         users: array<string, \Fred\Domain\Auth\User>
+     *     },
+     *     csrfToken: string,
+     *     emoticons: EmoticonSet,
+     *     communityContext: CommunityContext,
+     *     repos: array{
+     *         users: UserRepository,
+     *         threads: ThreadRepository,
+     *         posts: PostRepository,
+     *         boards: BoardRepository,
+     *         categories: CategoryRepository,
+     *         communities: CommunityRepository,
+     *         bans: BanRepository,
+     *         communityModerators: CommunityModeratorRepository,
+     *         roles: RoleRepository,
+     *         reactions: ReactionRepository,
+     *         mentions: MentionNotificationRepository
+     *     }
+     * } $app
+     */
     private function loginTestUser(int $userId, array $app): void
     {
         $_SESSION['user_id'] = $userId;

@@ -23,6 +23,7 @@ final class NavigationTracker
     {
     }
 
+    /** @param array<string, mixed> $session */
     public function track(Request $request, array &$session): ?Response
     {
         $method = strtoupper($request->method);
@@ -105,11 +106,13 @@ final class NavigationTracker
         return true;
     }
 
+    /** @return string[] */
     private function sanitizeHistory(mixed $history): array
     {
         return is_array($history) ? $history : [];
     }
 
+    /** @param string[] $history */
     private function sanitizeIndex(mixed $index, array $history): int
     {
         if (!is_int($index)) {

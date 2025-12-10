@@ -11,6 +11,15 @@ use function trim;
 
 final readonly class Request
 {
+    /**
+     * @param array<string, mixed> $query
+     * @param array<string, mixed> $body
+     * @param array<string, mixed> $files
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $headers
+     * @param array<string, mixed> $session
+     * @param array<string, mixed> $attributes
+     */
     public function __construct(
         public string $method,
         public string $path,
@@ -52,16 +61,12 @@ final readonly class Request
 
         $session = $_SESSION ?? [];
 
-        if (!is_array($session)) {
-            $session = [];
-        }
-
         return new self(
             method: trim($method),
             path: $path,
-            query: $_GET ?? [],
-            body: $_POST ?? [],
-            files: $_FILES ?? [],
+            query: $_GET,
+            body: $_POST,
+            files: $_FILES,
             params: [],
             headers: $normalizedHeaders,
             session: $session,
@@ -70,6 +75,7 @@ final readonly class Request
         );
     }
 
+    /** @param array<string, mixed> $params */
     public function withParams(array $params): self
     {
         return new self(

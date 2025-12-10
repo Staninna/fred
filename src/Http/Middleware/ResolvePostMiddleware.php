@@ -83,7 +83,7 @@ final readonly class ResolvePostMiddleware
         return $this->view;
     }
 
-    protected function config(): ?AppConfig
+    protected function config(): AppConfig
     {
         return $this->config;
     }

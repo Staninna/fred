@@ -181,6 +181,7 @@ final readonly class PostRepository
         return $lastId;
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Post
     {
         return new Post(

@@ -46,17 +46,10 @@ final readonly class ModerationController extends Controller
         AuthService $auth,
         CommunityContext $communityContext,
         private PermissionService $permissions,
-        private ThreadRepository $threads,
-        private PostRepository $posts,
-        private BbcodeParser $parser,
         private UserRepository $users,
         private BanRepository $bans,
         private BoardRepository $boards,
         private CategoryRepository $categories,
-        private ReportRepository $reports,
-        private AttachmentRepository $attachments,
-        private UploadService $uploads,
-        private MentionService $mentions,
         private ThreadStateService $threadStateService,
         private EditPostService $editPostService,
         private DeletePostService $deletePostService,
@@ -389,6 +382,7 @@ final readonly class ModerationController extends Controller
 
 
 
+    /** @return array{categories: \Fred\Domain\Community\Category[], boardsByCategory: array<int, array<int, Board>>} */
     private function structureForCommunity(Community $community): array
     {
         $categories = $this->categories->listByCommunityId($community->id);
@@ -400,17 +394,16 @@ final readonly class ModerationController extends Controller
         ];
     }
 
-    /** @param Board[] $boards @return array<int, \Fred\Domain\Community\Board[]> */
+    /**
+     * @param Board[] $boards
+     * @return array<int, array<int, Board>>
+     */
     private function groupBoards(array $boards): array
     {
         $grouped = [];
 
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
         }
 
         return $grouped;

@@ -102,6 +102,7 @@ final class CommunityContext
      * @param Community[]|null $communities
      * @param Category[] $categories
      * @param array<int, Board[]> $boardsByCategory
+     * @return array<int, array{title: string, items: array<int, array{label: string, href: string}>}>
      */
     public function navSections(?Community $current, array $categories, array $boardsByCategory, ?array $communities = null): array
     {
@@ -117,7 +118,7 @@ final class CommunityContext
         }
 
         $boardLinks = [];
-        $communitySlug = $current?->slug ?? '';
+        $communitySlug = $current !== null ? $current->slug : '';
 
         if ($communitySlug !== '') {
             $boardLinks[] = [
@@ -139,7 +140,7 @@ final class CommunityContext
             foreach ($boardsByCategory[$category->id] ?? [] as $board) {
                 $boardLinks[] = [
                     'label' => '↳ ' . $board->name,
-                    'href' => '/c/' . ($current?->slug ?? '') . '/b/' . $board->slug,
+                    'href' => '/c/' . ($current !== null ? $current->slug : '') . '/b/' . $board->slug,
                 ];
             }
         }
@@ -156,6 +157,9 @@ final class CommunityContext
         ];
     }
 
+    /**
+     * @return array<int, array{title: string, items: array<int, array{label: string, href: string}>}>
+     */
     public function navForCommunity(?Community $community = null): array
     {
         if ($community === null) {
@@ -185,17 +189,16 @@ final class CommunityContext
         return trim((string) $slug, '-');
     }
 
-    /** @param Board[] $boards @return array<int, Board[]> */
+    /**
+     * @param Board[] $boards
+     * @return array<int, Board[]>
+     */
     private function groupBoards(array $boards): array
     {
         $grouped = [];
 
         foreach ($boards as $board) {
             $grouped[$board->categoryId][] = $board;
-        }
-
-        foreach ($grouped as $categoryId => $items) {
-            $grouped[$categoryId] = array_values($items);
         }
 
         return $grouped;

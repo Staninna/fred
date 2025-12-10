@@ -218,6 +218,7 @@ final readonly class ProfileRepository
         ]);
     }
 
+    /** @param array<string, mixed> $row */
     private function hydrate(array $row): Profile
     {
         return new Profile(

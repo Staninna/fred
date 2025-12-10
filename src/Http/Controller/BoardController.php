@@ -27,8 +27,6 @@ final readonly class BoardController extends Controller
         AuthService $auth,
         CommunityContext $communityContext,
         private PermissionService $permissions,
-        private BoardRepository $boards,
-        private CategoryRepository $categories,
         private ThreadRepository $threads,
     ) {
         parent::__construct($view, $config, $auth, $communityContext);
@@ -43,6 +41,10 @@ final readonly class BoardController extends Controller
         $board = $ctxRequest->board;
         /** @var Category|null $category */
         $category = $ctxRequest->category;
+
+        if (!$community instanceof Community || !$board instanceof Board || !$category instanceof Category) {
+            return $this->notFound($request, 'Required attributes missing in BoardController::show');
+        }
 
         $page = (int) ($request->query['page'] ?? 1);
         $page = max($page, 1);

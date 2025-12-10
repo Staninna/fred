@@ -57,7 +57,7 @@ final readonly class SqliteSessionHandler implements SessionHandlerInterface
         return $statement->execute(['id' => $id]);
     }
 
-    public function gc($max_lifetime): int|false
+    public function gc($max_lifetime): int
     {
         $statement = $this->pdo->prepare('DELETE FROM sessions WHERE last_activity < :threshold');
         $statement->execute([

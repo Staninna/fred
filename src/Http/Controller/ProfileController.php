@@ -275,6 +275,12 @@ final readonly class ProfileController
         return ['community' => $community, 'currentUser' => $currentUser];
     }
 
+    /**
+     * @param string[] $profileErrors
+     * @param string[] $signatureErrors
+     * @param string[] $avatarErrors
+     * @param array<string, mixed> $oldProfile
+     */
     private function renderProfilePage(
         Request $request,
         Community $community,

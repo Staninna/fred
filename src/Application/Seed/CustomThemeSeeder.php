@@ -80,7 +80,7 @@ CSS,
                 description: 'Uses custom CSS snippet #' . ($i + 1),
                 position: $i + 1,
                 isLocked: false,
-                customCss: $boardCssSnippets[$i] ?? null,
+                customCss: $boardCssSnippets[$i],
                 timestamp: $timestamp,
             );
         }
