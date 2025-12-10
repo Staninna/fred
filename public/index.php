@@ -139,10 +139,12 @@ $router->group('/c/{community}', function (Router $router) use (
     $postContext,
     $permissions
 ) {
+    // Community & users
     $router->get('/', [$communityController, 'show']);
     $router->get('/about', [$communityController, 'about']);
     $router->get('/u/{username}', [$profileController, 'show']);
 
+    // User settings
     $router->group('/settings', function (Router $router) use ($profileController) {
         $router->get('/profile', [$profileController, 'editProfile']);
         $router->post('/profile', [$profileController, 'updateProfile']);
@@ -152,37 +154,77 @@ $router->group('/c/{community}', function (Router $router) use (
         $router->post('/avatar', [$profileController, 'updateAvatar']);
     }, [$authRequired]);
 
-    $router->get('/b/{board}', [$boardController, 'show'], [$boardContext]);
-    $router->group('/b/{board}', function (Router $router) use ($threadController) {
-        $router->get('/thread/new', [$threadController, 'create']);
-        $router->post('/thread', [$threadController, 'store']);
-    }, [$authRequired, $boardContext]);
+    // Boards & thread creation
+    $router->group('/b/{board}', function (Router $router) use (
+        $boardController,
+        $threadController,
+        $authRequired,
+        $boardContext
+    ) {
+        $router->get('/', [$boardController, 'show'], [$boardContext]);
 
-    $router->get('/t/{thread}', [$threadController, 'show'], [$threadContext]);
-    $router->get('/t/{thread}/previews', [$threadController, 'previews'], [$threadContext]);
-    $router->post('/t/{thread}/reply', [$postController, 'store'], [$authRequired, $threadContext, $permissions->check('canReply')]);
-    $router->post('/t/{thread}/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
-    $router->post('/t/{thread}/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
-    $router->post('/t/{thread}/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-    $router->post('/t/{thread}/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-    $router->post('/t/{thread}/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]); // Assuming announce uses sticky permission or similar?
-    $router->post('/t/{thread}/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
-    $router->post('/t/{thread}/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext, $permissions->check('canMoveThread')]);
-    $router->get('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
-    $router->post('/p/{post}/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext, $permissions->check('canDeleteAnyPost')]);
-    $router->post('/p/{post}/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
-    $router->post('/p/{post}/report', [$moderationController, 'reportPost'], [$authRequired, $postContext]);
-    $router->post('/p/{post}/react', [$reactionController, 'add'], [$authRequired, $postContext]);
-    $router->get('/mentions', [$mentionController, 'inbox'], [$authRequired]);
-    $router->post('/mentions/read', [$mentionController, 'markRead'], [$authRequired]);
-    $router->post('/mentions/{mention}/read', [$mentionController, 'markOneRead'], [$authRequired]);
-    $router->get('/mentions/suggest', [$mentionController, 'suggest'], [$authRequired]);
+        $router->group('', function (Router $router) use ($threadController) {
+            $router->get('/thread/new', [$threadController, 'create']);
+            $router->post('/thread', [$threadController, 'store']);
+        }, [$authRequired, $boardContext]);
+    });
 
-    $router->get('/admin/bans', [$moderationController, 'listBans'], [$authRequired, $permissions->check('canBan')]);
-    $router->post('/admin/bans', [$moderationController, 'createBan'], [$authRequired, $permissions->check('canBan')]);
-    $router->post('/admin/bans/{ban}/delete', [$moderationController, 'deleteBan'], [$authRequired, $permissions->check('canBan')]);
+    // Threads
+    $router->group('/t/{thread}', function (Router $router) use (
+        $threadController,
+        $postController,
+        $moderationController,
+        $authRequired,
+        $threadContext,
+        $permissions
+    ) {
+        $router->get('/', [$threadController, 'show'], [$threadContext]);
+        $router->get('/previews', [$threadController, 'previews'], [$threadContext]);
+
+        $router->post('/reply', [$postController, 'store'], [$authRequired, $threadContext, $permissions->check('canReply')]);
+        $router->post('/lock', [$moderationController, 'lockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
+        $router->post('/unlock', [$moderationController, 'unlockThread'], [$authRequired, $threadContext, $permissions->check('canLockThread')]);
+        $router->post('/sticky', [$moderationController, 'stickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+        $router->post('/unsticky', [$moderationController, 'unstickyThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+        $router->post('/announce', [$moderationController, 'announceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+        $router->post('/unannounce', [$moderationController, 'unannounceThread'], [$authRequired, $threadContext, $permissions->check('canStickyThread')]);
+        $router->post('/move', [$moderationController, 'moveThread'], [$authRequired, $threadContext, $permissions->check('canMoveThread')]);
+    });
+
+    // Posts
+    $router->group('/p/{post}', function (Router $router) use (
+        $moderationController,
+        $reactionController,
+        $authRequired,
+        $postContext,
+        $permissions
+    ) {
+        $router->get('/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
+        $router->post('/delete', [$moderationController, 'deletePost'], [$authRequired, $postContext, $permissions->check('canDeleteAnyPost')]);
+        $router->post('/edit', [$moderationController, 'editPost'], [$authRequired, $postContext, $permissions->check('canEditAnyPost')]);
+        $router->post('/report', [$moderationController, 'reportPost'], [$authRequired, $postContext]);
+        $router->post('/react', [$reactionController, 'add'], [$authRequired, $postContext]);
+    });
+
+    // Mentions
+    $router->group('/mentions', function (Router $router) use ($mentionController) {
+        $router->get('/', [$mentionController, 'inbox']);
+        $router->post('/read', [$mentionController, 'markRead']);
+        $router->post('/{mention}/read', [$mentionController, 'markOneRead']);
+        $router->get('/suggest', [$mentionController, 'suggest']);
+    }, [$authRequired]);
+
+    // Search
     $router->get('/search', [$searchController, 'search']);
 
+    // Admin bans
+    $router->group('/admin/bans', function (Router $router) use ($moderationController) {
+        $router->get('/', [$moderationController, 'listBans']);
+        $router->post('/', [$moderationController, 'createBan']);
+        $router->post('/{ban}/delete', [$moderationController, 'deleteBan']);
+    }, [$authRequired, $permissions->check('canBan')]);
+
+    // Admin
     $router->group('/admin', function (Router $router) use ($adminController) {
         $router->get('/structure', [$adminController, 'structure']);
         $router->post('/custom-css', [$adminController, 'updateCommunityCss']);
