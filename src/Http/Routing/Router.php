@@ -192,7 +192,6 @@ final class Router
                 $routes[] = [
                     'method' => $method,
                     'path' => $path,
-                    'handler' => $this->stringifyHandler($route['handler']),
                     'middlewareInfo' => $middlewareInfo,
                 ];
             }
@@ -202,47 +201,19 @@ final class Router
                 $routes[] = [
                     'method' => $method,
                     'path' => $route['path'],
-                    'handler' => $this->stringifyHandler($route['handler']),
                     'middlewareInfo' => $middlewareInfo,
                 ];
             }
         }
 
-        // Calculate max widths
-        $methodWidth = 6;
-        $pathWidth = 4;
-        $handlerWidth = 7;
-        foreach ($routes as $r) {
-            $methodWidth = max($methodWidth, strlen($r['method']));
-            $pathWidth = max($pathWidth, strlen($r['path']) + strlen($r['middlewareInfo']));
-            $handlerWidth = max($handlerWidth, strlen($r['handler']));
-        }
-
-        // ANSI color codes
-        $colorMethod = "\033[1;34m"; // bold blue
-        $colorHandler = "\033[0;32m"; // green
-        $colorReset = "\033[0m";
-
+        $lines[] = 'Registered Routes:';
         $lines[] = '';
-        $lines[] = '┌' . str_repeat('─', $methodWidth+2) . '┬' . str_repeat('─', $pathWidth+2) . '┬' . str_repeat('─', $handlerWidth+2) . '┐';
-        $lines[] = sprintf(
-            "│ %s%-{$methodWidth}s%s │ %-{$pathWidth}s │ %s%-{$handlerWidth}s%s │",
-            $colorMethod, 'METHOD', $colorReset,
-            'PATH',
-            $colorHandler, 'HANDLER', $colorReset
-        );
-        $lines[] = '├' . str_repeat('─', $methodWidth+2) . '┼' . str_repeat('─', $pathWidth+2) . '┼' . str_repeat('─', $handlerWidth+2) . '┤';
 
         foreach ($routes as $r) {
             $pathDisplay = $r['path'] . $r['middlewareInfo'];
-            $lines[] = sprintf(
-                "│ %s%-{$methodWidth}s%s │ %-{$pathWidth}s │ %s%-{$handlerWidth}s%s │",
-                $colorMethod, $r['method'], $colorReset,
-                $pathDisplay,
-                $colorHandler, $r['handler'], $colorReset
-            );
+            $lines[] = sprintf('%-6s %s', $r['method'], $pathDisplay);
         }
-        $lines[] = '└' . str_repeat('─', $methodWidth+2) . '┴' . str_repeat('─', $pathWidth+2) . '┴' . str_repeat('─', $handlerWidth+2) . '┘';
+
         $lines[] = '';
         $lines[] = sprintf('Total: %d static, %d dynamic routes',
             count($this->staticRoutes['GET'] ?? []) + count($this->staticRoutes['POST'] ?? []),
@@ -250,31 +221,6 @@ final class Router
         );
 
         return implode("\n", $lines);
-    }
-
-    /**
-     * Convert a handler to a string for display.
-     */
-    private function stringifyHandler($handler): string
-    {
-        if (is_array($handler)) {
-            if (is_object($handler[0])) {
-                $class = get_class($handler[0]);
-            } else {
-                $class = (string) $handler[0];
-            }
-            return $class . '::' . $handler[1];
-        }
-        if (is_string($handler)) {
-            return $handler;
-        }
-        if ($handler instanceof \Closure) {
-            return 'Closure';
-        }
-        if (is_object($handler)) {
-            return get_class($handler);
-        }
-        return 'Unknown';
     }
 
     /**
