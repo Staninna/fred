@@ -3,8 +3,8 @@
 /** @var Community $community */
 /** @var array<int, string> $errors */
 /** @var CurrentUser|null $currentUser */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var string|null $success */
 
 use Fred\Application\Auth\CurrentUser;

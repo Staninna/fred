@@ -1,6 +1,6 @@
 <?php
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var string $action */
 /** @var string $submitLabel */
 /** @var string $textareaId */

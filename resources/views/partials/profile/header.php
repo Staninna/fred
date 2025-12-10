@@ -2,8 +2,8 @@
 /** @var User $user */
 /** @var Profile|null $profile */
 /** @var Community $community */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Auth\User;

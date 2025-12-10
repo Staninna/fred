@@ -3,8 +3,8 @@
 /** @var array<int, Category> $categories */
 /** @var CurrentUser $currentUser*/
 /** @var array<int, array<int, Board>> $boardsByCategory */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var bool $canModerate */
 
 use Fred\Application\Auth\CurrentUser;

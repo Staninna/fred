@@ -1,6 +1,6 @@
 <?php
 /** @var string $targetId */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 ?>
 
 <div class="bbcode-toolbar" x-data="bbcodeToolbar('<?= $e($targetId) ?>')">

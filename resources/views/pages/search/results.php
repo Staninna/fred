@@ -4,8 +4,8 @@
 /** @var array<int, array<string, mixed>> $threads */
 /** @var array<int, array<string, mixed>> $posts */
 /** @var array<int, string> $errors */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 /** @var string $query */
 /** @var Board|null $boardFilter */
 /** @var User|null $userFilter */

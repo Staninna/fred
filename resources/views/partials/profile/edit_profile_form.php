@@ -3,7 +3,7 @@
 /** @var Profile|null $profile */
 /** @var array<int, string> $profileErrors */
 /** @var array<string, string> $oldProfile */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 /** @var string|null $success */
 
 use Fred\Domain\Auth\Profile;

@@ -6,8 +6,8 @@
 /** @var int $totalCount */
 /** @var array{page:int,totalPages:int} $pagination */
 /** @var int $postsPerPage */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Community\Community;

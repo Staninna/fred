@@ -1,6 +1,6 @@
 <?php
 /** @var Profile|null $profile */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 
 use Fred\Domain\Auth\Profile;
 

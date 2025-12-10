@@ -1,4 +1,4 @@
-<?php /** @var callable(string, ?int=): string $e */ ?>
+<?php  /** @var callable $e */ ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>
         <th>Security check failed</th>

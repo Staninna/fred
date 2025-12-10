@@ -2,7 +2,7 @@
 /** @var Community $community */
 /** @var array<int, Category> $categories */
 /** @var array<int, array<int, Board>> $boardsByCategory */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;

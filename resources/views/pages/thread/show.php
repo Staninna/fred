@@ -5,7 +5,7 @@
 /** @var \Fred\Domain\Forum\Thread $thread */
 /** @var array<int, Post> $posts */
 /** @var CurrentUser|null $currentUser */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $renderPartial */
 /** @var bool $canModerate */
 /** @var bool $canLockThread */
 /** @var bool $canStickyThread */

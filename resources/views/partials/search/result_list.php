@@ -3,7 +3,7 @@
 /** @var string $emptyMessage */
 /** @var string $type */
 /** @var Community $community */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 
 use Fred\Domain\Community\Community;
 

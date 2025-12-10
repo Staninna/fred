@@ -4,8 +4,8 @@
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var CurrentUser|null $currentUser */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 /** @var string|null $success */
 
 use Fred\Application\Auth\CurrentUser;

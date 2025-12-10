@@ -4,8 +4,8 @@
 /** @var Category $category */
 /** @var array<int, \Fred\Domain\Forum\Thread> $threads */
 /** @var CurrentUser|null $currentUser */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var bool $canModerate */
 /** @var bool $canCreateThread */
 

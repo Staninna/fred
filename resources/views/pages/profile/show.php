@@ -3,8 +3,8 @@
 /** @var Profile|null $profile */
 /** @var Community $community */
 /** @var CurrentUser|null $currentUser */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 /** @var array<int, string> $profileErrors */
 /** @var array<int, string> $signatureErrors */
 /** @var array<int, string> $avatarErrors */

@@ -2,8 +2,8 @@
 /** @var Community $community */
 /** @var Profile|null $profile */
 /** @var array<int, string> $avatarErrors */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var string|null $success */
 
 use Fred\Domain\Auth\Profile;

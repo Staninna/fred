@@ -1,6 +1,6 @@
 <?php
 /** @var array<int, Post> $posts */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 /** @var bool $canEditAnyPost */
 /** @var bool $canDeleteAnyPost */
 /** @var string $communitySlug */
@@ -18,7 +18,7 @@
 /** @var array<int, array<string, array{names: string[], extra: int}>> $reactionUsersByPost */
 /** @var array<int, array<int, array{url:string, title:string, description:?string, image:?string, host:string}>> $linkPreviewsByPost */
 /** @var array<int, string[]> $linkPreviewUrlsByPost */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $renderPartial */
 
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Forum\Attachment;

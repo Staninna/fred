@@ -3,8 +3,8 @@
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
 /** @var bool $saved */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 
 use Fred\Domain\Community\Community;
 

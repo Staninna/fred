@@ -3,8 +3,8 @@
 /** @var array<int, User> $users */
 /** @var string $query */
 /** @var string $role */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 
 use Fred\Domain\Auth\User;
 use Fred\Domain\Community\Community;

@@ -2,8 +2,8 @@
 /** @var array<int, array{ id:int, user_id:int, username:string, reason:string, expires_at:int|null, created_at:int }> $bans */
 /** @var array<int, string> $errors */
 /** @var array<string, string> $old */
-/** @var callable(string, ?int=): string $e */
-/** @var callable(string, array): string $renderPartial */
+/** @var callable $e */
+/** @var callable $renderPartial */
 /** @var array<int, string> $usernames */
 /** @var string|null $success */
 

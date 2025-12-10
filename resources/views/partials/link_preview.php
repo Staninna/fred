@@ -1,6 +1,6 @@
 <?php
 /** @var array<int, array{url:string, title:string, description:?string, image:?string, host:string}> $previews */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 
 if ($previews === []) {
     return '';

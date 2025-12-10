@@ -2,8 +2,8 @@
 /** @var Community $community */
 /** @var Profile|null $profile */
 /** @var array<int, string> $signatureErrors */
-/** @var callable(string, array): string $renderPartial */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $renderPartial */
+/** @var callable $e */
 /** @var string|null $success */
 
 use Fred\Domain\Auth\Profile;

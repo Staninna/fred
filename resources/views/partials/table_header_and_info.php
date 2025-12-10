@@ -1,7 +1,7 @@
 <?php
 /** @var string $title */
 /** @var int|null $colspan */
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>

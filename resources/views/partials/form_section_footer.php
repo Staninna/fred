@@ -1,5 +1,5 @@
 <?php
-/** @var callable(string, ?int=): string $e */
+/** @var callable $e */
 /** @var string $submitLabel */
 /** @var string|null $backUrl */
 /** @var bool $showBack */
