@@ -214,7 +214,7 @@ final class ApplicationFlowTest extends TestCase
         session_start();
         $app = $this->buildApp();
 
-        $_SESSION['user_id'] = $app['context']['users']['moderator']->id;
+        $this->loginTestUser($app['context']['users']['moderator']->id, $app);
         $router = $app['router'];
         $context = $app['context'];
         $repos = $app['repos'];
@@ -413,7 +413,7 @@ final class ApplicationFlowTest extends TestCase
         session_start();
         $app = $this->buildApp();
 
-        $_SESSION['user_id'] = $app['context']['users']['admin']->id;
+        $this->loginTestUser($app['context']['users']['admin']->id, $app);
         $router = $app['router'];
         $repos = $app['repos'];
         $memberUser = $app['context']['users']['member'];
@@ -874,5 +874,11 @@ final class ApplicationFlowTest extends TestCase
         $cachedProperty->setValue($auth, null);
 
         return $this->dispatch($app, $request);
+    }
+
+    private function loginTestUser(int $userId, array $app): void
+    {
+        $_SESSION['user_id'] = $userId;
+        $app['auth']->flushPermissionCache($userId);
     }
 }

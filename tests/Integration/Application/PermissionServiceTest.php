@@ -36,8 +36,15 @@ final class PermissionServiceTest extends TestCase
         $this->permissions->ensureDefaultPermissions();
     }
 
-    private function user(string $roleSlug, ?int $id = 1): CurrentUser
+    private function user(string $roleSlug, ?int $id = 1, ?int $communityId = null): CurrentUser
     {
+        $permissions = $this->roles->getPermissionsForRole($roleSlug);
+        $moderatedCommunities = [];
+
+        if ($roleSlug === 'moderator' && $communityId !== null && $id !== null) {
+            $moderatedCommunities = [$communityId];
+        }
+
         return new CurrentUser(
             id: $id,
             username: $roleSlug,
@@ -45,12 +52,14 @@ final class PermissionServiceTest extends TestCase
             role: $roleSlug,
             roleName: ucfirst($roleSlug),
             authenticated: true,
+            permissions: $permissions,
+            moderatedCommunities: $moderatedCommunities,
         );
     }
 
     public function testAdminHasGlobalModeration(): void
     {
-        $service = new PermissionService($this->permissions, $this->communityModerators);
+        $service = new PermissionService();
         $admin = $this->user('admin');
 
         $this->assertTrue($service->canModerate($admin, 1));
@@ -60,7 +69,7 @@ final class PermissionServiceTest extends TestCase
 
     public function testModeratorNeedsAssignmentPerCommunity(): void
     {
-        $service = new PermissionService($this->permissions, $this->communityModerators);
+        $service = new PermissionService();
         $community = $this->communities->create('demo', 'Demo', 'Demo community', null, time());
         $moderatorUser = $this->createUserWithRole('moderator');
         $moderator = $this->user('moderator', $moderatorUser->id);
@@ -68,14 +77,15 @@ final class PermissionServiceTest extends TestCase
         $this->assertFalse($service->canModerate($moderator, $community->id));
 
         $this->communityModerators->assign($community->id, $moderatorUser->id, time());
-        $this->assertTrue($service->canModerate($moderator, $community->id));
-        $this->assertTrue($service->canLockThread($moderator, $community->id));
-        $this->assertFalse($service->canModerate($moderator, $community->id + 1));
+        $moderatorWithCommunity = $this->user('moderator', $moderatorUser->id, $community->id);
+        $this->assertTrue($service->canModerate($moderatorWithCommunity, $community->id));
+        $this->assertTrue($service->canLockThread($moderatorWithCommunity, $community->id));
+        $this->assertFalse($service->canModerate($moderatorWithCommunity, $community->id + 1));
     }
 
     public function testMemberCannotModerate(): void
     {
-        $service = new PermissionService($this->permissions, $this->communityModerators);
+        $service = new PermissionService();
         $member = $this->user('member');
 
         $this->assertFalse($service->canModerate($member, 1));
