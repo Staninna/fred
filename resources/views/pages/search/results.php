@@ -16,18 +16,15 @@
 use Fred\Domain\Auth\User;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'search-form';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageTargets = ViewHelper::collectMessageTargets(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
+$messageAria = ViewHelper::buildAriaDescribedBy($messageTargets);
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -58,7 +55,7 @@ echo $renderPartial('partials/select.php', [
     'placeholder' => 'All boards',
     'options' => $boardOptions,
     'selected' => $boardFilter ? $boardFilter->slug : '',
-    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+    'ariaDescribedBy' => implode(' ', $messageTargets),
 ]);
 ?>
                         </td>
@@ -74,7 +71,7 @@ echo $renderPartial('partials/select.php', [
     'placeholder' => 'All users',
     'options' => $userOptions,
     'selected' => $userFilter ? $userFilter->username : '',
-    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+    'ariaDescribedBy' => implode(' ', $messageTargets),
 ]);
 ?>
                         </td>

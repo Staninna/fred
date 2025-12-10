@@ -11,11 +11,14 @@
 /** @var int|null $page */
 /** @var string|null $messagesDescribedBy */
 /** @var string|null $mentionEndpoint */
+
+use Fred\Infrastructure\View\ViewHelper;
+
 ?>
 
 <?php
-$messagesDescribedBy = trim($messagesDescribedBy ?? '');
-$messageAria = $messagesDescribedBy === '' ? '' : ' aria-describedby="' . $e($messagesDescribedBy) . '"';
+$messageDescriberIds = preg_split('/\s+/', trim($messagesDescribedBy ?? ''), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+$messageAria = ViewHelper::buildAriaDescribedBy($messageDescriberIds);
 ?>
 
 <form method="post" action="<?= $e($action) ?>" enctype="multipart/form-data" novalidate>

@@ -49,16 +49,11 @@ use Fred\Domain\Community\Community;
 <?php if (!empty($canCreateCommunity ?? false)): ?>
     <?php
     $messageIdPrefix = 'community-create';
-    $messageTargets = [];
-
-    if (!empty($errors)) {
-        $messageTargets[] = $messageIdPrefix . '-errors';
-    }
-
-    if (!empty($success ?? '')) {
-        $messageTargets[] = $messageIdPrefix . '-success';
-    }
-    $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+    $messageAria = Fred\Infrastructure\View\ViewHelper::buildMessageAria(
+        !empty($errors),
+        !empty($success ?? ''),
+        $messageIdPrefix,
+    );
     ?>
     <table class="section-table" cellpadding="0" cellspacing="0">
         <tr>

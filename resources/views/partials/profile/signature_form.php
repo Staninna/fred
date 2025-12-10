@@ -8,18 +8,14 @@
 
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'signature-settings';
-$messageTargets = [];
-
-if (!empty($signatureErrors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageAria = ViewHelper::buildMessageAria(
+    !empty($signatureErrors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
 ?>
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Edit signature',

@@ -7,17 +7,15 @@
 /** @var array<int, string> $usernames */
 /** @var string|null $success */
 
+use Fred\Infrastructure\View\ViewHelper;
+
 $messageIdPrefix = 'ban-create';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageTargets = ViewHelper::collectMessageTargets(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
+$messageAria = ViewHelper::buildAriaDescribedBy($messageTargets);
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -45,7 +43,7 @@ echo $renderPartial('partials/select.php', [
     'placeholder' => 'Select user',
     'options' => $banUserOptions,
     'selected' => $old['username'] ?? '',
-    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+    'ariaDescribedBy' => implode(' ', $messageTargets),
 ]);
 ?>
                         </td>

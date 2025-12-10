@@ -9,18 +9,14 @@
 
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'profile-settings';
-$messageTargets = [];
-
-if (!empty($profileErrors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageAria = ViewHelper::buildMessageAria(
+    !empty($profileErrors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
 ?>
 <table class="section-table" cellpadding="0" cellspacing="0">
     <tr>

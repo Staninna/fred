@@ -12,22 +12,19 @@
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 ?>
 
 <?php $boardTotal = array_sum(array_map('count', $boardsByCategory)); ?>
 <?php
 $messageIdPrefix = 'community-structure';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageTargets = ViewHelper::collectMessageTargets(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
+$messageAria = ViewHelper::buildAriaDescribedBy($messageTargets);
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -150,7 +147,7 @@ echo $renderPartial('partials/select.php', [
     'placeholder' => 'Select user',
     'options' => $modUserOptions,
     'selected' => '',
-    'ariaDescribedBy' => trim(implode(' ', $messageTargets)),
+    'ariaDescribedBy' => implode(' ', $messageTargets),
 ]);
 ?>
                 <button class="button" type="submit">Assign</button>

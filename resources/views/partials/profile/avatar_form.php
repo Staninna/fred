@@ -8,18 +8,14 @@
 
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'avatar-settings';
-$messageTargets = [];
-
-if (!empty($avatarErrors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageAria = ViewHelper::buildMessageAria(
+    !empty($avatarErrors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
 ?>
 <?= $renderPartial('partials/form_section_header.php', [
     'title' => 'Avatar',

@@ -5,17 +5,14 @@
 /** @var callable $e */
 /** @var string|null $success */
 
+use Fred\Infrastructure\View\ViewHelper;
+
 $messageIdPrefix = 'login-form';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageAria = ViewHelper::buildMessageAria(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix
+);
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">

@@ -9,18 +9,15 @@
 
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'thread-create';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageTargets = ViewHelper::collectMessageTargets(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
+$messageAria = ViewHelper::buildAriaDescribedBy($messageTargets);
 ?>
 
 <table class="section-table" cellpadding="0" cellspacing="0">
@@ -64,7 +61,7 @@ $messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(
                     'textareaLabel' => 'Body',
                     'bodyValue' => $old['body'] ?? '',
                     'includeAttachment' => true,
-                    'messagesDescribedBy' => trim(implode(' ', $messageTargets)),
+                    'messagesDescribedBy' => implode(' ', $messageTargets),
                     'mentionEndpoint' => '/c/' . $community->slug . '/mentions/suggest',
                     'renderPartial' => $renderPartial,
                 ]) ?>

@@ -7,22 +7,19 @@
 /** @var callable $e */
 
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $nameValue = $old['name'] ?? $community->name;
 $descriptionValue = $old['description'] ?? $community->description;
 $cssValue = $old['custom_css'] ?? ($community->customCss ?? '');
 $success = $saved ? 'Settings saved.' : null;
 $messageIdPrefix = 'community-settings';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageTargets = ViewHelper::collectMessageTargets(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
+$messageAria = ViewHelper::buildAriaDescribedBy($messageTargets);
 
 ?>
 

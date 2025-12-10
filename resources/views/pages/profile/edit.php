@@ -11,18 +11,14 @@
 use Fred\Application\Auth\CurrentUser;
 use Fred\Domain\Auth\Profile;
 use Fred\Domain\Community\Community;
+use Fred\Infrastructure\View\ViewHelper;
 
 $messageIdPrefix = 'profile-edit';
-$messageTargets = [];
-
-if (!empty($errors)) {
-    $messageTargets[] = $messageIdPrefix . '-errors';
-}
-
-if (!empty($success ?? '')) {
-    $messageTargets[] = $messageIdPrefix . '-success';
-}
-$messageAria = $messageTargets === [] ? '' : ' aria-describedby="' . $e(implode(' ', $messageTargets)) . '"';
+$messageAria = ViewHelper::buildMessageAria(
+    !empty($errors),
+    !empty($success ?? ''),
+    $messageIdPrefix,
+);
 
 ?>
 
