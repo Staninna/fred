@@ -64,6 +64,7 @@ final readonly class PostController extends Controller
 
         try {
             $attachmentFile = $request->files['attachment'] ?? null;
+
             if (!is_array($attachmentFile)) {
                 $attachmentFile = null;
             }

@@ -7,7 +7,6 @@ namespace Fred\Application\Admin;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
 use Fred\Infrastructure\Database\BoardRepository;
-use Fred\Infrastructure\Database\CategoryRepository;
 use RuntimeException;
 
 use function time;

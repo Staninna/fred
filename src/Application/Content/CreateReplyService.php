@@ -12,7 +12,6 @@ use Fred\Domain\Forum\Thread;
 use Fred\Infrastructure\Database\AttachmentRepository;
 use Fred\Infrastructure\Database\PostRepository;
 use Fred\Infrastructure\Database\ProfileRepository;
-use Fred\Infrastructure\Database\ThreadRepository;
 use RuntimeException;
 use Throwable;
 
