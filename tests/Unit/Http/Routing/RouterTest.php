@@ -160,4 +160,24 @@ final class RouterTest extends TestCase
         $this->assertSame(403, $response->status);
         $this->assertSame('blocked', $response->body);
     }
+
+    public function testDumpRouteMap(): void
+    {
+        $router = new Router();
+        $router->get('/', static fn () => new Response(200, [], 'home'));
+        $router->get('/hello', static fn () => new Response(200, [], 'hello'), [
+            static fn (Request $r, callable $n) => $n($r),
+        ]);
+        $router->post('/submit', static fn () => new Response(200, [], 'ok'));
+        $router->get('/c/{community}/b/{board}', static fn () => new Response(200, [], 'board'));
+
+        $map = $router->dumpRouteMap();
+
+        $this->assertStringContainsString('Registered Routes:', $map);
+        $this->assertStringContainsString('GET    /', $map);
+        $this->assertStringContainsString('GET    /hello [1 middleware]', $map);
+        $this->assertStringContainsString('POST   /submit', $map);
+        $this->assertStringContainsString('GET    /c/{community}/b/{board}', $map);
+        $this->assertStringContainsString('Total:', $map);
+    }
 }

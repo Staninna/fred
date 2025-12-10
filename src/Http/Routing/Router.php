@@ -22,6 +22,8 @@ use const PATHINFO_EXTENSION;
 
 use function preg_match;
 use function preg_replace_callback;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use function realpath;
 use function rtrim;
 
@@ -57,10 +59,13 @@ final class Router
     /** @var null|callable(string):callable */
     private readonly ?Closure $middlewareResolver;
 
-    public function __construct(?string $publicPath = null, ?callable $middlewareResolver = null)
+    private readonly LoggerInterface $logger;
+
+    public function __construct(?string $publicPath = null, ?callable $middlewareResolver = null, ?LoggerInterface $logger = null)
     {
         $this->publicPath = $publicPath === null ? null : rtrim($publicPath, '/\\');
         $this->middlewareResolver = $middlewareResolver !== null ? Closure::fromCallable($middlewareResolver) : null;
+        $this->logger = $logger ?? new NullLogger();
     }
 
     public function addGlobalMiddleware(callable|string $middleware): void
@@ -131,8 +136,20 @@ final class Router
             return $staticResponse;
         }
 
+        $this->logger->warning('Route not found', [
+            'method' => $request->method,
+            'path' => $request->path,
+            'query' => $request->query,
+        ]);
+
         if ($this->notFoundHandler !== null) {
-            return ($this->notFoundHandler)($request);
+            $response = ($this->notFoundHandler)($request);
+            
+            if (!$response instanceof Response) {
+                throw new RuntimeException('Not found handler must return a Response.');
+            }
+            
+            return $response;
         }
 
         return new Response(
@@ -148,6 +165,104 @@ final class Router
             'static' => $this->staticRoutes,
             'dynamic' => $this->dynamicRoutes,
         ];
+    }
+
+    /**
+     * Dump route map for diagnostics.
+     * Returns a human-readable list of all registered routes.
+     * 
+     * @return string
+     */
+    public function dumpRouteMap(): string
+    {
+        $lines = [];
+        $routes = [];
+        $methods = ['GET', 'POST'];
+
+        // Gather all routes for pretty printing
+        foreach ($methods as $method) {
+            foreach ($this->staticRoutes[$method] ?? [] as $path => $route) {
+                $routes[] = [
+                    'method' => $method,
+                    'path' => $path,
+                    'handler' => $this->stringifyHandler($route['handler']),
+                ];
+            }
+            foreach ($this->dynamicRoutes[$method] ?? [] as $route) {
+                $routes[] = [
+                    'method' => $method,
+                    'path' => $route['path'],
+                    'handler' => $this->stringifyHandler($route['handler']),
+                ];
+            }
+        }
+
+        // Calculate max widths
+        $methodWidth = 6;
+        $pathWidth = 4;
+        $handlerWidth = 7;
+        foreach ($routes as $r) {
+            $methodWidth = max($methodWidth, strlen($r['method']));
+            $pathWidth = max($pathWidth, strlen($r['path']));
+            $handlerWidth = max($handlerWidth, strlen($r['handler']));
+        }
+
+        // ANSI color codes
+        $colorMethod = "\033[1;34m"; // bold blue
+        $colorHandler = "\033[0;32m"; // green
+        $colorReset = "\033[0m";
+
+        $lines[] = '';
+        $lines[] = '┌' . str_repeat('─', $methodWidth+2) . '┬' . str_repeat('─', $pathWidth+2) . '┬' . str_repeat('─', $handlerWidth+2) . '┐';
+        $lines[] = sprintf(
+            "│ %s%-{$methodWidth}s%s │ %-{$pathWidth}s │ %s%-{$handlerWidth}s%s │",
+            $colorMethod, 'METHOD', $colorReset,
+            'PATH',
+            $colorHandler, 'HANDLER', $colorReset
+        );
+        $lines[] = '├' . str_repeat('─', $methodWidth+2) . '┼' . str_repeat('─', $pathWidth+2) . '┼' . str_repeat('─', $handlerWidth+2) . '┤';
+
+        foreach ($routes as $r) {
+            $lines[] = sprintf(
+                "│ %s%-{$methodWidth}s%s │ %-{$pathWidth}s │ %s%-{$handlerWidth}s%s │",
+                $colorMethod, $r['method'], $colorReset,
+                $r['path'],
+                $colorHandler, $r['handler'], $colorReset
+            );
+        }
+        $lines[] = '└' . str_repeat('─', $methodWidth+2) . '┴' . str_repeat('─', $pathWidth+2) . '┴' . str_repeat('─', $handlerWidth+2) . '┘';
+        $lines[] = '';
+        $lines[] = sprintf('Total: %d static, %d dynamic routes',
+            count($this->staticRoutes['GET'] ?? []) + count($this->staticRoutes['POST'] ?? []),
+            count($this->dynamicRoutes['GET'] ?? []) + count($this->dynamicRoutes['POST'] ?? [])
+        );
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Convert a handler to a string for display.
+     */
+    private function stringifyHandler($handler): string
+    {
+        if (is_array($handler)) {
+            if (is_object($handler[0])) {
+                $class = get_class($handler[0]);
+            } else {
+                $class = (string) $handler[0];
+            }
+            return $class . '::' . $handler[1];
+        }
+        if (is_string($handler)) {
+            return $handler;
+        }
+        if ($handler instanceof \Closure) {
+            return 'Closure';
+        }
+        if (is_object($handler)) {
+            return get_class($handler);
+        }
+        return 'Unknown';
     }
 
     /**
@@ -279,7 +394,18 @@ final class Router
         $result = $next($request);
 
         if (!$result instanceof Response) {
-            throw new RuntimeException('Middleware pipeline must return a Response.');
+            $type = get_debug_type($result);
+            $this->logger->error('Handler/middleware returned non-Response', [
+                'type' => $type,
+                'method' => $request->method,
+                'path' => $request->path,
+            ]);
+            throw new RuntimeException(sprintf(
+                'Handler or middleware must return Response, got %s for %s %s',
+                $type,
+                $request->method,
+                $request->path
+            ));
         }
 
         return $result;

@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Dump route map for diagnostics
+ */
+
+[$container, $router, $dispatch] = require __DIR__ . '/../bootstrap.php';
+
+(require __DIR__ . '/../routes.php')($router, $container);
+
+echo $router->dumpRouteMap();
+echo "\n";

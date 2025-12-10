@@ -29,8 +29,6 @@ use Fred\Infrastructure\Session\SqliteSessionHandler;
 use Fred\Infrastructure\View\ViewRenderer;
 use League\Container\Container;
 use League\Container\ReflectionContainer;
-use PDO;
-use Throwable;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -62,24 +60,29 @@ return (static function (): array {
     $container->addShared(Router::class, static fn () => new Router(
         $container->get('basePath') . '/public',
         $container->get(MiddlewareRegistry::class)->resolver(),
+        $container->get(FileLogger::class),
     ));
 
     $config = $container->get(AppConfig::class);
-    $cookieSecure = str_starts_with($config->baseUrl, 'https://');
-    session_set_cookie_params([
-        'lifetime' => 0,
-        'path' => '/',
-        'secure' => $cookieSecure,
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
-    ini_set('session.use_strict_mode', '1');
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.cookie_secure', $cookieSecure ? '1' : '0');
+    
+    // Only configure and start session for web requests (not CLI)
+    if (PHP_SAPI !== 'cli') {
+        $cookieSecure = str_starts_with($config->baseUrl, 'https://');
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'secure' => $cookieSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        ini_set('session.use_strict_mode', '1');
+        ini_set('session.cookie_httponly', '1');
+        ini_set('session.cookie_secure', $cookieSecure ? '1' : '0');
 
-    $sessionHandler = $container->get(SqliteSessionHandler::class);
-    session_set_save_handler($sessionHandler, true);
-    session_start();
+        $sessionHandler = $container->get(SqliteSessionHandler::class);
+        session_set_save_handler($sessionHandler, true);
+        session_start();
+    }
 
     $router = $container->get(Router::class);
     $csrf = $container->get(CsrfGuard::class);
