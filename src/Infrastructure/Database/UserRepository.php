@@ -39,6 +39,22 @@ final readonly class UserRepository
     }
 
     /**
+     * @return array<int>
+     */
+    public function getModeratedCommunityIds(int $userId): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT community_id FROM community_moderators WHERE user_id = :user_id'
+        );
+        $statement->execute(['user_id' => $userId]);
+
+        /** @var int[] $communityIds */
+        $communityIds = $statement->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+        return array_map('intval', $communityIds);
+    }
+
+    /**
      * @param int[] $ids
      * @return array<int, User>
      */

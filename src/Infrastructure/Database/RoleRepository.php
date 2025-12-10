@@ -44,4 +44,24 @@ final readonly class RoleRepository
             name: (string) $row['name'],
         );
     }
+
+    /**
+     * @return array<string>
+     */
+    public function getPermissionsForRole(string $roleSlug): array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT p.slug
+             FROM permissions p
+             JOIN role_permissions rp ON rp.permission_id = p.id
+             JOIN roles r ON r.id = rp.role_id
+             WHERE r.slug = :slug'
+        );
+        $statement->execute(['slug' => $roleSlug]);
+
+        /** @var string[] $permissions */
+        $permissions = $statement->fetchAll(PDO::FETCH_COLUMN) ?: [];
+
+        return $permissions;
+    }
 }
