@@ -15,10 +15,10 @@ final class BbcodeParserTest extends TestCase
         $input = "[b]bold[/b] [i]italics[/i] [quote]quoted[/quote] [code]echo 'hi';[/code]";
         $output = $parser->parse($input);
 
-        $this->assertStringContainsString('<strong>bold</strong>', $output);
-        $this->assertStringContainsString('<em>italics</em>', $output);
-        $this->assertStringContainsString('<blockquote>quoted</blockquote>', $output);
-        $this->assertStringContainsString('<pre><code>echo &#039;hi&#039;;</code></pre>', $output);
+        $this->assertStringContainsString('<strong class="bb-bold">bold</strong>', $output);
+        $this->assertStringContainsString('<em class="bb-italic">italics</em>', $output);
+        $this->assertStringContainsString('<blockquote class="bb-quote">quoted</blockquote>', $output);
+        $this->assertStringContainsString('<pre class="bb-code"><code>echo &#039;hi&#039;;</code></pre>', $output);
     }
 
     public function testParsesUrls(): void
@@ -58,6 +58,6 @@ final class BbcodeParserTest extends TestCase
 
         $this->assertStringNotContainsString('<script>', $output);
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $output);
-        $this->assertStringContainsString('<strong>bold</strong>', $output);
+        $this->assertStringContainsString('<strong class="bb-bold">bold</strong>', $output);
     }
 }
