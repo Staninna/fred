@@ -17,7 +17,11 @@ final readonly class InjectCurrentUserMiddleware
     public function __invoke(Request $request, callable $next): Response
     {
         $currentUser = $this->auth->currentUser();
-        $request = $request->withAttribute('currentUser', $currentUser);
+
+        $context = $request->context()->withCurrentUser($currentUser);
+        $request = $request
+            ->withContext($context)
+            ->withAttribute('currentUser', $currentUser);
 
         return $next($request);
     }

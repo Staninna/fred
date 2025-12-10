@@ -9,6 +9,8 @@ use function is_array;
 use function parse_url;
 use function trim;
 
+use Fred\Http\RequestContext;
+
 final readonly class Request
 {
     public function __construct(
@@ -21,6 +23,7 @@ final readonly class Request
         public array  $headers = [],
         public array  $session = [],
         public array  $attributes = [],
+        public RequestContext $context = new RequestContext(),
     ) {
     }
 
@@ -65,6 +68,7 @@ final readonly class Request
             headers: $normalizedHeaders,
             session: $session,
             attributes: [],
+            context: RequestContext::empty(),
         );
     }
 
@@ -80,6 +84,7 @@ final readonly class Request
             headers: $this->headers,
             session: $this->session,
             attributes: $this->attributes,
+            context: $this->context,
         );
     }
 
@@ -98,6 +103,7 @@ final readonly class Request
             headers: $this->headers,
             session: $this->session,
             attributes: $attributes,
+            context: $this->context,
         );
     }
 
@@ -106,15 +112,31 @@ final readonly class Request
         return $this->attributes[$name] ?? $default;
     }
 
+    public function withContext(RequestContext $context): self
+    {
+        return new self(
+            method: $this->method,
+            path: $this->path,
+            query: $this->query,
+            body: $this->body,
+            files: $this->files,
+            params: $this->params,
+            headers: $this->headers,
+            session: $this->session,
+            attributes: $this->attributes,
+            context: $context,
+        );
+    }
+
+    public function context(): RequestContext
+    {
+        return $this->context;
+    }
+
     public function header(string $name, mixed $default = null): mixed
     {
         $normalized = strtolower($name);
 
         return $this->headers[$normalized] ?? $default;
-    }
-
-    public function isHxRequest(): bool
-    {
-        return strtolower((string) $this->header('HX-Request', 'false')) === 'true';
     }
 }

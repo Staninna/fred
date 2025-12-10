@@ -23,7 +23,7 @@ final readonly class EnrichViewContextMiddleware
     public function __invoke(Request $request, callable $next): Response
     {
         /** @var CurrentUser|null $currentUser */
-        $currentUser = $request->attribute('currentUser');
+        $currentUser = $request->context()->currentUser ?? $request->attribute('currentUser');
 
         $this->view->share('currentUser', $currentUser);
         $this->view->share('environment', $this->config->environment);
