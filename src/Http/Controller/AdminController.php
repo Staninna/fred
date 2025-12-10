@@ -54,7 +54,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $structure = $this->structureForCommunity($community);
@@ -94,7 +94,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $ctx = ViewContext::make()
@@ -124,7 +124,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
@@ -169,7 +169,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $name = trim((string) ($request->body['name'] ?? ''));
@@ -193,7 +193,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $categoryId = (int) ($request->params['category'] ?? 0);
@@ -224,7 +224,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $positions = $request->body['category_positions'] ?? [];
@@ -248,7 +248,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $categoryId = (int) ($request->params['category'] ?? 0);
@@ -272,7 +272,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $positions = $request->body['board_positions'] ?? [];
@@ -305,7 +305,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $categoryId = (int) ($request->body['category_id'] ?? 0);
@@ -363,7 +363,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $boardId = (int) ($request->params['board'] ?? 0);
@@ -422,7 +422,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $boardId = (int) ($request->params['board'] ?? 0);
@@ -446,7 +446,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $css = trim((string) ($request->body['custom_css'] ?? ''));
@@ -477,11 +477,11 @@ final readonly class AdminController
         $currentUser = $this->auth->currentUser();
 
         if (!$this->permissions->canModerate($currentUser, $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         if ($currentUser->role !== 'admin') {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $username = trim((string) ($request->body['username'] ?? ''));
@@ -541,11 +541,11 @@ final readonly class AdminController
         $currentUser = $this->auth->currentUser();
 
         if (!$this->permissions->canModerate($currentUser, $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         if ($currentUser->role !== 'admin') {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $userId = (int) ($request->params['user'] ?? 0);
@@ -567,7 +567,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $status = (string) ($request->query['status'] ?? 'open');
@@ -596,7 +596,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $reportId = (int) ($request->params['report'] ?? 0);
@@ -620,7 +620,7 @@ final readonly class AdminController
         }
 
         if (!$this->permissions->canModerate($this->auth->currentUser(), $community->id)) {
-            return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+            return Response::forbidden();
         }
 
         $query = trim((string) ($request->query['q'] ?? ''));

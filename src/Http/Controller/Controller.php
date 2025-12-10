@@ -36,11 +36,7 @@ abstract readonly class Controller
 
     protected function forbidden(): Response
     {
-        return new Response(
-            status: 403,
-            headers: ['Content-Type' => 'text/plain; charset=utf-8'],
-            body: 'Forbidden',
-        );
+        return Response::forbidden();
     }
 
     protected function redirectToThread(Community $community, Thread $thread, ?int $page = null, ?string $anchor = null): Response

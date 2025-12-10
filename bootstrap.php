@@ -113,21 +113,10 @@ return (static function (): array {
         if ($request->method === 'POST' && !$csrf->isValid($request)) {
             try {
                 $view = $container->get(ViewRenderer::class);
-                $config = $container->get(AppConfig::class);
-                $auth = $container->get(AuthService::class);
-
-                $body = $view->render('errors/419.php', [
-                    'pageTitle' => 'CSRF token mismatch',
-                ]);
+                Response::csrfFailure($view)->send();
             } catch (Throwable) {
-                $body = '<h1>CSRF token mismatch</h1>';
+                Response::csrfFailure()->send();
             }
-
-            (new Response(
-                status: 419,
-                headers: ['Content-Type' => 'text/html; charset=utf-8'],
-                body: $body,
-            ))->send();
 
             return;
         }

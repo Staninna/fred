@@ -40,7 +40,7 @@ final readonly class PermissionMiddleware
             };
 
             if (!$allowed) {
-                return new Response(403, ['Content-Type' => 'text/plain'], 'Forbidden');
+                return Response::forbidden();
             }
 
             return $next($request);

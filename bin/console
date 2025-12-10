@@ -1,0 +1,197 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Fred\Infrastructure\Config\ConfigLoader;
+use Fred\Infrastructure\Env\DotenvLoader;
+
+$basePath = dirname(__DIR__);
+$autoload = $basePath . '/vendor/autoload.php';
+
+if (!file_exists($autoload)) {
+    fwrite(STDERR, "Error: vendor/autoload.php not found. Run 'composer install'.\n");
+    exit(1);
+}
+
+require $autoload;
+
+$env = DotenvLoader::load($basePath . '/.env');
+$config = ConfigLoader::fromArray($env, $basePath);
+
+$command = $argv[1] ?? null;
+$args = array_slice($argv, 2);
+
+// Validate command
+$validCommands = ['serve', 'migrate', 'seed', 'test', 'phpstan', 'routes', 'help'];
+if ($command === null) {
+    showHelp();
+    exit(0);
+}
+
+if ($command === 'help' || $command === '-h' || $command === '--help') {
+    showHelp();
+    exit(0);
+}
+
+if (!in_array($command, $validCommands, true)) {
+    fwrite(STDERR, "Error: Unknown command '$command'.\n\n");
+    showHelp();
+    exit(1);
+}
+
+// Execute command
+match ($command) {
+    'serve' => executeServe($basePath, $args),
+    'migrate' => executeMigrate($basePath, $args),
+    'seed' => executeSeed($basePath, $args),
+    'test' => executeTest($basePath, $args),
+    'phpstan' => executePhpstan($basePath, $args),
+    'routes' => executeRoutes($basePath, $args),
+};
+
+exit(0);
+
+// Command implementations
+
+function executeServe(string $basePath, array $args): void
+{
+    $host = 'localhost';
+    $port = '8000';
+
+    // Parse args for --host and --port
+    foreach ($args as $arg) {
+        if (str_starts_with($arg, '--host=')) {
+            $host = substr($arg, 7);
+        } elseif (str_starts_with($arg, '--port=')) {
+            $port = substr($arg, 7);
+        }
+    }
+
+    $docRoot = $basePath . '/public';
+    $addr = "{$host}:{$port}";
+
+    echo "Starting development server at http://{$addr}\n";
+    echo "Document root: {$docRoot}\n";
+    echo "Press Ctrl+C to quit.\n\n";
+
+    passthru("php -S {$addr} -t {$docRoot} -r {$basePath}/public/index.php");
+}
+
+function executeMigrate(string $basePath, array $args): void
+{
+    $script = $basePath . '/bin/migrate';
+    $cmd = "php {$script}";
+
+    if (!empty($args)) {
+        $cmd .= ' ' . implode(' ', array_map('escapeshellarg', $args));
+    }
+
+    passthru($cmd);
+}
+
+function executeSeed(string $basePath, array $args): void
+{
+    $script = $basePath . '/bin/seed';
+    $cmd = "php {$script}";
+
+    if (!empty($args)) {
+        $cmd .= ' ' . implode(' ', array_map('escapeshellarg', $args));
+    }
+
+    passthru($cmd);
+}
+
+function executeTest(string $basePath, array $args): void
+{
+    $cmd = "composer test";
+
+    if (!empty($args)) {
+        $cmd .= ' -- ' . implode(' ', array_map('escapeshellarg', $args));
+    }
+
+    passthru($cmd);
+}
+
+function executePhpstan(string $basePath, array $args): void
+{
+    $cmd = "composer phpstan";
+
+    if (!empty($args)) {
+        $cmd .= ' ' . implode(' ', array_map('escapeshellarg', $args));
+    }
+
+    passthru($cmd);
+}
+
+function executeRoutes(string $basePath, array $args): void
+{
+    $script = $basePath . '/bin/routes';
+    $cmd = "php {$script}";
+
+    if (!empty($args)) {
+        $cmd .= ' ' . implode(' ', array_map('escapeshellarg', $args));
+    }
+
+    passthru($cmd);
+}
+
+function showHelp(): void
+{
+    $help = <<<'HELP'
+Fred Console - Development helper script
+
+USAGE:
+    ./bin/console <command> [options]
+
+COMMANDS:
+
+    serve [OPTIONS]         Start the development server
+        --host=ADDR         Host to bind to (default: localhost)
+        --port=PORT         Port to bind to (default: 8000)
+        Example: ./bin/console serve --host=0.0.0.0 --port=3000
+
+    migrate [OPTIONS]       Run database migrations
+        --fresh             Reset database before migrating
+        Example: ./bin/console migrate --fresh
+
+    seed [OPTIONS]          Seed demo data into database
+        --theme NAME        Seed custom theme (optional)
+        Example: ./bin/console seed
+
+    test [OPTIONS]          Run unit/integration/acceptance tests
+        Example: ./bin/console test
+        Example: ./bin/console test -- tests/Unit/SomeTest.php
+
+    phpstan [OPTIONS]       Run static analysis (PHPStan)
+        Example: ./bin/console phpstan
+
+    routes [OPTIONS]        List registered routes
+        Example: ./bin/console routes
+
+    help                    Show this help message
+
+EXAMPLES:
+
+    Set up a fresh database and seed data:
+        ./bin/console migrate --fresh
+        ./bin/console seed
+
+    Run tests and check code quality:
+        ./bin/console test
+        ./bin/console phpstan
+
+    Start development server:
+        ./bin/console serve
+        # Then visit http://localhost:8000
+
+NOTES:
+
+    - All commands use the .env configuration
+    - Ensure .env exists before running commands
+    - Database path and other config via .env.example
+
+HELP;
+
+    echo $help;
+}

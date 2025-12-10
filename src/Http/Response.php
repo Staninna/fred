@@ -13,6 +13,8 @@ use function header;
 use function http_response_code;
 use function is_array;
 
+use Throwable;
+
 final readonly class Response
 {
     /** @param array<string, string|string[]> $headers */
@@ -58,6 +60,54 @@ final readonly class Response
 
         return new self(
             status: 404,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
+    /**
+     * Create a 403 Forbidden response.
+     *
+     * @param ?ViewRenderer $view If provided, renders error template; otherwise returns plain text.
+     */
+    public static function forbidden(
+        ?ViewRenderer $view = null,
+        string $body = '<h1>Forbidden</h1>',
+    ): self {
+        if ($view !== null) {
+            try {
+                $body = $view->render('errors/403.php', [
+                    'pageTitle' => 'Access denied',
+                ]);
+            } catch (Throwable) {
+                // Fall through to default body on render failure
+            }
+        }
+
+        return new self(
+            status: 403,
+            headers: ['Content-Type' => 'text/html; charset=utf-8'],
+            body: $body,
+        );
+    }
+
+    /**
+     * Create a 419 CSRF Failure response.
+     *
+     * @param ?ViewRenderer $view If provided, renders error template; otherwise returns plain text.
+     */
+    public static function csrfFailure(
+        ?ViewRenderer $view = null,
+        string $body = '<h1>CSRF token mismatch</h1>',
+    ): self {
+        if ($view !== null) {
+            $body = $view->render('errors/419.php', [
+                'pageTitle' => 'CSRF token mismatch',
+            ]);
+        }
+
+        return new self(
+            status: 419,
             headers: ['Content-Type' => 'text/html; charset=utf-8'],
             body: $body,
         );
