@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Fred\Application\Auth;
 
-use Fred\Infrastructure\Database\CommunityModeratorRepository;
-use Fred\Infrastructure\Database\PermissionRepository;
-
 use function in_array;
 
-final class PermissionService
+final readonly class PermissionService
 {
     private const string PERMISSION_THREAD_CREATE = 'thread.create';
     private const string PERMISSION_POST_CREATE = 'post.create';
@@ -19,18 +16,6 @@ final class PermissionService
     private const string PERMISSION_POST_EDIT_ANY = 'post.edit_any';
     private const string PERMISSION_POST_DELETE_ANY = 'post.delete_any';
     private const string PERMISSION_USER_BAN = 'user.ban';
-
-    /** @var array<string, bool> Cache of role-wide permission checks (role|perm => bool) */
-    private array $rolePermissionCache = [];
-
-    /** @var array<string, bool> Cache of scoped permission checks (role|user|perm|community => bool) */
-    private array $scopedPermissionCache = [];
-
-    public function __construct(
-        private readonly PermissionRepository $permissions,
-        private readonly CommunityModeratorRepository $communityModerators,
-    ) {
-    }
 
     public function canModerate(CurrentUser $user, ?int $communityId = null): bool
     {
@@ -95,27 +80,10 @@ final class PermissionService
         return $this->hasForCommunity($user, self::PERMISSION_POST_DELETE_ANY, $communityId);
     }
 
+    // TODO: this is kond of a wrapper function
     private function has(CurrentUser $user, string $permission): bool
     {
-        $role = $user->role;
-
-        if ($role === '') {
-            return false;
-        }
-
-        $key = $role . '|' . $permission;
-
-        if (isset($this->rolePermissionCache[$key])) {
-            return $this->rolePermissionCache[$key];
-        }
-
-        $allowed = $this->permissions->roleHasPermission($role, $permission);
-
-        if ($allowed) {
-            $this->rolePermissionCache[$key] = true;
-        }
-
-        return $allowed;
+        return $user->hasPermission($permission);
     }
 
     private function hasForCommunity(CurrentUser $user, string $permission, ?int $communityId): bool
@@ -133,23 +101,11 @@ final class PermissionService
                 return true;
             }
 
-            if ($communityId === null || $user->id === null) {
+            if ($communityId === null) {
                 return false;
             }
 
-            $key = $user->role . '|' . ($user->id) . '|' . $permission . '|' . $communityId;
-
-            if (isset($this->scopedPermissionCache[$key])) {
-                return $this->scopedPermissionCache[$key];
-            }
-
-            $allowed = $this->communityModerators->isModerator($communityId, $user->id);
-
-            if ($allowed) {
-                $this->scopedPermissionCache[$key] = true;
-            }
-
-            return $allowed;
+            return $user->isModeratorOf($communityId);
         }
 
         // Member/guest have no scoped permissions beyond create/reply.
