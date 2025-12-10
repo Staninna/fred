@@ -22,6 +22,8 @@ use function trim;
 final class AuthService
 {
     private const string SESSION_KEY = 'user_id';
+    private const string SESSION_PERMISSIONS_KEY = 'user_permissions';
+    private const string SESSION_MODERATED_COMMUNITIES_KEY = 'user_moderated_communities';
 
     private ?CurrentUser $cached = null;
 
@@ -59,7 +61,10 @@ final class AuthService
             return $this->guest();
         }
 
-        return $this->cached = $this->mapUser($user);
+        $permissions = $this->sessionGet(self::SESSION_PERMISSIONS_KEY) ?? [];
+        $moderatedCommunities = $this->sessionGet(self::SESSION_MODERATED_COMMUNITIES_KEY) ?? [];
+
+        return $this->cached = $this->mapUser($user, $permissions, $moderatedCommunities);
     }
 
     public function register(string $username, string $displayName, string $password): CurrentUser
@@ -121,6 +126,30 @@ final class AuthService
         $this->regenerateSession();
     }
 
+    public function flushPermissionCache(?int $userId = null): void
+    {
+        if ($userId === null) {
+            $currentUserId = $this->sessionGet(self::SESSION_KEY);
+            $userId = $currentUserId !== null ? (int) $currentUserId : null;
+        }
+
+        if ($userId === null) {
+            return;
+        }
+
+        $user = $this->users->findById($userId);
+
+        if ($user === null) {
+            return;
+        }
+
+        $this->cachePermissions($user);
+
+        if ($this->cached !== null && $this->cached->id === $userId) {
+            $this->cached = null;
+        }
+    }
+
     private function guest(): CurrentUser
     {
         $guestRole = $this->roles->findBySlug('guest');
@@ -132,10 +161,16 @@ final class AuthService
             role: $guestRole?->slug ?? 'guest',
             roleName: $guestRole?->name ?? 'Guest',
             authenticated: false,
+            permissions: [],
+            moderatedCommunities: [],
         );
     }
 
-    private function mapUser(User $user): CurrentUser
+    /**
+     * @param array<string> $permissions
+     * @param array<int> $moderatedCommunities
+     */
+    private function mapUser(User $user, array $permissions = [], array $moderatedCommunities = []): CurrentUser
     {
         return new CurrentUser(
             id: $user->id,
@@ -144,18 +179,36 @@ final class AuthService
             role: $user->roleSlug,
             roleName: $user->roleName,
             authenticated: true,
+            permissions: $permissions,
+            moderatedCommunities: $moderatedCommunities,
         );
     }
 
     private function loginUser(User $user): CurrentUser
     {
         $this->sessionSet(self::SESSION_KEY, $user->id);
+        $this->cachePermissions($user);
         $this->regenerateSession();
 
-        $current = $this->mapUser($user);
+        $permissions = $this->sessionGet(self::SESSION_PERMISSIONS_KEY) ?? [];
+        $moderatedCommunities = $this->sessionGet(self::SESSION_MODERATED_COMMUNITIES_KEY) ?? [];
+
+        $current = $this->mapUser($user, $permissions, $moderatedCommunities);
         $this->cached = $current;
 
         return $current;
+    }
+
+    private function cachePermissions(User $user): void
+    {
+        $permissions = $this->roles->getPermissionsForRole($user->roleSlug);
+        $this->sessionSet(self::SESSION_PERMISSIONS_KEY, $permissions);
+
+        $moderatedCommunities = [];
+        if ($user->roleSlug === 'moderator' && $user->id !== null) {
+            $moderatedCommunities = $this->users->getModeratedCommunityIds($user->id);
+        }
+        $this->sessionSet(self::SESSION_MODERATED_COMMUNITIES_KEY, $moderatedCommunities);
     }
 
     private function sessionGet(string $key): mixed
