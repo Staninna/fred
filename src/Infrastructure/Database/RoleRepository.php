@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Fred\Infrastructure\Database;
 
 use Fred\Domain\Auth\Role;
+use Fred\Domain\Auth\RoleSlug;
 use PDO;
 
 final readonly class RoleRepository
@@ -18,10 +19,10 @@ final readonly class RoleRepository
         $statement = $this->pdo->prepare('INSERT OR IGNORE INTO roles (slug, name) VALUES (:slug, :name)');
 
         foreach ([
-            ['slug' => 'guest', 'name' => 'Guest'],
-            ['slug' => 'member', 'name' => 'Member'],
-            ['slug' => 'moderator', 'name' => 'Moderator'],
-            ['slug' => 'admin', 'name' => 'Administrator'],
+            ['slug' => RoleSlug::GUEST, 'name' => 'Guest'],
+            ['slug' => RoleSlug::MEMBER, 'name' => 'Member'],
+            ['slug' => RoleSlug::MODERATOR, 'name' => 'Moderator'],
+            ['slug' => RoleSlug::ADMIN, 'name' => 'Administrator'],
         ] as $role) {
             $statement->execute($role);
         }

@@ -6,6 +6,7 @@ namespace Fred\Http\Controller;
 
 use Fred\Application\Auth\AuthService;
 use Fred\Application\Auth\PermissionService;
+use Fred\Domain\Auth\RoleSlug;
 use Fred\Domain\Community\Board;
 use Fred\Domain\Community\Community;
 use Fred\Http\Request;
@@ -479,7 +480,7 @@ final readonly class AdminController
             return Response::forbidden();
         }
 
-        if ($currentUser->role !== 'admin') {
+        if ($currentUser->role !== RoleSlug::ADMIN) {
             return Response::forbidden();
         }
 
@@ -498,8 +499,8 @@ final readonly class AdminController
             $errors[] = 'User not found.';
         }
 
-        if ($user !== null && $user->roleSlug === 'guest') {
-            $memberRole = $this->roles->findBySlug('member');
+        if ($user !== null && $user->roleSlug === RoleSlug::GUEST) {
+            $memberRole = $this->roles->findBySlug(RoleSlug::MEMBER);
 
             if ($memberRole !== null) {
                 $this->users->updateRole($user->id, $memberRole->id);
@@ -508,8 +509,8 @@ final readonly class AdminController
             }
         }
 
-        if ($user !== null && $user->roleSlug === 'member') {
-            $modRole = $this->roles->findBySlug('moderator');
+        if ($user !== null && $user->roleSlug === RoleSlug::MEMBER) {
+            $modRole = $this->roles->findBySlug(RoleSlug::MODERATOR);
 
             if ($modRole === null) {
                 $errors[] = 'Moderator role is missing.';
@@ -543,7 +544,7 @@ final readonly class AdminController
             return Response::forbidden();
         }
 
-        if ($currentUser->role !== 'admin') {
+        if ($currentUser->role !== RoleSlug::ADMIN) {
             return Response::forbidden();
         }
 

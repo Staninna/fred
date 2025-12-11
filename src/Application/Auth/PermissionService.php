@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Application\Auth;
 
+use Fred\Domain\Auth\RoleSlug;
+
 use function in_array;
 
 final readonly class PermissionService
@@ -42,7 +44,7 @@ final readonly class PermissionService
 
     public function canCreateCommunity(CurrentUser $user): bool
     {
-        return $user->role === 'admin';
+        return $user->role === RoleSlug::ADMIN;
     }
 
     public function canReply(CurrentUser $user): bool
@@ -92,11 +94,11 @@ final readonly class PermissionService
             return false;
         }
 
-        if ($user->role === 'admin') {
+        if ($user->role === RoleSlug::ADMIN) {
             return true;
         }
 
-        if ($user->role === 'moderator') {
+        if ($user->role === RoleSlug::MODERATOR) {
             if (in_array($permission, [self::PERMISSION_THREAD_CREATE, self::PERMISSION_POST_CREATE], true)) {
                 return true;
             }

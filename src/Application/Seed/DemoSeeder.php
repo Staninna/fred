@@ -10,6 +10,7 @@ use Faker\Generator;
 use Fred\Application\Content\BbcodeParser;
 use Fred\Application\Content\EmoticonSet;
 use Fred\Application\Content\MentionService;
+use Fred\Domain\Auth\RoleSlug;
 use Fred\Domain\Auth\User;
 use Fred\Domain\Community\Category;
 use Fred\Domain\Community\Community;
@@ -72,9 +73,9 @@ final readonly class DemoSeeder
 
         try {
             $this->roles->ensureDefaultRoles();
-            $memberRole = $this->roles->findBySlug('member');
-            $moderatorRole = $this->roles->findBySlug('moderator');
-            $adminRole = $this->roles->findBySlug('admin');
+            $memberRole = $this->roles->findBySlug(RoleSlug::MEMBER);
+            $moderatorRole = $this->roles->findBySlug(RoleSlug::MODERATOR);
+            $adminRole = $this->roles->findBySlug(RoleSlug::ADMIN);
 
             if ($memberRole === null || $moderatorRole === null || $adminRole === null) {
                 throw new RuntimeException('Core roles are missing.');

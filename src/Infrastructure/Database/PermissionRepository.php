@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fred\Infrastructure\Database;
 
+use Fred\Domain\Auth\RoleSlug;
+
 use function in_array;
 
 use PDO;
@@ -37,9 +39,9 @@ final class PermissionRepository
         }
 
         $rolePermissions = [
-            'guest' => [],
-            'member' => ['thread.create', 'post.create'],
-            'moderator' => [
+            RoleSlug::GUEST => [],
+            RoleSlug::MEMBER => ['thread.create', 'post.create'],
+            RoleSlug::MODERATOR => [
                 'thread.create',
                 'post.create',
                 'thread.lock',
@@ -49,7 +51,7 @@ final class PermissionRepository
                 'post.edit_any',
                 'user.ban',
             ],
-            'admin' => [
+            RoleSlug::ADMIN => [
                 'thread.create',
                 'post.create',
                 'thread.lock',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Fred\Application\Auth;
 
+use Fred\Domain\Auth\RoleSlug;
 use Fred\Domain\Auth\User;
 use Fred\Infrastructure\Database\BanRepository;
 use Fred\Infrastructure\Database\RoleRepository;
@@ -80,7 +81,7 @@ final class AuthService
             throw new RuntimeException('Username is already taken.');
         }
 
-        $role = $this->roles->findBySlug('member');
+        $role = $this->roles->findBySlug(RoleSlug::MEMBER);
 
         if ($role === null) {
             throw new RuntimeException('Member role is missing.');
@@ -206,7 +207,7 @@ final class AuthService
 
         $moderatedCommunities = [];
 
-        if ($user->roleSlug === 'moderator') {
+        if ($user->roleSlug === RoleSlug::MODERATOR) {
             $moderatedCommunities = $this->users->getModeratedCommunityIds($user->id);
         }
         $this->sessionSet(self::SESSION_MODERATED_COMMUNITIES_KEY, $moderatedCommunities);
