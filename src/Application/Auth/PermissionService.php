@@ -82,7 +82,7 @@ final readonly class PermissionService
         return $this->hasForCommunity($user, self::PERMISSION_POST_DELETE_ANY, $communityId);
     }
 
-    // Thin wrapper to centralize permission checks.
+    // TODO: Thin wrapper to centralize permission checks.remove it
     private function has(CurrentUser $user, string $permission): bool
     {
         return $user->hasPermission($permission);
